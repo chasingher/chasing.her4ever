@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="theme-color" content="#380000" />
+<title>For You</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='28'%3E%E2%9D%A4%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Caveat:wght@500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --cream: #fdf1e7;
+    --cream-deep: #f7ddc9;
+    --rose: #c2185b;
+    --rose-deep: #96123f;
+    --maroon-900: #200000;
+    --maroon-800: #380000;
+    --maroon-700: #4a0909;
+    --maroon-600: #5c0b0b;
+    --gold: #e8c27a;
+    --cream-text: #fdf3ea;
+    --font-script: 'Dancing Script', cursive;
+    --font-hand: 'Caveat', cursive;
+    --font-ui: 'Poppins', sans-serif;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    font-family: var(--font-ui);
+    background: var(--maroon-800);
+    color: var(--cream-text);
+    overflow-x:hidden;
+    scroll-snap-type: y proximity;
+  }
+  #root{ min-height:100%; }
+  img{ max-width:100%; display:block; }
+  button{ font-family:inherit; }
+  a{ color:inherit; }
+
+  ::selection{ background: var(--rose); color:#fff; }
+
+  /* ---------- Login screen ---------- */
+  .login-screen{
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:30px;
+    padding: 40px 20px;
+    background: radial-gradient(circle at 50% 15%, #fffaf5 0%, var(--cream) 55%, var(--cream-deep) 100%);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .login-screen.fading-out{ opacity:0; transform: scale(1.06); pointer-events:none; }
+
+  .login-heart svg{
+    width:74px; height:74px;
+    filter: drop-shadow(0 12px 20px rgba(194,24,91,.35));
+    animation: pulseHeart 2s ease-in-out infinite;
+  }
+  .login-heart.shake svg{ animation: shakeX .5s ease; }
+  .login-heart.success svg{ animation: burstHeart .55s ease; }
+  @keyframes pulseHeart{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.09); } }
+  @keyframes burstHeart{ 0%{ transform:scale(1);} 40%{ transform:scale(1.35);} 100%{ transform:scale(1.05);} }
+  @keyframes shakeX{
+    10%,90%{ transform:translateX(-4px); }
+    20%,80%{ transform:translateX(6px); }
+    30%,50%,70%{ transform:translateX(-9px); }
+    40%,60%{ transform:translateX(9px); }
+  }
+
+  .login-loading{
+    font-size:.85rem; letter-spacing:.06em; color: var(--rose-deep); opacity:.75;
+  }
+  .dot-anim{ display:inline-block; animation: dotFade 1.2s ease-in-out infinite; }
+  @keyframes dotFade{ 0%,100%{opacity:.2;} 50%{opacity:1;} }
+
+  .pin-dots{ display:flex; gap:14px; }
+  .pin-dots.shake{ animation: shakeX .5s ease; }
+  .dot{
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid var(--rose);
+    transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .dot.filled{ background: var(--rose); transform: scale(1.15); }
+  .dot.success{ background:#4c9a52; border-color:#4c9a52; }
+
+  .keypad{ display:grid; grid-template-columns: repeat(3,72px); gap:18px 22px; animation: fadeInUp .5s ease; }
+  .key{
+    width:72px; height:72px; border-radius:50%;
+    border:none; background:#ffffff; color:#3a1220;
+    font-size:1.5rem; font-weight:500;
+    box-shadow: 0 6px 16px rgba(120,60,60,.12);
+    cursor:pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .key:hover{ transform: translateY(-2px); box-shadow: 0 10px 22px rgba(120,60,60,.18); }
+  .key:active{ transform: translateY(0) scale(.93); }
+  .key-alt{ background:#fbdce6; color: var(--rose-deep); }
+  .key-alt svg{ width:20px; height:20px; }
+  .key:focus-visible, .go-start:focus-visible{ outline:3px solid var(--rose); outline-offset:3px; }
+
+  @keyframes fadeInUp{ from{ opacity:0; transform: translateY(14px);} to{ opacity:1; transform:translateY(0);} }
+
+  /* ---------- Flower reveal ---------- */
+  .flower-overlay{
+    position:fixed; inset:0; z-index:9999;
+    background: var(--cream);
+    overflow:hidden;
+    transition: opacity .9s ease;
+  }
+  .flower-overlay.fade-out{ opacity:0; pointer-events:none; }
+  .flower-wrap{
+    position:absolute; top:50%; left:50%; width:0; height:0;
+    animation-name: spiralOut;
+    animation-timing-function: cubic-bezier(.22,.82,.28,1);
+    animation-fill-mode: forwards;
+    animation-duration: var(--dur);
+    animation-delay: var(--delay);
+    opacity:0;
+  }
+  @keyframes spiralOut{
+    0%{ transform: rotate(calc(var(--a) - var(--extra))) translateX(0) scale(.25); opacity:0; }
+    14%{ opacity:1; }
+    100%{ transform: rotate(var(--a)) translateX(var(--d)) scale(1); opacity:1; }
+  }
+  .flower-self{
+    position:absolute; left:0; top:0;
+    transform: translate(-50%,-50%);
+    animation-name: selfSpin;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes selfSpin{ from{ transform: translate(-50%,-50%) rotate(0deg); } to{ transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* ---------- Main app / sections ---------- */
+  .main-app{ position:relative; }
+  .section{
+    min-height:100vh;
+    position:relative;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 100px 22px;
+    opacity:0; transform: translateY(46px);
+    transition: opacity 1s ease, transform 1s ease;
+    scroll-snap-align:start;
+    overflow:hidden;
+  }
+  .section.in-view{ opacity:1; transform: translateY(0); }
+
+  .tw-cursor{ animation: blinkCursor 1s step-start infinite; }
+  @keyframes blinkCursor{ 50%{ opacity:0; } }
+
+  /* Hero */
+  .section-hero{ background: var(--maroon-900); }
+  .photo-mosaic{
+    position:absolute; inset:0;
+    display:grid;
+    gap:3px;
+    background: var(--maroon-900);
+    filter: saturate(.82) contrast(1.03);
+    animation: mosaicIn 1.4s ease both;
+  }
+  @keyframes mosaicIn{
+    from{ opacity:0; transform: scale(1.06); }
+    to{ opacity:1; transform: scale(1); }
+  }
+  .photo-tile{
+    position:relative; overflow:hidden;
+    background: linear-gradient(135deg,#b9807a,#8a4f4a);
+  }
+  .photo-tile img{
+    width:100%; height:100%; object-fit:cover; display:block;
+    transition: transform 8s ease;
+    transform: scale(1.02);
+  }
+  .section-hero.in-view .photo-tile img{ transform: scale(1.12); }
+  .photo-tile-placeholder{
+    width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    color: rgba(255,255,255,.65);
+  }
+  .photo-tile-placeholder svg{ width:22px; height:22px; }
+  .photo-tile-placeholder span{ font-family: var(--font-hand); font-size:.8rem; }
+  .hero-overlay{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(32,0,0,.35), rgba(32,0,0,.72) 62%, rgba(32,0,0,.85)); }
+  .hero-text{
+    position:relative; z-index:2;
+    font-family: var(--font-script); font-weight:700;
+    color: var(--cream-text); text-align:center;
+    font-size: clamp(2rem, 6vw, 3.6rem);
+    text-shadow: 0 4px 32px rgba(0,0,0,.55);
+    padding: 0 16px; max-width: 900px;
+  }
+
+  /* Letter */
+  .section-letter{ background: radial-gradient(circle at 50% 25%, var(--maroon-700), var(--maroon-900) 78%); }
+  .letter-card{
+    max-width:720px; width:100%;
+    background: rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.14);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius:28px; padding: 56px 46px;
+    text-align:center;
+    box-shadow: 0 32px 64px rgba(0,0,0,.4);
+  }
+  .letter-title{
+    font-family: var(--font-script); font-weight:700;
+    font-size: clamp(1.8rem,4vw,2.4rem); color: var(--gold); margin-bottom:22px;
+    min-height: 1.3em;
+  }
+  .letter-body{
+    font-family: var(--font-hand); font-weight:500;
+    font-size: clamp(1.25rem,2.6vw,1.55rem); line-height:1.85;
+    color: var(--cream-text); white-space: pre-wrap; min-height: 3em;
+  }
+
+  /* Songs */
+  .section-songs{ background: linear-gradient(180deg, var(--maroon-700), var(--maroon-900)); }
+  .songs-head{ text-align:center; margin-bottom:44px; }
+  .songs-head h2{ font-family: var(--font-script); font-weight:700; font-size: clamp(2rem,5vw,3rem); margin:0; color: var(--cream-text); }
+  .eyebrow{ letter-spacing:.32em; font-size:.72rem; color: rgba(255,255,255,.55); text-transform:uppercase; margin-top:8px; }
+  .songs-grid{
+    display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+    gap:22px; max-width:1020px; width:100%;
+  }
+  .song-card{
+    background: linear-gradient(155deg, rgba(255,255,255,.07), rgba(0,0,0,.22));
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:20px; padding:18px 18px 16px;
+    transition: transform .2s ease, border-color .2s ease;
+  }
+  .song-card:hover{ transform: translateY(-4px); border-color: rgba(255,255,255,.22); }
+  .song-top{ display:flex; gap:14px; align-items:flex-start; }
+  .album-art{
+    width:64px; height:64px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color: rgba(255,255,255,.85);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+  }
+  .album-art svg{ width:26px; height:26px; }
+  .song-meta{ flex:1; min-width:0; }
+  .song-title{ display:flex; align-items:center; gap:6px; font-weight:600; color:#fff; font-size:1rem; }
+  .song-title .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .explicit-tag{ font-size:.6rem; background: rgba(255,255,255,.2); padding:1px 5px; border-radius:3px; flex-shrink:0; }
+  .song-artist{ color: rgba(255,255,255,.6); font-size:.85rem; margin:2px 0 10px; }
+  .save-btn{ display:inline-flex; align-items:center; gap:6px; font-size:.78rem; color:#fff; text-decoration:none; opacity:.85; }
+  .save-btn:hover{ opacity:1; }
+  .save-btn svg{ width:15px; height:15px; }
+  .spotify-badge{ opacity:.8; flex-shrink:0; }
+  .spotify-badge svg{ width:22px; height:22px; }
+  .spotify-badge:hover{ opacity:1; }
+  .song-bottom{ display:flex; align-items:center; gap:10px; margin-top:16px; }
+  .progress{ flex:1; height:4px; background: rgba(255,255,255,.15); border-radius:2px; overflow:hidden; }
+  .progress-fill{ height:100%; background: rgba(255,255,255,.6); border-radius:2px; }
+  .duration{ font-size:.7rem; color: rgba(255,255,255,.55); white-space:nowrap; }
+  .more-btn{ background:none; border:none; color: rgba(255,255,255,.45); cursor:pointer; font-size:.9rem; letter-spacing:1px; padding:2px; }
+  .play-btn{
+    width:32px; height:32px; border-radius:50%; background:#fff; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color: var(--maroon-900);
+  }
+  .play-btn svg{ width:13px; height:13px; margin-left:1px; }
+
+  /* Final */
+  .section-final{
+    background-color: var(--maroon-800);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cpath d='M22 10c-4-6-15-4-15 4 0 7.5 8.5 12.5 15 18 6.5-5.5 15-10.5 15-18 0-8-11-10-15-4z' fill='%23ffffff' fill-opacity='0.055'/%3E%3Cpath d='M67 47c-4-6-15-4-15 4 0 7.5 8.5 12.5 15 18 6.5-5.5 15-10.5 15-18 0-8-11-10-15-4z' fill='%23ffffff' fill-opacity='0.055'/%3E%3C/svg%3E");
+    background-size: 90px 90px;
+  }
+  .final-text{
+    font-family: var(--font-script); font-weight:700;
+    color: var(--cream-text); text-align:center;
+    font-size: clamp(1.8rem, 6vw, 3.2rem);
+    text-shadow: 0 4px 28px rgba(0,0,0,.55);
+    padding: 0 20px; min-height:1.4em;
+  }
+
+  /* Go to start */
+  .go-start{
+    position:fixed; right:20px; bottom:20px; z-index:60;
+    background: rgba(255,247,241,.94); color: var(--rose-deep);
+    border:none; border-radius:999px; padding:12px 20px;
+    font-weight:600; font-size:.82rem;
+    display:inline-flex; align-items:center; gap:7px;
+    cursor:pointer; box-shadow: 0 12px 26px rgba(0,0,0,.4);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .go-start:hover{ transform: translateY(-3px); box-shadow: 0 16px 30px rgba(0,0,0,.45); }
+  .go-start .arrow{ display:inline-block; }
+
+  @media (max-width: 480px){
+    .keypad{ grid-template-columns: repeat(3,64px); gap:14px 16px; }
+    .key{ width:64px; height:64px; font-size:1.3rem; }
+    .letter-card{ padding:38px 24px; }
+    .go-start{ padding:10px 16px; font-size:.74rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+    }
+    html{ scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script type="text/babel" data-presets="react">
+/* =====================================================================
+   CONFIGURE ME
+   ---------------------------------------------------------------------
+   This file is normally generated for you by admin.html (the project
+   builder) â it fills in the four values below automatically and you
+   just upload the result. Editing this file by hand also works fine:
+
+   1) Paste your Supabase project URL + anon key below to load content
+      (pin, letter, photos, songs) from your database. Leave the
+      placeholders as-is and the site will run beautifully off the
+      DEFAULT_CONFIG below instead â nothing breaks either way.
+   2) PROJECT_SLUG picks which row of the `projects` table this page
+      loads. It must match the slug you used when creating the project
+      in admin.html.
+   3) DEFAULT_CONFIG is a snapshot of the project's content at the time
+      this file was generated, so the page works even if Supabase is
+      unreachable. If Supabase IS reachable, the live row always wins,
+      so later edits in admin.html show up without re-downloading this
+      file.
+   4) See SETUP.md (shipped alongside this file) for the SQL to create
+      the `projects` and `visits` tables on Supabase.
+===================================================================== */
+const SUPABASE_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc";
+const PROJECT_SLUG = "for-esther-2026";
+
+/* DEFAULT_CONFIG:START */
+const DEFAULT_CONFIG = {
+  "pin": "200706",
+  "intro_message": "To My Wife, the Only Woman I Ever Want To Love Deeply",
+  "letter_title": "My Most Beautiful and Sexy Wife,",
+  "letter_body": "Thank you for loving me my Queen,\n\nIn all my years, I have only wished for a deep love like this.\n\nIn all my days, I have desired an intimacy as sweet as this.\n\nAnd I thank God I can experience it all with you.\n\nMy Sunshine,\n\nYou bring light to my life,\nLike color to a blank canvas\n\nYou bring beauty to my days\nLike a rainbow after a rainy day\n\nYou make me happy my dear\nAnd for this I treasure you I priceless jade\n\nEsther, My Queen, My World\n\nYou are a breathtaking beauty\nYou are a rare gemstone crafted by the master creator\nAnd you are a most wonderful lover.\n\nMy beautiful Wife, I make this promises to you today...\n\nIt is only you I plan to ever want,\nIt is only you I plan to ever desire,\nIt is only you I plan to ever marry,\nIt is only you I would sacrifice everything I have for,\n\nBaby it is only you that I would ever give deep access to in my whole entire life.\n\nBaby, I give you these promises again...\n\nI will protect you baby,\nI will provide for you,\nI will sacrifice for you,\nI will love you,\nI will treasure you,\nI will honor you,\n\nAnd baby I plan to marry you, no matter the price I have to pay.",
+  "final_message": "I love you, to the moon and back My Wife.",
+  "photos": [
+    {
+      "url": "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/photos/1788033039028-whatsapp-image-2026-08-29-at-20-21-56.jpeg",
+      "caption": "You are Gorgeous"
+    },
+    {
+      "url": "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/photos/1788034274988-whatsapp-image-2026-08-29-at-20-21-56-1.jpeg",
+      "caption": "Can't stop looking"
+    },
+    {
+      "url": "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/photos/1788034277989-whatsapp-image-2026-08-29-at-20-21-57-1.jpeg",
+      "caption": "Me and Wifey having fun"
+    },
+    {
+      "url": "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/photos/1788034279034-whatsapp-image-2026-08-29-at-20-21-57.jpeg",
+      "caption": "Achalugo"
+    },
+    {
+      "url": "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/photos/1788034281162-whatsapp-image-2026-08-29-at-20-21-58-2.jpeg",
+      "caption": "Beautiful"
+    },
+    {
+      "url": "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/photos/1788034282363-whatsapp-image-2026-08-29-at-20-21-58.jpeg",
+      "caption": "I and the VCF!!!"
+    },
+    {
+      "url": "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/photos/1788034283210-whatsapp-image-2026-08-29-at-20-21-59.jpeg",
+      "caption": "My Sexy Wife"
+    }
+  ],
+  "flower_images": [],
+  "songs": [
+    {
+      "title": "Eze Ebube",
+      "artist": "Neon Adejo",
+      "duration": "7:12",
+      "spotify_url": "https://open.spotify.com/track/0gv4xh4D75UrI6PrgkEQuC?si=787033a3e6fd4bcb",
+      "explicit": true
+    }
+  ]
+};
+/* DEFAULT_CONFIG:END */
+
+let supabaseClient = null;
+try {
+  if (window.supabase && typeof SUPABASE_URL === "string" && SUPABASE_URL.indexOf("http") === 0) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e) {
+  console.warn("Supabase not configured, using local defaults.", e);
+}
+
+async function loadConfig() {
+  if (!supabaseClient) return DEFAULT_CONFIG;
+  try {
+    const { data, error } = await supabaseClient
+      .from("projects")
+      .select("*")
+      .eq("slug", PROJECT_SLUG)
+      .single();
+    if (error || !data) return DEFAULT_CONFIG;
+    return {
+      pin: data.pin || DEFAULT_CONFIG.pin,
+      intro_message: data.intro_message || DEFAULT_CONFIG.intro_message,
+      letter_title: data.letter_title || DEFAULT_CONFIG.letter_title,
+      letter_body: data.letter_body || DEFAULT_CONFIG.letter_body,
+      final_message: data.final_message || DEFAULT_CONFIG.final_message,
+      photos: data.photos && data.photos.length ? data.photos : DEFAULT_CONFIG.photos,
+      flower_images: data.flower_images && data.flower_images.length ? data.flower_images : DEFAULT_CONFIG.flower_images,
+      songs: data.songs && data.songs.length ? data.songs : DEFAULT_CONFIG.songs
+    };
+  } catch (e) {
+    console.warn("Could not load project config, using local defaults.", e);
+    return DEFAULT_CONFIG;
+  }
+}
+
+async function logVisit() {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from("visits").insert({ project_slug: PROJECT_SLUG, opened_at: new Date().toISOString() });
+  } catch (e) {
+    /* table may not exist yet â safe to ignore */
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Icons
+--------------------------------------------------------------------- */
+function HeartIcon() {
+  return (
+    <svg viewBox="0 0 32 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 27C10 22.5 2 16 2 9.2 2 4.4 5.7 1 10.1 1c2.6 0 5 1.3 6 3.4C17.1 2.3 19.5 1 22.1 1 26.5 1 30 4.4 30 9.2 30 16 22 22.5 16 27z" fill="#c2185b"/>
+    </svg>
+  );
+}
+function BackspaceIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 5h11a1 1 0 011 1v12a1 1 0 01-1 1H9l-6.5-7L9 5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+      <path d="M14 10l5 5m0-5l-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function PlusCircleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="9.2" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 2.5l10 5.5-10 5.5v-11z" />
+    </svg>
+  );
+}
+function SoundMarkIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.14"/>
+      <path d="M7 15c3-2 7-2 10 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+      <path d="M6 11.5c4-2.6 8-2.6 12 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+      <path d="M8.5 18c2-1.2 5-1.2 7 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function MusicNoteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 17.5a2.5 2.5 0 11-2.5-2.5A2.5 2.5 0 019 17.5zm9-2a2.5 2.5 0 11-2.5-2.5 2.5 2.5 0 012.5 2.5zM9 17.5V6l9-2v9.5" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+function CameraGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.4"/>
+      <circle cx="12" cy="13" r="3.4" stroke="currentColor" strokeWidth="1.4"/>
+    </svg>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Typewriter
+--------------------------------------------------------------------- */
+function Typewriter({ text, speed = 35, delay = 0 }) {
+  const [display, setDisplay] = React.useState("");
+  const [done, setDone] = React.useState(false);
+
+  React.useEffect(() => {
+    let interval;
+    let idx = 0;
+    setDisplay("");
+    setDone(false);
+    const startTimeout = setTimeout(() => {
+      interval = setInterval(() => {
+        idx++;
+        setDisplay(text.slice(0, idx));
+        if (idx >= text.length) {
+          clearInterval(interval);
+          setDone(true);
+        }
+      }, speed);
+    }, delay);
+    return () => {
+      clearTimeout(startTimeout);
+      clearInterval(interval);
+    };
+  }, [text, speed, delay]);
+
+  return (
+    <React.Fragment>
+      {display}
+      {!done && <span className="tw-cursor">|</span>}
+    </React.Fragment>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Section visibility (fade in/out + retype on re-entry)
+--------------------------------------------------------------------- */
+function useSectionVisibility(threshold = 0.32, once = false) {
+  const ref = React.useRef(null);
+  const [visible, setVisible] = React.useState(false);
+  const [visitId, setVisitId] = React.useState(0);
+  const lockedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let wasVisible = false;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (lockedRef.current) return;
+        const nowVisible = entry.isIntersecting && entry.intersectionRatio >= threshold;
+        setVisible(nowVisible);
+        if (nowVisible && !wasVisible) setVisitId((v) => v + 1);
+        wasVisible = nowVisible;
+        if (once && nowVisible) {
+          lockedRef.current = true;
+          obs.disconnect();
+        }
+      },
+      { threshold: [0, threshold, 0.6, 1] }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold, once]);
+
+  return { ref, visible, visitId };
+}
+
+function FadeSection({ id, className, children, once }) {
+  const { ref, visible, visitId } = useSectionVisibility(0.32, once);
+  return (
+    <section id={id} ref={ref} className={`section ${className} ${visible ? "in-view" : ""}`}>
+      <div className="section-inner">
+        {typeof children === "function" ? children({ visible, visitId }) : children}
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Login screen
+--------------------------------------------------------------------- */
+function LoginScreen({ correctPin, onCorrect, fading, ready }) {
+  const maxLen = (correctPin || "123456").length || 6;
+  const [digits, setDigits] = React.useState("");
+  const [shake, setShake] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!ready || success) return;
+    if (digits.length > 0 && digits.length === maxLen) {
+      const t = setTimeout(() => {
+        if (digits === correctPin) {
+          setSuccess(true);
+          setTimeout(onCorrect, 550);
+        } else {
+          setShake(true);
+          setTimeout(() => {
+            setShake(false);
+            setDigits("");
+          }, 550);
+        }
+      }, 220);
+      return () => clearTimeout(t);
+    }
+  }, [digits, ready]);
+
+  const press = (d) => {
+    if (success) return;
+    setDigits((prev) => (prev.length < maxLen ? prev + d : prev));
+  };
+  const clearAll = () => !success && setDigits("");
+  const backspace = () => !success && setDigits((prev) => prev.slice(0, -1));
+
+  return (
+    <div className={`login-screen ${fading ? "fading-out" : ""}`}>
+      <div className={`login-heart ${shake ? "shake" : ""} ${success ? "success" : ""}`}>
+        <HeartIcon />
+      </div>
+
+      {!ready && (
+        <div className="login-loading">
+          opening our memories<span className="dot-anim">â¦</span>
+        </div>
+      )}
+
+      {ready && (
+        <React.Fragment>
+          <div className={`pin-dots ${shake ? "shake" : ""}`}>
+            {Array.from({ length: maxLen }).map((_, i) => (
+              <span key={i} className={`dot ${i < digits.length ? "filled" : ""} ${success ? "success" : ""}`} />
+            ))}
+          </div>
+          <div className="keypad">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <button key={n} type="button" className="key" onClick={() => press(String(n))}>
+                {n}
+              </button>
+            ))}
+            <button type="button" className="key key-alt" onClick={clearAll}>
+              C
+            </button>
+            <button type="button" className="key" onClick={() => press("0")}>
+              0
+            </button>
+            <button type="button" className="key key-alt" onClick={backspace} aria-label="Backspace">
+              <BackspaceIcon />
+            </button>
+          </div>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Flower reveal transition
+   (flowerImages comes from config.flower_images â set per-project in
+   admin.html, or edit DEFAULT_CONFIG.flower_images directly below.
+   Leave it empty to use the built-in hand-drawn blooms instead.)
+--------------------------------------------------------------------- */
+const FLOWER_PALETTES = [
+  { petal: "#e8879f", center: "#f4c9d6", rose: true },
+  { petal: "#c0392b", center: "#2c1710", rose: false },
+  { petal: "#8e6bb0", center: "#2d1b3d", rose: false },
+  { petal: "#eec25e", center: "#eec25e", rose: true },
+  { petal: "#6f9d76", center: "#3c5940", rose: false },
+  { petal: "#f7f1e6", center: "#cdb98d", rose: false },
+  { petal: "#6f9bd1", center: "#1f2c47", rose: false },
+  { petal: "#c3bdb8", center: "#83786f", rose: false },
+  { petal: "#c97a3d", center: "#c97a3d", rose: true }
+];
+
+function FlowerGraphic({ palette }) {
+  const petals = palette.rose ? 10 : 6;
+  return (
+    <svg viewBox="0 0 100 100" width="100%" height="100%">
+      {Array.from({ length: petals }).map((_, i) => (
+        <ellipse
+          key={i}
+          cx="50"
+          cy="26"
+          rx={palette.rose ? 12 : 15}
+          ry={palette.rose ? 20 : 23}
+          fill={palette.petal}
+          opacity={palette.rose ? 0.88 : 0.96}
+          transform={`rotate(${i * (360 / petals)} 50 50)`}
+        />
+      ))}
+      {!palette.rose &&
+        Array.from({ length: 8 }).map((_, i) => {
+          const ang = (i * 45 * Math.PI) / 180;
+          return <circle key={i} cx={50 + Math.cos(ang) * 9} cy={50 + Math.sin(ang) * 9} r="1.6" fill={palette.center} />;
+        })}
+      <circle cx="50" cy="50" r={palette.rose ? 9 : 7} fill={palette.center} />
+    </svg>
+  );
+}
+
+function FlowerReveal({ onDone, images }) {
+  const flowerImages = images || [];
+  const flowers = React.useMemo(() => {
+    const prefersReduced =
+      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const cols = w < 600 ? 6 : 9;
+    const rows = w < 600 ? 9 : 6;
+    const cellW = w / cols;
+    const cellH = h / rows;
+    const arr = [];
+    let i = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const jitterX = (Math.random() - 0.5) * cellW * 0.6;
+        const jitterY = (Math.random() - 0.5) * cellH * 0.6;
+        const px = (c + 0.5) * cellW + jitterX;
+        const py = (r + 0.5) * cellH + jitterY;
+        const dx = px - w / 2;
+        const dy = py - h / 2;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+        const size = Math.max(cellW, cellH) * (0.95 + Math.random() * 0.5);
+        const palette = FLOWER_PALETTES[Math.floor(Math.random() * FLOWER_PALETTES.length)];
+        const image = flowerImages.length ? flowerImages[Math.floor(Math.random() * flowerImages.length)] : null;
+        arr.push({
+          id: i,
+          angle,
+          dist,
+          size,
+          palette,
+          image,
+          delay: prefersReduced ? 0 : i * 16 + Math.random() * 120,
+          duration: prefersReduced ? 200 : 1100 + Math.random() * 500,
+          extraSpin: 720 + Math.random() * 540,
+          spinDur: 6 + Math.random() * 4,
+          spinDir: Math.random() < 0.5 ? "normal" : "reverse"
+        });
+        i++;
+      }
+    }
+    return arr;
+  }, []);
+
+  const [fading, setFading] = React.useState(false);
+
+  React.useEffect(() => {
+    const maxDelay = flowers.reduce((m, f) => Math.max(m, f.delay + f.duration), 0);
+    const t1 = setTimeout(() => setFading(true), maxDelay + 450);
+    const t2 = setTimeout(() => onDone(), maxDelay + 450 + 900);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [flowers]);
+
+  return (
+    <div className={`flower-overlay ${fading ? "fade-out" : ""}`}>
+      {flowers.map((f) => (
+        <div
+          key={f.id}
+          className="flower-wrap"
+          style={{
+            "--a": f.angle + "deg",
+            "--d": f.dist + "px",
+            "--dur": f.duration + "ms",
+            "--delay": f.delay + "ms",
+            "--extra": f.extraSpin + "deg"
+          }}
+        >
+          <div
+            className="flower-self"
+            style={{ width: f.size, height: f.size, animationDuration: f.spinDur + "s", animationDirection: f.spinDir }}
+          >
+            {f.image ? <img src={f.image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <FlowerGraphic palette={f.palette} />}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   Main app sections
+--------------------------------------------------------------------- */
+const PLACEHOLDER_PHOTOS = Array.from({ length: 10 }).map(() => ({ url: null }));
+
+/* Builds a grid just dense enough to cover the current viewport edge-to-edge,
+   cycling back through the available photos if there aren't enough to fill it. */
+function useMosaicGrid(list) {
+  return React.useMemo(() => {
+    const w = typeof window !== "undefined" ? window.innerWidth : 1200;
+    const h = typeof window !== "undefined" ? window.innerHeight : 800;
+    const target = w < 600 ? 128 : w < 1000 ? 176 : 220;
+    const cols = Math.max(3, Math.round(w / target));
+    const rows = Math.max(3, Math.round(h / target));
+    const count = cols * rows;
+    const tiles = Array.from({ length: count }).map((_, i) => ({ ...list[i % list.length], key: i }));
+    return { cols, rows, tiles };
+  }, [list]);
+}
+
+function SectionHero({ photos, message }) {
+  const list = photos && photos.length ? photos.map((p) => (typeof p === "string" ? { url: p } : p)) : PLACEHOLDER_PHOTOS;
+  const { cols, rows, tiles } = useMosaicGrid(list);
+  return (
+    <FadeSection id="hero" className="section-hero">
+      {({ visitId }) => (
+        <React.Fragment>
+          <div
+            className="photo-mosaic"
+            style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}
+          >
+            {tiles.map((p) => (
+              <div key={p.key} className="photo-tile">
+                {p.url ? (
+                  <img src={p.url} alt={p.caption || ""} />
+                ) : (
+                  <div className="photo-tile-placeholder">
+                    <CameraGlyph />
+                    <span>a memory</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="hero-overlay" />
+          <h1 className="hero-text">
+            <Typewriter key={visitId} text={message} speed={55} />
+          </h1>
+        </React.Fragment>
+      )}
+    </FadeSection>
+  );
+}
+
+function SectionLetter({ title, body }) {
+  return (
+    <FadeSection id="letter" className="section-letter" once>
+      {({ visitId }) => (
+        <div className="letter-card">
+          <div className="letter-title">
+            <Typewriter key={"t" + visitId} text={title} speed={45} />
+          </div>
+          <p className="letter-body">
+            <Typewriter key={"b" + visitId} text={body} speed={14} delay={title.length * 45 + 400} />
+          </p>
+        </div>
+      )}
+    </FadeSection>
+  );
+}
+
+const ALBUM_GRADIENTS = [
+  "linear-gradient(135deg,#5c2323,#8a3d3d)",
+  "linear-gradient(135deg,#3d2a5c,#6b4a8a)",
+  "linear-gradient(135deg,#2f4d3a,#4f7a5c)",
+  "linear-gradient(135deg,#5c4a23,#8a723d)",
+  "linear-gradient(135deg,#233d5c,#3d6b8a)"
+];
+
+function SongCard({ song, index }) {
+  const width = 25 + ((index * 37) % 55);
+  const href = song.spotify_url || `https://open.spotify.com/search/${encodeURIComponent(song.title + " " + song.artist)}`;
+  return (
+    <div className="song-card">
+      <div className="song-top">
+        <div className="album-art" style={{ background: ALBUM_GRADIENTS[index % ALBUM_GRADIENTS.length] }}>
+          <MusicNoteIcon />
+        </div>
+        <div className="song-meta">
+          <div className="song-title">
+            <span className="t">{song.title}</span>
+            {song.explicit && <span className="explicit-tag">E</span>}
+          </div>
+          <div className="song-artist">{song.artist}</div>
+          <a className="save-btn" href={href} target="_blank" rel="noreferrer">
+            <PlusCircleIcon /> Save on Spotify
+          </a>
+        </div>
+        <a className="spotify-badge" href={href} target="_blank" rel="noreferrer" aria-label="Open on Spotify">
+          <SoundMarkIcon />
+        </a>
+      </div>
+      <div className="song-bottom">
+        <div className="progress">
+          <div className="progress-fill" style={{ width: width + "%" }} />
+        </div>
+        <span className="duration">{song.duration}</span>
+        <button type="button" className="more-btn" aria-label="More options">â¢â¢â¢</button>
+        <a className="play-btn" href={href} target="_blank" rel="noreferrer" aria-label="Play on Spotify">
+          <PlayIcon />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function SectionSongs({ songs }) {
+  return (
+    <FadeSection id="songs" className="section-songs">
+      {() => (
+        <React.Fragment>
+          <div className="songs-head">
+            <h2>Our Top Songs</h2>
+            <div className="eyebrow">The soundtrack of us</div>
+          </div>
+          <div className="songs-grid">
+            {songs.map((s, i) => (
+              <SongCard key={i} song={s} index={i} />
+            ))}
+          </div>
+        </React.Fragment>
+      )}
+    </FadeSection>
+  );
+}
+
+function SectionFinal({ message }) {
+  return (
+    <FadeSection id="final" className="section-final">
+      {({ visitId }) => (
+        <h1 className="final-text">
+          <Typewriter key={visitId} text={message} speed={62} />
+        </h1>
+      )}
+    </FadeSection>
+  );
+}
+
+function GoToStart() {
+  return (
+    <button type="button" className="go-start" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+      <span className="arrow">â</span> Go to the start
+    </button>
+  );
+}
+
+function MainApp({ config }) {
+  return (
+    <div className="main-app">
+      <SectionHero photos={config.photos} message={config.intro_message} />
+      <SectionLetter title={config.letter_title} body={config.letter_body} />
+      <SectionSongs songs={config.songs} />
+      <SectionFinal message={config.final_message} />
+      <GoToStart />
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------
+   App root
+--------------------------------------------------------------------- */
+function App() {
+  const [stage, setStage] = React.useState("login"); // login -> unlocking -> flowers -> main
+  const [config, setConfig] = React.useState(DEFAULT_CONFIG);
+  const [ready, setReady] = React.useState(false);
+
+  React.useEffect(() => {
+    loadConfig().then((c) => {
+      setConfig(c);
+      setReady(true);
+    });
+  }, []);
+
+  const handleCorrect = React.useCallback(() => {
+    logVisit();
+    setStage("unlocking");
+    setTimeout(() => setStage("flowers"), 650);
+  }, []);
+
+  const showLogin = stage === "login" || stage === "unlocking";
+  const showMain = stage === "flowers" || stage === "main";
+
+  return (
+    <React.Fragment>
+      {showLogin && <LoginScreen correctPin={config.pin} onCorrect={handleCorrect} fading={stage === "unlocking"} ready={ready} />}
+      {showMain && <MainApp config={config} />}
+      {stage === "flowers" && <FlowerReveal images={config.flower_images} onDone={() => setStage("main")} />}
+    </React.Fragment>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
