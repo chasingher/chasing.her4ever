@@ -328,8 +328,8 @@
    4) See SETUP.md (shipped alongside this file) for the SQL to create
       the `projects` and `visits` tables on Supabase.
 ===================================================================== */
-const SUPABASE_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc";
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 const PROJECT_SLUG = "YOUR_PROJECT_SLUG";
 
 /* DEFAULT_CONFIG:START */
@@ -493,10 +493,11 @@ function Typewriter({ text, speed = 35, delay = 0 }) {
 /* ---------------------------------------------------------------------
    Section visibility (fade in/out + retype on re-entry)
 --------------------------------------------------------------------- */
-function useSectionVisibility(threshold = 0.32) {
+function useSectionVisibility(threshold = 0.32, once = false) {
   const ref = React.useRef(null);
   const [visible, setVisible] = React.useState(false);
   const [visitId, setVisitId] = React.useState(0);
+  const lockedRef = React.useRef(false);
 
   React.useEffect(() => {
     const el = ref.current;
@@ -504,22 +505,27 @@ function useSectionVisibility(threshold = 0.32) {
     let wasVisible = false;
     const obs = new IntersectionObserver(
       ([entry]) => {
+        if (lockedRef.current) return;
         const nowVisible = entry.isIntersecting && entry.intersectionRatio >= threshold;
         setVisible(nowVisible);
         if (nowVisible && !wasVisible) setVisitId((v) => v + 1);
         wasVisible = nowVisible;
+        if (once && nowVisible) {
+          lockedRef.current = true;
+          obs.disconnect();
+        }
       },
       { threshold: [0, threshold, 0.6, 1] }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [threshold]);
+  }, [threshold, once]);
 
   return { ref, visible, visitId };
 }
 
-function FadeSection({ id, className, children }) {
-  const { ref, visible, visitId } = useSectionVisibility();
+function FadeSection({ id, className, children, once }) {
+  const { ref, visible, visitId } = useSectionVisibility(0.32, once);
   return (
     <section id={id} ref={ref} className={`section ${className} ${visible ? "in-view" : ""}`}>
       <div className="section-inner">
@@ -770,7 +776,7 @@ function SectionHero({ photos, message }) {
 
 function SectionLetter({ title, body }) {
   return (
-    <FadeSection id="letter" className="section-letter">
+    <FadeSection id="letter" className="section-letter" once>
       {({ visitId }) => (
         <div className="letter-card">
           <div className="letter-title">
