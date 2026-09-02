@@ -44,6 +44,76 @@
 
   ::selection{ background: var(--rose); color:#fff; }
 
+  /* ---------- Loading gate ---------- */
+  .loading-gate{
+    position:fixed; inset:0; z-index:10000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:36px; padding:40px 20px; text-align:center;
+    background: radial-gradient(circle at 50% 15%, #fffaf5 0%, var(--cream) 55%, var(--cream-deep) 100%);
+    overflow:hidden;
+  }
+  .loading-gate::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(circle at 50% 42%, rgba(232,135,159,.16), transparent 58%);
+  }
+  .loading-heart-wrap{
+    position:relative; width:104px; height:90px; perspective:700px;
+    animation: pulseHeart 1.9s ease-in-out infinite;
+  }
+  .loading-heart-wrap::before{
+    content:""; position:absolute; inset:-34px; border-radius:50%;
+    border:1px solid rgba(194,24,91,.32);
+    animation: heartRing 1.9s ease-out infinite;
+    pointer-events:none;
+  }
+  @keyframes heartRing{
+    0%{ transform:scale(.75); opacity:.55; }
+    70%{ opacity:0; }
+    100%{ transform:scale(1.7); opacity:0; }
+  }
+  .loading-heart-wrap.impact{
+    animation:none;
+    transform:scale(1.3);
+    transition: transform 280ms cubic-bezier(.34,1.56,.64,1);
+  }
+  .heart-half{
+    position:absolute; inset:0;
+    transform-style: preserve-3d;
+    transition: transform 1550ms cubic-bezier(.16,1,.3,1), opacity 1000ms ease 350ms;
+  }
+  .heart-half svg{ width:100%; height:100%; filter: drop-shadow(0 14px 24px rgba(194,24,91,.4)); }
+  .heart-half-left{ clip-path: inset(0 50% 0 0); transform-origin: right center; }
+  .heart-half-right{ clip-path: inset(0 0 0 50%); transform-origin: left center; }
+  .heart-open .heart-half-left{ transform: rotateY(-118deg) translateX(-8px); opacity:0; }
+  .heart-open .heart-half-right{ transform: rotateY(118deg) translateX(8px); opacity:0; }
+  .heart-burst{
+    position:absolute; top:50%; left:50%; width:8px; height:8px; border-radius:50%;
+    transform:translate(-50%,-50%) scale(1);
+    background: radial-gradient(circle, #fff8ec 0%, rgba(255,222,180,.5) 40%, rgba(255,222,180,0) 72%);
+    opacity:0; pointer-events:none;
+    transition: opacity 300ms ease, transform 1500ms cubic-bezier(.16,1,.3,1);
+  }
+  .heart-open .heart-burst{ opacity:1; transform:translate(-50%,-50%) scale(17); }
+  .loading-arrow-layer{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    pointer-events:none; overflow:visible;
+  }
+  .cupid-arrow{
+    animation: arrowFly 1150ms cubic-bezier(.22,1,.36,1) forwards;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,.3)) drop-shadow(0 0 10px rgba(232,194,122,.55));
+  }
+  @keyframes arrowFly{
+    0%{ transform: translate(80vw,-52vh) rotate(-40deg) scale(.7); opacity:0; }
+    10%{ opacity:1; }
+    60%{ transform: translate(19vw,-9vh) rotate(-31deg) scale(.94); opacity:1; }
+    100%{ transform: translate(0,0) rotate(-27deg) scale(1); opacity:1; }
+  }
+  .loading-text{
+    font-family: var(--font-hand); font-weight:600;
+    font-size: clamp(1.15rem, 3vw, 1.5rem); color: var(--rose-deep);
+    min-height:1.6em; max-width:340px;
+  }
+
   /* ---------- Login screen ---------- */
   .login-screen{
     min-height:100vh;
@@ -70,12 +140,6 @@
     30%,50%,70%{ transform:translateX(-9px); }
     40%,60%{ transform:translateX(9px); }
   }
-
-  .login-loading{
-    font-size:.85rem; letter-spacing:.06em; color: var(--rose-deep); opacity:.75;
-  }
-  .dot-anim{ display:inline-block; animation: dotFade 1.2s ease-in-out infinite; }
-  @keyframes dotFade{ 0%,100%{opacity:.2;} 50%{opacity:1;} }
 
   .pin-dots{ display:flex; gap:14px; }
   .pin-dots.shake{ animation: shakeX .5s ease; }
@@ -109,6 +173,7 @@
     position:fixed; inset:0; z-index:9999;
     background-color: var(--cream);
     overflow:hidden;
+    contain: layout style;
     transition: background-color 1700ms ease .3s;
   }
   .flower-overlay.revealing{ background-color: transparent; pointer-events:none; }
@@ -124,10 +189,12 @@
     position:absolute; border-radius:50%;
     background: radial-gradient(circle, #fff8ec 0%, rgba(255,248,236,0) 72%);
     animation-name: twinkle; animation-timing-function: ease-in-out; animation-iteration-count: infinite;
+    will-change: opacity, transform;
   }
   @keyframes twinkle{ 0%,100%{ opacity:0; transform:scale(.4); } 50%{ opacity:1; transform:scale(1); } }
   .flower-wrap{
     position:absolute; top:50%; left:50%; width:0; height:0;
+    will-change: transform, opacity;
   }
   .flower-self{
     position:absolute; left:0; top:0;
@@ -135,7 +202,9 @@
     animation-name: selfSpin;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
-    filter: drop-shadow(0 3px 12px rgba(194,24,91,.4)) drop-shadow(0 0 18px rgba(232,194,122,.25));
+    filter: drop-shadow(0 3px 10px rgba(194,24,91,.4));
+    will-change: transform;
+    backface-visibility: hidden;
   }
   @keyframes selfSpin{ from{ transform: translate(-50%,-50%) rotate(0deg); } to{ transform: translate(-50%,-50%) rotate(360deg); } }
 
@@ -263,7 +332,7 @@
   .song-title{ display:flex; align-items:center; gap:6px; font-weight:600; color:#fff; font-size:1rem; }
   .song-title .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .explicit-tag{ font-size:.6rem; background: rgba(255,255,255,.2); padding:1px 5px; border-radius:3px; flex-shrink:0; }
-  .song-artist{ color: rgba(255,255,255,.6); font-size:.85rem; margin:2px 0 10px; }
+  .song-artist{ color: rgba(255,255,255,.6); font-size:.85rem; margin:2px 0 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .save-btn{ display:inline-flex; align-items:center; gap:6px; font-size:.78rem; color:#fff; text-decoration:none; opacity:.85; }
   .save-btn:hover{ opacity:1; }
   .save-btn svg{ width:15px; height:15px; }
@@ -360,6 +429,19 @@
     .polaroid img, .polaroid-placeholder{ height:100px; }
     .polaroid-rows{ gap:10px; }
     .polaroid-row-track{ gap:14px; }
+    .songs-grid{ grid-template-columns: 1fr; gap:16px; }
+    .song-card{ padding:14px 14px 12px; border-radius:16px; }
+    .song-top{ gap:11px; }
+    .album-art{ width:52px; height:52px; border-radius:10px; }
+    .album-art svg{ width:21px; height:21px; }
+    .song-title{ font-size:.92rem; }
+    .save-btn{ font-size:.72rem; }
+    .save-btn svg{ width:13px; height:13px; }
+    .song-bottom{ gap:7px; margin-top:12px; }
+    .play-btn{ width:28px; height:28px; }
+    .play-btn svg{ width:11px; height:11px; }
+    .duration{ font-size:.65rem; }
+    .more-btn{ font-size:.78rem; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -385,13 +467,13 @@
    CONFIGURE ME
    ---------------------------------------------------------------------
    This file is normally generated for you by admin.html (the project
-   builder) â it fills in the four values below automatically and you
+   builder) — it fills in the four values below automatically and you
    just upload the result. Editing this file by hand also works fine:
 
    1) Paste your Supabase project URL + anon key below to load content
       (pin, letter, photos, songs) from your database. Leave the
       placeholders as-is and the site will run beautifully off the
-      DEFAULT_CONFIG below instead â nothing breaks either way.
+      DEFAULT_CONFIG below instead — nothing breaks either way.
    2) PROJECT_SLUG picks which row of the `projects` table this page
       loads. It must match the slug you used when creating the project
       in admin.html.
@@ -521,19 +603,32 @@ async function logVisit() {
   try {
     await supabaseClient.from("visits").insert({ project_slug: PROJECT_SLUG, opened_at: new Date().toISOString() });
   } catch (e) {
-    /* table may not exist yet â safe to ignore */
+    /* table may not exist yet — safe to ignore */
   }
 }
 
-/* Kicks off browser fetches for a batch of image URLs immediately, so by
-   the time the flower reveal (or the hero section) actually needs them,
-   they're already sitting in the browser's cache instead of popping in. */
-function preloadImages(urls) {
-  urls.forEach((u) => {
-    if (!u) return;
-    const img = new Image();
-    img.src = u;
-  });
+/* Kicks off browser fetches for a batch of image URLs immediately, and
+   resolves once every one of them has actually finished loading (or
+   failed) — so the site can wait for real confirmation instead of just
+   hoping they're ready by the time they're needed. A safety timeout keeps
+   a single broken URL from hanging the whole reveal forever. */
+function preloadImages(urls, maxWaitMs) {
+  const list = Array.from(new Set(urls.filter(Boolean)));
+  if (!list.length) return Promise.resolve();
+  const loadAll = Promise.all(
+    list.map(
+      (u) =>
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = u;
+        })
+    )
+  );
+  if (!maxWaitMs) return loadAll;
+  const timeout = new Promise((resolve) => setTimeout(resolve, maxWaitMs));
+  return Promise.race([loadAll, timeout]);
 }
 
 function urlOf(item) {
@@ -684,14 +779,105 @@ function FadeSection({ id, className, children, once }) {
 /* ---------------------------------------------------------------------
    Login screen
 --------------------------------------------------------------------- */
-function LoginScreen({ correctPin, onCorrect, fading, ready }) {
+/* ---------------------------------------------------------------------
+   Loading gate — shown while config + every image is confirmed loaded.
+   A heart beats with rotating sweet-nothings typed out beneath it; once
+   everything is actually ready, an arrow strikes the heart and it swings
+   open like double doors to reveal the PIN screen underneath.
+--------------------------------------------------------------------- */
+const LOADING_MESSAGES = [
+  "Hold on, I'm preparing your gift…",
+  "I love you so much…",
+  "Kisses, baby — be excited…",
+  "Almost there, my love…",
+  "This one's just for you…"
+];
+
+function CupidArrow() {
+  return (
+    <svg className="cupid-arrow" viewBox="0 0 140 36" width="140" height="36" xmlns="http://www.w3.org/2000/svg">
+      <line x1="6" y1="18" x2="118" y2="18" stroke="var(--gold)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M118 18 L102 9 M118 18 L102 27" stroke="var(--gold)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M6 18 L17 12 M6 18 L17 24 M6 18 L15 18" stroke="var(--gold)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+function LoadingGate({ imagesReady, onDone }) {
+  const prefersReduced = React.useMemo(
+    () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches),
+    []
+  );
+  const [phase, setPhase] = React.useState("waiting"); // waiting -> arrow -> impact -> opening
+  const [msgIndex, setMsgIndex] = React.useState(0);
+  const startedAt = React.useRef(Date.now());
+
+  React.useEffect(() => {
+    if (phase !== "waiting") return;
+    const t = setTimeout(() => setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length), 2600);
+    return () => clearTimeout(t);
+  }, [phase, msgIndex]);
+
+  React.useEffect(() => {
+    if (!imagesReady || phase !== "waiting") return;
+    if (prefersReduced) {
+      onDone();
+      return;
+    }
+    const elapsed = Date.now() - startedAt.current;
+    const minDisplay = 2000; // always let the heartbeat breathe a moment, even on fast connections
+    const t = setTimeout(() => setPhase("arrow"), Math.max(0, minDisplay - elapsed));
+    return () => clearTimeout(t);
+  }, [imagesReady, phase, prefersReduced]);
+
+  React.useEffect(() => {
+    if (phase === "arrow") {
+      const t = setTimeout(() => setPhase("impact"), 1150);
+      return () => clearTimeout(t);
+    }
+    if (phase === "impact") {
+      const t = setTimeout(() => setPhase("opening"), 320);
+      return () => clearTimeout(t);
+    }
+    if (phase === "opening") {
+      const t = setTimeout(() => onDone(), 1650);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
+  return (
+    <div className={`loading-gate ${phase === "opening" ? "heart-open" : ""}`}>
+      <div className={`loading-heart-wrap ${phase === "impact" ? "impact" : ""}`}>
+        <div className="heart-half heart-half-left">
+          <HeartIcon />
+        </div>
+        <div className="heart-half heart-half-right">
+          <HeartIcon />
+        </div>
+        <div className="heart-burst" />
+        {(phase === "arrow" || phase === "impact") && (
+          <div className="loading-arrow-layer">
+            <CupidArrow />
+          </div>
+        )}
+      </div>
+      {phase === "waiting" && (
+        <div className="loading-text">
+          <Typewriter key={msgIndex} text={LOADING_MESSAGES[msgIndex]} speed={38} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LoginScreen({ correctPin, onCorrect, fading }) {
   const maxLen = (correctPin || "123456").length || 6;
   const [digits, setDigits] = React.useState("");
   const [shake, setShake] = React.useState(false);
   const [success, setSuccess] = React.useState(false);
 
   React.useEffect(() => {
-    if (!ready || success) return;
+    if (success) return;
     if (digits.length > 0 && digits.length === maxLen) {
       const t = setTimeout(() => {
         if (digits === correctPin) {
@@ -707,7 +893,7 @@ function LoginScreen({ correctPin, onCorrect, fading, ready }) {
       }, 220);
       return () => clearTimeout(t);
     }
-  }, [digits, ready]);
+  }, [digits]);
 
   const press = (d) => {
     if (success) return;
@@ -722,44 +908,34 @@ function LoginScreen({ correctPin, onCorrect, fading, ready }) {
         <HeartIcon />
       </div>
 
-      {!ready && (
-        <div className="login-loading">
-          opening our memories<span className="dot-anim">â¦</span>
-        </div>
-      )}
-
-      {ready && (
-        <React.Fragment>
-          <div className={`pin-dots ${shake ? "shake" : ""}`}>
-            {Array.from({ length: maxLen }).map((_, i) => (
-              <span key={i} className={`dot ${i < digits.length ? "filled" : ""} ${success ? "success" : ""}`} />
-            ))}
-          </div>
-          <div className="keypad">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-              <button key={n} type="button" className="key" onClick={() => press(String(n))}>
-                {n}
-              </button>
-            ))}
-            <button type="button" className="key key-alt" onClick={clearAll}>
-              C
-            </button>
-            <button type="button" className="key" onClick={() => press("0")}>
-              0
-            </button>
-            <button type="button" className="key key-alt" onClick={backspace} aria-label="Backspace">
-              <BackspaceIcon />
-            </button>
-          </div>
-        </React.Fragment>
-      )}
+      <div className={`pin-dots ${shake ? "shake" : ""}`}>
+        {Array.from({ length: maxLen }).map((_, i) => (
+          <span key={i} className={`dot ${i < digits.length ? "filled" : ""} ${success ? "success" : ""}`} />
+        ))}
+      </div>
+      <div className="keypad">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+          <button key={n} type="button" className="key" onClick={() => press(String(n))}>
+            {n}
+          </button>
+        ))}
+        <button type="button" className="key key-alt" onClick={clearAll}>
+          C
+        </button>
+        <button type="button" className="key" onClick={() => press("0")}>
+          0
+        </button>
+        <button type="button" className="key key-alt" onClick={backspace} aria-label="Backspace">
+          <BackspaceIcon />
+        </button>
+      </div>
     </div>
   );
 }
 
 /* ---------------------------------------------------------------------
    Flower reveal transition
-   (flowerImages comes from config.flower_images â set per-project in
+   (flowerImages comes from config.flower_images — set per-project in
    admin.html, or edit DEFAULT_CONFIG.flower_images directly below.
    Leave it empty to use the built-in hand-drawn blooms instead.)
 --------------------------------------------------------------------- */
@@ -817,14 +993,14 @@ function FlowerReveal({ onDone, images }) {
     let i = 0;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const jitterX = (Math.random() - 0.5) * cellW * 0.6;
-        const jitterY = (Math.random() - 0.5) * cellH * 0.6;
+        const jitterX = (Math.random() - 0.5) * cellW * 0.35;
+        const jitterY = (Math.random() - 0.5) * cellH * 0.35;
         const px = (c + 0.5) * cellW + jitterX;
         const py = (r + 0.5) * cellH + jitterY;
         const dx = px - w / 2;
         const dy = py - h / 2;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const size = Math.max(cellW, cellH) * (0.95 + Math.random() * 0.5);
+        const size = Math.max(cellW, cellH) * (1.55 + Math.random() * 0.65);
         const palette = FLOWER_PALETTES[Math.floor(Math.random() * FLOWER_PALETTES.length)];
         const rawImage = flowerImages.length ? flowerImages[Math.floor(Math.random() * flowerImages.length)] : null;
         const image = urlOf(rawImage);
@@ -848,7 +1024,7 @@ function FlowerReveal({ onDone, images }) {
     // after another from the middle outward, instead of a whole ring of
     // them appearing together.
     arr.sort((a, b) => a.dist - b.dist);
-    const gap = prefersReduced ? 0 : 52; // ms between each flower's turn â slow enough to savor each bloom
+    const gap = prefersReduced ? 0 : 52; // ms between each flower's turn — slow enough to savor each bloom
     arr.forEach((f, idx) => {
       f.packDelay = prefersReduced ? 0 : idx * gap + Math.random() * 60;
       f.packDuration = prefersReduced ? 1 : 560 + Math.random() * 340;
@@ -871,12 +1047,19 @@ function FlowerReveal({ onDone, images }) {
 
   React.useEffect(() => {
     let raf2;
+    let settleTimer;
     const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setPhase("packed"));
+      raf2 = requestAnimationFrame(() => {
+        // A brief settle beat lets the browser finish laying out and
+        // painting every flower before the transition starts, so the very
+        // first reveal in a session doesn't stutter on the opening frames.
+        settleTimer = setTimeout(() => setPhase("packed"), 60);
+      });
     });
     return () => {
       cancelAnimationFrame(raf1);
       if (raf2) cancelAnimationFrame(raf2);
+      if (settleTimer) clearTimeout(settleTimer);
     };
   }, []);
 
@@ -918,7 +1101,7 @@ function FlowerReveal({ onDone, images }) {
   return (
     <div className={`flower-overlay ${phase === "parting" ? "revealing" : ""}`}>
       <div className="flower-ambient-glow" />
-      <FlowerSparkles count={prefersReduced ? 0 : 22} />
+      <FlowerSparkles count={prefersReduced ? 0 : 16} />
       {flowers.map((f) => (
         <div key={f.id} className="flower-wrap" style={wrapStyle(f)}>
           <div
@@ -933,7 +1116,7 @@ function FlowerReveal({ onDone, images }) {
   );
 }
 
-/* A scatter of soft twinkling points behind the flowers â a little fairy-dust
+/* A scatter of soft twinkling points behind the flowers — a little fairy-dust
    touch so the reveal feels magical rather than mechanical. */
 function FlowerSparkles({ count }) {
   const sparkles = React.useMemo(
@@ -1133,7 +1316,7 @@ function SongCard({ song, index }) {
             <div className="progress-fill" style={{ width: width + "%" }} />
           </div>
           <span className="duration">{song.duration}</span>
-          <button type="button" className="more-btn" aria-label="More options">â¢â¢â¢</button>
+          <button type="button" className="more-btn" aria-label="More options">•••</button>
           <button
             type="button"
             className="play-btn"
@@ -1181,7 +1364,7 @@ function MiniHeart() {
 
 const HEART_TINTS = ["rgba(232,135,159,.6)", "rgba(232,194,122,.6)", "rgba(194,24,91,.5)"];
 
-/* A slow, sparse drift of hearts down the whole page â purely ambient,
+/* A slow, sparse drift of hearts down the whole page — purely ambient,
    never blocks clicks (pointer-events:none). Skipped entirely for
    prefers-reduced-motion. */
 function FloatingHearts() {
@@ -1224,7 +1407,7 @@ function FloatingHearts() {
   );
 }
 
-/* A slow, full-bleed crossfade through a few of the project's own photos â
+/* A slow, full-bleed crossfade through a few of the project's own photos —
    each one fills the entire section (not sliced into strips) so it reads
    as one big, lively background rather than a thumbnail row. */
 function FinalBackdrop({ photos }) {
@@ -1274,8 +1457,8 @@ function SectionFinal({ message, photos }) {
 
 function GoToStart() {
   return (
-    <button type="button" className="go-start" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-      <span className="arrow">â</span> Go to the start
+    <button type="button" className="go-start" onClick={() => window.location.reload()}>
+      <span className="arrow">↑</span> Go to the start
     </button>
   );
 }
@@ -1297,19 +1480,18 @@ function MainApp({ config, flowersCleared }) {
    App root
 --------------------------------------------------------------------- */
 function App() {
-  const [stage, setStage] = React.useState("login"); // login -> unlocking -> flowers -> main
+  const [stage, setStage] = React.useState("loading"); // loading -> login -> unlocking -> flowers -> main
   const [config, setConfig] = React.useState(DEFAULT_CONFIG);
-  const [ready, setReady] = React.useState(false);
+  const [imagesReady, setImagesReady] = React.useState(false);
 
   React.useEffect(() => {
     loadConfig().then((c) => {
       setConfig(c);
-      setReady(true);
-      // Start fetching these now, while the visitor is still on the PIN
-      // screen, so nothing has to load mid-animation later.
+      // Start fetching every image now, and only flip imagesReady once
+      // they've actually finished (or failed) — not just been requested.
       const flowerUrls = (c.flower_images || []).map(urlOf).filter(Boolean);
       const photoUrls = (c.photos || []).map(urlOf).filter(Boolean);
-      preloadImages([...flowerUrls, ...photoUrls]);
+      preloadImages([...flowerUrls, ...photoUrls], 9000).then(() => setImagesReady(true));
     });
   }, []);
 
@@ -1324,7 +1506,8 @@ function App() {
 
   return (
     <React.Fragment>
-      {showLogin && <LoginScreen correctPin={config.pin} onCorrect={handleCorrect} fading={stage === "unlocking"} ready={ready} />}
+      {stage === "loading" && <LoadingGate imagesReady={imagesReady} onDone={() => setStage("login")} />}
+      {showLogin && <LoginScreen correctPin={config.pin} onCorrect={handleCorrect} fading={stage === "unlocking"} />}
       {showMain && <MainApp config={config} flowersCleared={stage === "main"} />}
       {stage === "flowers" && <FlowerReveal images={config.flower_images} onDone={() => setStage("main")} />}
     </React.Fragment>
