@@ -44,6 +44,76 @@
 
   ::selection{ background: var(--rose); color:#fff; }
 
+  /* ---------- Loading gate ---------- */
+  .loading-gate{
+    position:fixed; inset:0; z-index:10000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:36px; padding:40px 20px; text-align:center;
+    background: radial-gradient(circle at 50% 15%, #fffaf5 0%, var(--cream) 55%, var(--cream-deep) 100%);
+    overflow:hidden;
+  }
+  .loading-gate::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(circle at 50% 42%, rgba(232,135,159,.16), transparent 58%);
+  }
+  .loading-heart-wrap{
+    position:relative; width:104px; height:90px; perspective:700px;
+    animation: pulseHeart 1.9s ease-in-out infinite;
+  }
+  .loading-heart-wrap::before{
+    content:""; position:absolute; inset:-34px; border-radius:50%;
+    border:1px solid rgba(194,24,91,.32);
+    animation: heartRing 1.9s ease-out infinite;
+    pointer-events:none;
+  }
+  @keyframes heartRing{
+    0%{ transform:scale(.75); opacity:.55; }
+    70%{ opacity:0; }
+    100%{ transform:scale(1.7); opacity:0; }
+  }
+  .loading-heart-wrap.impact{
+    animation:none;
+    transform:scale(1.3);
+    transition: transform 280ms cubic-bezier(.34,1.56,.64,1);
+  }
+  .heart-half{
+    position:absolute; inset:0;
+    transform-style: preserve-3d;
+    transition: transform 1550ms cubic-bezier(.16,1,.3,1), opacity 1000ms ease 350ms;
+  }
+  .heart-half svg{ width:100%; height:100%; filter: drop-shadow(0 14px 24px rgba(194,24,91,.4)); }
+  .heart-half-left{ clip-path: inset(0 50% 0 0); transform-origin: right center; }
+  .heart-half-right{ clip-path: inset(0 0 0 50%); transform-origin: left center; }
+  .heart-open .heart-half-left{ transform: rotateY(-118deg) translateX(-8px); opacity:0; }
+  .heart-open .heart-half-right{ transform: rotateY(118deg) translateX(8px); opacity:0; }
+  .heart-burst{
+    position:absolute; top:50%; left:50%; width:8px; height:8px; border-radius:50%;
+    transform:translate(-50%,-50%) scale(1);
+    background: radial-gradient(circle, #fff8ec 0%, rgba(255,222,180,.5) 40%, rgba(255,222,180,0) 72%);
+    opacity:0; pointer-events:none;
+    transition: opacity 300ms ease, transform 1500ms cubic-bezier(.16,1,.3,1);
+  }
+  .heart-open .heart-burst{ opacity:1; transform:translate(-50%,-50%) scale(17); }
+  .loading-arrow-layer{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    pointer-events:none; overflow:visible;
+  }
+  .cupid-arrow{
+    animation: arrowFly 1150ms cubic-bezier(.22,1,.36,1) forwards;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,.3)) drop-shadow(0 0 10px rgba(232,194,122,.55));
+  }
+  @keyframes arrowFly{
+    0%{ transform: translate(80vw,-52vh) rotate(-40deg) scale(.7); opacity:0; }
+    10%{ opacity:1; }
+    60%{ transform: translate(19vw,-9vh) rotate(-31deg) scale(.94); opacity:1; }
+    100%{ transform: translate(0,0) rotate(-27deg) scale(1); opacity:1; }
+  }
+  .loading-text{
+    font-family: var(--font-hand); font-weight:600;
+    font-size: clamp(1.15rem, 3vw, 1.5rem); color: var(--rose-deep);
+    min-height:1.6em; max-width:340px;
+  }
+
   /* ---------- Login screen ---------- */
   .login-screen{
     min-height:100vh;
@@ -70,12 +140,6 @@
     30%,50%,70%{ transform:translateX(-9px); }
     40%,60%{ transform:translateX(9px); }
   }
-
-  .login-loading{
-    font-size:.85rem; letter-spacing:.06em; color: var(--rose-deep); opacity:.75;
-  }
-  .dot-anim{ display:inline-block; animation: dotFade 1.2s ease-in-out infinite; }
-  @keyframes dotFade{ 0%,100%{opacity:.2;} 50%{opacity:1;} }
 
   .pin-dots{ display:flex; gap:14px; }
   .pin-dots.shake{ animation: shakeX .5s ease; }
@@ -107,24 +171,30 @@
   /* ---------- Flower reveal ---------- */
   .flower-overlay{
     position:fixed; inset:0; z-index:9999;
-    background: var(--cream);
+    background-color: var(--cream);
     overflow:hidden;
-    transition: opacity .9s ease;
+    contain: layout style;
+    transition: background-color 1700ms ease .3s;
   }
-  .flower-overlay.fade-out{ opacity:0; pointer-events:none; }
+  .flower-overlay.revealing{ background-color: transparent; pointer-events:none; }
+  .flower-ambient-glow{
+    position:absolute; inset:0;
+    background: radial-gradient(circle at 50% 50%, rgba(232,135,159,.28), rgba(232,135,159,0) 62%);
+    animation: ambientGlowPulse 4.2s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes ambientGlowPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+  .flower-sparkles{ position:absolute; inset:0; pointer-events:none; }
+  .sparkle{
+    position:absolute; border-radius:50%;
+    background: radial-gradient(circle, #fff8ec 0%, rgba(255,248,236,0) 72%);
+    animation-name: twinkle; animation-timing-function: ease-in-out; animation-iteration-count: infinite;
+    will-change: opacity, transform;
+  }
+  @keyframes twinkle{ 0%,100%{ opacity:0; transform:scale(.4); } 50%{ opacity:1; transform:scale(1); } }
   .flower-wrap{
     position:absolute; top:50%; left:50%; width:0; height:0;
-    animation-name: spiralOut;
-    animation-timing-function: cubic-bezier(.22,.82,.28,1);
-    animation-fill-mode: forwards;
-    animation-duration: var(--dur);
-    animation-delay: var(--delay);
-    opacity:0;
-  }
-  @keyframes spiralOut{
-    0%{ transform: rotate(calc(var(--a) - var(--extra))) translateX(0) scale(.25); opacity:0; }
-    14%{ opacity:1; }
-    100%{ transform: rotate(var(--a)) translateX(var(--d)) scale(1); opacity:1; }
+    will-change: transform, opacity;
   }
   .flower-self{
     position:absolute; left:0; top:0;
@@ -132,6 +202,9 @@
     animation-name: selfSpin;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
+    filter: drop-shadow(0 3px 10px rgba(194,24,91,.4));
+    will-change: transform;
+    backface-visibility: hidden;
   }
   @keyframes selfSpin{ from{ transform: translate(-50%,-50%) rotate(0deg); } to{ transform: translate(-50%,-50%) rotate(360deg); } }
 
@@ -154,36 +227,48 @@
 
   /* Hero */
   .section-hero{ background: var(--maroon-900); }
-  .photo-mosaic{
+  .polaroid-rows{
     position:absolute; inset:0;
-    display:grid;
-    gap:3px;
+    display:flex; flex-direction:column; justify-content:center; gap:16px;
     background: var(--maroon-900);
-    filter: saturate(.82) contrast(1.03);
-    animation: mosaicIn 1.4s ease both;
+    filter: saturate(.85);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, black 10%, black 90%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, black 10%, black 90%, transparent 100%);
   }
-  @keyframes mosaicIn{
-    from{ opacity:0; transform: scale(1.06); }
-    to{ opacity:1; transform: scale(1); }
+  .polaroid-row{ width:100%; overflow:hidden; }
+  .polaroid-row-track{
+    display:flex; align-items:center; gap:22px; width:max-content;
+    animation-timing-function: linear; animation-iteration-count: infinite;
+    will-change: transform;
   }
-  .photo-tile{
-    position:relative; overflow:hidden;
+  .polaroid-row.dir-left .polaroid-row-track{ animation-name: marqueeLeft; }
+  .polaroid-row.dir-right .polaroid-row-track{ animation-name: marqueeRight; }
+  @keyframes marqueeLeft{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
+  @keyframes marqueeRight{ from{ transform: translateX(-50%); } to{ transform: translateX(0); } }
+  .polaroid{
+    flex:0 0 auto;
+    background:#f3e9dc;
+    padding:8px 8px 24px; width:132px;
+    border-radius:3px; box-shadow: 0 10px 22px rgba(0,0,0,.4);
+  }
+  .polaroid img{ width:100%; height:132px; object-fit:cover; border-radius:2px; display:block; }
+  .polaroid-placeholder{
+    width:100%; height:132px; border-radius:2px;
     background: linear-gradient(135deg,#b9807a,#8a4f4a);
-  }
-  .photo-tile img{
-    width:100%; height:100%; object-fit:cover; display:block;
-    transition: transform 8s ease;
-    transform: scale(1.02);
-  }
-  .section-hero.in-view .photo-tile img{ transform: scale(1.12); }
-  .photo-tile-placeholder{
-    width:100%; height:100%;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
     color: rgba(255,255,255,.65);
   }
-  .photo-tile-placeholder svg{ width:22px; height:22px; }
-  .photo-tile-placeholder span{ font-family: var(--font-hand); font-size:.8rem; }
-  .hero-overlay{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(32,0,0,.35), rgba(32,0,0,.72) 62%, rgba(32,0,0,.85)); }
+  .polaroid-placeholder svg{ width:22px; height:22px; }
+  .polaroid-placeholder span{ font-family: var(--font-hand); font-size:.78rem; }
+  .hero-overlay{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(32,0,0,.4), rgba(32,0,0,.55) 55%, rgba(32,0,0,.82)); }
+  .hero-glow{
+    position:absolute; top:50%; left:50%; width:460px; height:460px;
+    transform:translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(232,194,122,.28), rgba(232,194,122,0) 70%);
+    filter: blur(10px);
+    animation: glowPulse 5s ease-in-out infinite;
+    z-index:1; pointer-events:none;
+  }
   .hero-text{
     position:relative; z-index:2;
     font-family: var(--font-script); font-weight:700;
@@ -203,13 +288,17 @@
     -webkit-backdrop-filter: blur(8px);
     border-radius:28px; padding: 56px 46px;
     text-align:center;
-    box-shadow: 0 32px 64px rgba(0,0,0,.4);
+    box-shadow: 0 32px 64px rgba(0,0,0,.4), 0 0 60px rgba(232,194,122,.08);
   }
   .letter-title{
     font-family: var(--font-script); font-weight:700;
-    font-size: clamp(1.8rem,4vw,2.4rem); color: var(--gold); margin-bottom:22px;
+    font-size: clamp(1.8rem,4vw,2.4rem); color: var(--gold); margin-bottom:10px;
     min-height: 1.3em;
   }
+  .letter-flourish{ display:flex; align-items:center; justify-content:center; gap:12px; margin: 0 0 26px; opacity:.85; }
+  .letter-flourish .fl-line{ width:44px; height:1px; background: linear-gradient(90deg, transparent, var(--gold)); }
+  .letter-flourish .fl-line.right{ background: linear-gradient(90deg, var(--gold), transparent); }
+  .letter-flourish svg{ width:13px; height:13px; color: var(--gold); }
   .letter-body{
     font-family: var(--font-hand); font-weight:500;
     font-size: clamp(1.25rem,2.6vw,1.55rem); line-height:1.85;
@@ -243,7 +332,7 @@
   .song-title{ display:flex; align-items:center; gap:6px; font-weight:600; color:#fff; font-size:1rem; }
   .song-title .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .explicit-tag{ font-size:.6rem; background: rgba(255,255,255,.2); padding:1px 5px; border-radius:3px; flex-shrink:0; }
-  .song-artist{ color: rgba(255,255,255,.6); font-size:.85rem; margin:2px 0 10px; }
+  .song-artist{ color: rgba(255,255,255,.6); font-size:.85rem; margin:2px 0 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .save-btn{ display:inline-flex; align-items:center; gap:6px; font-size:.78rem; color:#fff; text-decoration:none; opacity:.85; }
   .save-btn:hover{ opacity:1; }
   .save-btn svg{ width:15px; height:15px; }
@@ -260,19 +349,62 @@
     display:flex; align-items:center; justify-content:center; color: var(--maroon-900);
   }
   .play-btn svg{ width:13px; height:13px; margin-left:1px; }
+  .play-btn{ border:none; cursor:pointer; }
+  .song-embed{ margin-top:14px; border-radius:12px; overflow:hidden; }
+  .song-embed iframe{ display:block; border:none; }
 
   /* Final */
   .section-final{
+    position:relative; overflow:hidden;
     background-color: var(--maroon-800);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cpath d='M22 10c-4-6-15-4-15 4 0 7.5 8.5 12.5 15 18 6.5-5.5 15-10.5 15-18 0-8-11-10-15-4z' fill='%23ffffff' fill-opacity='0.055'/%3E%3Cpath d='M67 47c-4-6-15-4-15 4 0 7.5 8.5 12.5 15 18 6.5-5.5 15-10.5 15-18 0-8-11-10-15-4z' fill='%23ffffff' fill-opacity='0.055'/%3E%3C/svg%3E");
     background-size: 90px 90px;
   }
+  .final-backdrop{ position:absolute; inset:0; }
+  .final-backdrop-img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+    filter: blur(1px) saturate(.85) brightness(.68);
+    opacity:0; transform: scale(1.08);
+    transition: opacity 2s ease, transform 9s ease, filter 2s ease;
+  }
+  .final-backdrop-img.active{ opacity:1; transform: scale(1.2); filter: blur(0px) saturate(.95) brightness(.74); }
+  .final-backdrop-overlay{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 50% 45%, rgba(56,9,9,.18), rgba(32,0,0,.62) 78%),
+      linear-gradient(180deg, rgba(32,0,0,.35), rgba(32,0,0,.68));
+  }
+  .final-glow{
+    position:absolute; top:50%; left:50%; width:360px; height:360px;
+    transform:translate(-50%,-50%);
+    background: radial-gradient(circle, rgba(232,135,159,.38), rgba(232,135,159,0) 70%);
+    filter: blur(6px);
+    animation: glowPulse 4.5s ease-in-out infinite;
+    z-index:0; pointer-events:none;
+  }
+  @keyframes glowPulse{ 0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:.65; } 50%{ transform:translate(-50%,-50%) scale(1.18); opacity:1; } }
   .final-text{
+    position:relative; z-index:1;
     font-family: var(--font-script); font-weight:700;
     color: var(--cream-text); text-align:center;
     font-size: clamp(1.8rem, 6vw, 3.2rem);
     text-shadow: 0 4px 28px rgba(0,0,0,.55);
     padding: 0 20px; min-height:1.4em;
+  }
+
+  /* Ambient floating hearts */
+  .floating-hearts{ position:fixed; inset:0; z-index:5; overflow:hidden; pointer-events:none; }
+  .floating-heart{
+    position:absolute; top:-8%; opacity:0;
+    animation-name: heartFall; animation-timing-function: linear; animation-iteration-count: infinite;
+  }
+  .floating-heart svg{ width:100%; height:100%; display:block; filter: drop-shadow(0 2px 5px rgba(0,0,0,.18)) drop-shadow(0 0 7px currentColor); }
+  @keyframes heartFall{
+    0%{ transform: translateY(0) translateX(0) rotate(0deg); opacity:0; }
+    8%{ opacity:1; }
+    50%{ transform: translateY(56vh) translateX(var(--drift)) rotate(180deg); }
+    92%{ opacity:1; }
+    100%{ transform: translateY(112vh) translateX(0) rotate(360deg); opacity:0; }
   }
 
   /* Go to start */
@@ -293,6 +425,23 @@
     .key{ width:64px; height:64px; font-size:1.3rem; }
     .letter-card{ padding:38px 24px; }
     .go-start{ padding:10px 16px; font-size:.74rem; }
+    .polaroid{ width:100px; padding:6px 6px 18px; }
+    .polaroid img, .polaroid-placeholder{ height:100px; }
+    .polaroid-rows{ gap:10px; }
+    .polaroid-row-track{ gap:14px; }
+    .songs-grid{ grid-template-columns: 1fr; gap:16px; }
+    .song-card{ padding:14px 14px 12px; border-radius:16px; }
+    .song-top{ gap:11px; }
+    .album-art{ width:52px; height:52px; border-radius:10px; }
+    .album-art svg{ width:21px; height:21px; }
+    .song-title{ font-size:.92rem; }
+    .save-btn{ font-size:.72rem; }
+    .save-btn svg{ width:13px; height:13px; }
+    .song-bottom{ gap:7px; margin-top:12px; }
+    .play-btn{ width:28px; height:28px; }
+    .play-btn svg{ width:11px; height:11px; }
+    .duration{ font-size:.65rem; }
+    .more-btn{ font-size:.78rem; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -349,7 +498,13 @@ const DEFAULT_CONFIG = {
     "I am writing this because words sometimes catch in my throat when I look at you, overwhelmed by how much you mean to me. Every ordinary day becomes something worth remembering simply because you are in it.\n\nPlease keep this little note as a token of my heart — for the laughter, the quiet moments, and every mile still ahead of us.\n\nForever yours.",
   final_message: "I love you, to the moon and back.",
   photos: [],
-  flower_images: [],
+  flower_images: [
+    { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107878935-chatgpt-image-aug-29-2026-09-25-26-pm.png", caption: "" },
+    { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107882144-chatgpt-image-aug-29-2026-09-23-28-pm.png", caption: "" },
+    { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107884823-chatgpt-image-aug-29-2026-09-17-41-pm.png", caption: "" },
+    { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107887156-chatgpt-image-aug-29-2026-09-17-34-pm.png", caption: "" },
+    { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107889837-chatgpt-image-aug-29-2026-09-17-27-pm.png", caption: "" }
+  ],
   songs: [
     { title: "Iris", artist: "The Goo Goo Dolls", duration: "04:49" },
     { title: "She Will Be Loved", artist: "Maroon 5", duration: "04:17" },
@@ -401,6 +556,35 @@ async function logVisit() {
   } catch (e) {
     /* table may not exist yet — safe to ignore */
   }
+}
+
+/* Kicks off browser fetches for a batch of image URLs immediately, and
+   resolves once every one of them has actually finished loading (or
+   failed) — so the site can wait for real confirmation instead of just
+   hoping they're ready by the time they're needed. A safety timeout keeps
+   a single broken URL from hanging the whole reveal forever. */
+function preloadImages(urls, maxWaitMs) {
+  const list = Array.from(new Set(urls.filter(Boolean)));
+  if (!list.length) return Promise.resolve();
+  const loadAll = Promise.all(
+    list.map(
+      (u) =>
+        new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          img.src = u;
+        })
+    )
+  );
+  if (!maxWaitMs) return loadAll;
+  const timeout = new Promise((resolve) => setTimeout(resolve, maxWaitMs));
+  return Promise.race([loadAll, timeout]);
+}
+
+function urlOf(item) {
+  if (!item) return null;
+  return typeof item === "string" ? item : item.url || null;
 }
 
 /* ---------------------------------------------------------------------
@@ -546,14 +730,105 @@ function FadeSection({ id, className, children, once }) {
 /* ---------------------------------------------------------------------
    Login screen
 --------------------------------------------------------------------- */
-function LoginScreen({ correctPin, onCorrect, fading, ready }) {
+/* ---------------------------------------------------------------------
+   Loading gate — shown while config + every image is confirmed loaded.
+   A heart beats with rotating sweet-nothings typed out beneath it; once
+   everything is actually ready, an arrow strikes the heart and it swings
+   open like double doors to reveal the PIN screen underneath.
+--------------------------------------------------------------------- */
+const LOADING_MESSAGES = [
+  "Hold on, I'm preparing your gift…",
+  "I love you so much…",
+  "Kisses, baby — be excited…",
+  "Almost there, my love…",
+  "This one's just for you…"
+];
+
+function CupidArrow() {
+  return (
+    <svg className="cupid-arrow" viewBox="0 0 140 36" width="140" height="36" xmlns="http://www.w3.org/2000/svg">
+      <line x1="6" y1="18" x2="118" y2="18" stroke="var(--gold)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M118 18 L102 9 M118 18 L102 27" stroke="var(--gold)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M6 18 L17 12 M6 18 L17 24 M6 18 L15 18" stroke="var(--gold)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+function LoadingGate({ imagesReady, onDone }) {
+  const prefersReduced = React.useMemo(
+    () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches),
+    []
+  );
+  const [phase, setPhase] = React.useState("waiting"); // waiting -> arrow -> impact -> opening
+  const [msgIndex, setMsgIndex] = React.useState(0);
+  const startedAt = React.useRef(Date.now());
+
+  React.useEffect(() => {
+    if (phase !== "waiting") return;
+    const t = setTimeout(() => setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length), 2600);
+    return () => clearTimeout(t);
+  }, [phase, msgIndex]);
+
+  React.useEffect(() => {
+    if (!imagesReady || phase !== "waiting") return;
+    if (prefersReduced) {
+      onDone();
+      return;
+    }
+    const elapsed = Date.now() - startedAt.current;
+    const minDisplay = 2000; // always let the heartbeat breathe a moment, even on fast connections
+    const t = setTimeout(() => setPhase("arrow"), Math.max(0, minDisplay - elapsed));
+    return () => clearTimeout(t);
+  }, [imagesReady, phase, prefersReduced]);
+
+  React.useEffect(() => {
+    if (phase === "arrow") {
+      const t = setTimeout(() => setPhase("impact"), 1150);
+      return () => clearTimeout(t);
+    }
+    if (phase === "impact") {
+      const t = setTimeout(() => setPhase("opening"), 320);
+      return () => clearTimeout(t);
+    }
+    if (phase === "opening") {
+      const t = setTimeout(() => onDone(), 1650);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
+
+  return (
+    <div className={`loading-gate ${phase === "opening" ? "heart-open" : ""}`}>
+      <div className={`loading-heart-wrap ${phase === "impact" ? "impact" : ""}`}>
+        <div className="heart-half heart-half-left">
+          <HeartIcon />
+        </div>
+        <div className="heart-half heart-half-right">
+          <HeartIcon />
+        </div>
+        <div className="heart-burst" />
+        {(phase === "arrow" || phase === "impact") && (
+          <div className="loading-arrow-layer">
+            <CupidArrow />
+          </div>
+        )}
+      </div>
+      {phase === "waiting" && (
+        <div className="loading-text">
+          <Typewriter key={msgIndex} text={LOADING_MESSAGES[msgIndex]} speed={38} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LoginScreen({ correctPin, onCorrect, fading }) {
   const maxLen = (correctPin || "123456").length || 6;
   const [digits, setDigits] = React.useState("");
   const [shake, setShake] = React.useState(false);
   const [success, setSuccess] = React.useState(false);
 
   React.useEffect(() => {
-    if (!ready || success) return;
+    if (success) return;
     if (digits.length > 0 && digits.length === maxLen) {
       const t = setTimeout(() => {
         if (digits === correctPin) {
@@ -569,7 +844,7 @@ function LoginScreen({ correctPin, onCorrect, fading, ready }) {
       }, 220);
       return () => clearTimeout(t);
     }
-  }, [digits, ready]);
+  }, [digits]);
 
   const press = (d) => {
     if (success) return;
@@ -584,37 +859,27 @@ function LoginScreen({ correctPin, onCorrect, fading, ready }) {
         <HeartIcon />
       </div>
 
-      {!ready && (
-        <div className="login-loading">
-          opening our memories<span className="dot-anim">…</span>
-        </div>
-      )}
-
-      {ready && (
-        <React.Fragment>
-          <div className={`pin-dots ${shake ? "shake" : ""}`}>
-            {Array.from({ length: maxLen }).map((_, i) => (
-              <span key={i} className={`dot ${i < digits.length ? "filled" : ""} ${success ? "success" : ""}`} />
-            ))}
-          </div>
-          <div className="keypad">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-              <button key={n} type="button" className="key" onClick={() => press(String(n))}>
-                {n}
-              </button>
-            ))}
-            <button type="button" className="key key-alt" onClick={clearAll}>
-              C
-            </button>
-            <button type="button" className="key" onClick={() => press("0")}>
-              0
-            </button>
-            <button type="button" className="key key-alt" onClick={backspace} aria-label="Backspace">
-              <BackspaceIcon />
-            </button>
-          </div>
-        </React.Fragment>
-      )}
+      <div className={`pin-dots ${shake ? "shake" : ""}`}>
+        {Array.from({ length: maxLen }).map((_, i) => (
+          <span key={i} className={`dot ${i < digits.length ? "filled" : ""} ${success ? "success" : ""}`} />
+        ))}
+      </div>
+      <div className="keypad">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+          <button key={n} type="button" className="key" onClick={() => press(String(n))}>
+            {n}
+          </button>
+        ))}
+        <button type="button" className="key key-alt" onClick={clearAll}>
+          C
+        </button>
+        <button type="button" className="key" onClick={() => press("0")}>
+          0
+        </button>
+        <button type="button" className="key key-alt" onClick={backspace} aria-label="Backspace">
+          <BackspaceIcon />
+        </button>
+      </div>
     </div>
   );
 }
@@ -626,15 +891,13 @@ function LoginScreen({ correctPin, onCorrect, fading, ready }) {
    Leave it empty to use the built-in hand-drawn blooms instead.)
 --------------------------------------------------------------------- */
 const FLOWER_PALETTES = [
-  { petal: "#e8879f", center: "#f4c9d6", rose: true },
-  { petal: "#c0392b", center: "#2c1710", rose: false },
-  { petal: "#8e6bb0", center: "#2d1b3d", rose: false },
-  { petal: "#eec25e", center: "#eec25e", rose: true },
-  { petal: "#6f9d76", center: "#3c5940", rose: false },
-  { petal: "#f7f1e6", center: "#cdb98d", rose: false },
-  { petal: "#6f9bd1", center: "#1f2c47", rose: false },
-  { petal: "#c3bdb8", center: "#83786f", rose: false },
-  { petal: "#c97a3d", center: "#c97a3d", rose: true }
+  { petal: "#eb9bb0", center: "#fbdfe8", rose: true },  // blush rose
+  { petal: "#a33a5b", center: "#3a0d1f", rose: false }, // deep wine bloom
+  { petal: "#f0c988", center: "#f0c988", rose: true },  // champagne gold
+  { petal: "#9c6a8e", center: "#3a1f36", rose: false }, // dusty mauve
+  { petal: "#faf1e2", center: "#dcb98a", rose: false }, // ivory cream
+  { petal: "#e0879f", center: "#f7d3de", rose: true },  // antique rose
+  { petal: "#d98f5c", center: "#d98f5c", rose: true }   // soft coral gold
 ];
 
 function FlowerGraphic({ palette }) {
@@ -665,9 +928,12 @@ function FlowerGraphic({ palette }) {
 
 function FlowerReveal({ onDone, images }) {
   const flowerImages = images || [];
+  const prefersReduced = React.useMemo(
+    () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches),
+    []
+  );
+
   const flowers = React.useMemo(() => {
-    const prefersReduced =
-      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const w = window.innerWidth;
     const h = window.innerHeight;
     const cols = w < 600 ? 6 : 9;
@@ -678,62 +944,117 @@ function FlowerReveal({ onDone, images }) {
     let i = 0;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const jitterX = (Math.random() - 0.5) * cellW * 0.6;
-        const jitterY = (Math.random() - 0.5) * cellH * 0.6;
+        const jitterX = (Math.random() - 0.5) * cellW * 0.35;
+        const jitterY = (Math.random() - 0.5) * cellH * 0.35;
         const px = (c + 0.5) * cellW + jitterX;
         const py = (r + 0.5) * cellH + jitterY;
         const dx = px - w / 2;
         const dy = py - h / 2;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-        const size = Math.max(cellW, cellH) * (0.95 + Math.random() * 0.5);
+        const size = Math.max(cellW, cellH) * (1.55 + Math.random() * 0.65);
         const palette = FLOWER_PALETTES[Math.floor(Math.random() * FLOWER_PALETTES.length)];
-        const image = flowerImages.length ? flowerImages[Math.floor(Math.random() * flowerImages.length)] : null;
+        const rawImage = flowerImages.length ? flowerImages[Math.floor(Math.random() * flowerImages.length)] : null;
+        const image = urlOf(rawImage);
         arr.push({
           id: i,
-          angle,
+          dx,
+          dy,
           dist,
           size,
           palette,
           image,
-          delay: prefersReduced ? 0 : i * 16 + Math.random() * 120,
-          duration: prefersReduced ? 200 : 1100 + Math.random() * 500,
-          extraSpin: 720 + Math.random() * 540,
-          spinDur: 6 + Math.random() * 4,
+          spinDur: 13 + Math.random() * 9,
           spinDir: Math.random() < 0.5 ? "normal" : "reverse"
         });
         i++;
       }
     }
+
+    // Sorting by distance from center, then timing strictly off that sorted
+    // order (not raw distance), is what makes flowers visibly pop in one
+    // after another from the middle outward, instead of a whole ring of
+    // them appearing together.
+    arr.sort((a, b) => a.dist - b.dist);
+    const gap = prefersReduced ? 0 : 52; // ms between each flower's turn — slow enough to savor each bloom
+    arr.forEach((f, idx) => {
+      f.packDelay = prefersReduced ? 0 : idx * gap + Math.random() * 60;
+      f.packDuration = prefersReduced ? 1 : 560 + Math.random() * 340;
+
+      // Curtain-parting exit: keep going the direction it's already leaning
+      // (left half exits left, right half exits right) so the whole field
+      // reads as two curtains pulling apart, with a little breeze-like
+      // wobble and tumble on top so it doesn't feel mechanical.
+      const side = f.dx >= 0 ? 1 : -1;
+      f.exitDx = f.dx + side * (w * 0.85 + Math.abs(f.dx) * 0.15);
+      f.exitDy = f.dy + (Math.random() - 0.5) * 160;
+      f.exitRotate = side * (30 + Math.random() * 70);
+      f.exitDelay = prefersReduced ? 0 : Math.random() * 500;
+      f.exitDuration = prefersReduced ? 1 : 1500 + Math.random() * 600;
+    });
     return arr;
   }, []);
 
-  const [fading, setFading] = React.useState(false);
+  const [phase, setPhase] = React.useState("start"); // start -> packed -> parting
 
   React.useEffect(() => {
-    const maxDelay = flowers.reduce((m, f) => Math.max(m, f.delay + f.duration), 0);
-    const t1 = setTimeout(() => setFading(true), maxDelay + 450);
-    const t2 = setTimeout(() => onDone(), maxDelay + 450 + 900);
+    let raf2;
+    let settleTimer;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        // A brief settle beat lets the browser finish laying out and
+        // painting every flower before the transition starts, so the very
+        // first reveal in a session doesn't stutter on the opening frames.
+        settleTimer = setTimeout(() => setPhase("packed"), 60);
+      });
+    });
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+      if (settleTimer) clearTimeout(settleTimer);
     };
-  }, [flowers]);
+  }, []);
+
+  React.useEffect(() => {
+    if (phase !== "packed") return;
+    const maxPackEnd = flowers.reduce((m, f) => Math.max(m, f.packDelay + f.packDuration), 0);
+    const holdBeat = prefersReduced ? 0 : 1000; // a real pause to take in the full bloom before it parts
+    const t = setTimeout(() => setPhase("parting"), maxPackEnd + holdBeat);
+    return () => clearTimeout(t);
+  }, [phase, flowers, prefersReduced]);
+
+  React.useEffect(() => {
+    if (phase !== "parting") return;
+    const maxExitEnd = flowers.reduce((m, f) => Math.max(m, f.exitDelay + f.exitDuration), 0);
+    const t = setTimeout(() => onDone(), maxExitEnd + 150);
+    return () => clearTimeout(t);
+  }, [phase, flowers]);
+
+  function wrapStyle(f) {
+    if (phase === "start") {
+      return { transform: "scale(0)", opacity: 0, transition: "none" };
+    }
+    if (phase === "packed") {
+      return {
+        transform: `translate(${f.dx}px, ${f.dy}px) scale(1)`,
+        opacity: 1,
+        transition:
+          `transform ${f.packDuration}ms cubic-bezier(.16,1,.3,1) ${f.packDelay}ms, ` +
+          `opacity ${Math.min(f.packDuration, 480)}ms ease ${f.packDelay}ms`
+      };
+    }
+    return {
+      transform: `translate(${f.exitDx}px, ${f.exitDy}px) rotate(${f.exitRotate}deg) scale(.82)`,
+      opacity: 1,
+      transition: `transform ${f.exitDuration}ms cubic-bezier(.4,0,.3,1) ${f.exitDelay}ms`
+    };
+  }
 
   return (
-    <div className={`flower-overlay ${fading ? "fade-out" : ""}`}>
+    <div className={`flower-overlay ${phase === "parting" ? "revealing" : ""}`}>
+      <div className="flower-ambient-glow" />
+      <FlowerSparkles count={prefersReduced ? 0 : 16} />
       {flowers.map((f) => (
-        <div
-          key={f.id}
-          className="flower-wrap"
-          style={{
-            "--a": f.angle + "deg",
-            "--d": f.dist + "px",
-            "--dur": f.duration + "ms",
-            "--delay": f.delay + "ms",
-            "--extra": f.extraSpin + "deg"
-          }}
-        >
+        <div key={f.id} className="flower-wrap" style={wrapStyle(f)}>
           <div
             className="flower-self"
             style={{ width: f.size, height: f.size, animationDuration: f.spinDur + "s", animationDirection: f.spinDir }}
@@ -746,53 +1067,111 @@ function FlowerReveal({ onDone, images }) {
   );
 }
 
+/* A scatter of soft twinkling points behind the flowers — a little fairy-dust
+   touch so the reveal feels magical rather than mechanical. */
+function FlowerSparkles({ count }) {
+  const sparkles = React.useMemo(
+    () =>
+      Array.from({ length: count }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: 3 + Math.random() * 5,
+        delay: Math.random() * 3.5,
+        dur: 2.2 + Math.random() * 2
+      })),
+    [count]
+  );
+  if (!sparkles.length) return null;
+  return (
+    <div className="flower-sparkles" aria-hidden="true">
+      {sparkles.map((s) => (
+        <span
+          key={s.id}
+          className="sparkle"
+          style={{
+            left: s.left + "%",
+            top: s.top + "%",
+            width: s.size,
+            height: s.size,
+            animationDelay: s.delay + "s",
+            animationDuration: s.dur + "s"
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------------
    Main app sections
 --------------------------------------------------------------------- */
 const PLACEHOLDER_PHOTOS = Array.from({ length: 10 }).map(() => ({ url: null }));
+const ROW_HEIGHT = 176; // polaroid height + vertical gap, used to size how many rows fill the screen
+const POLAROID_W = 154; // polaroid width + horizontal gap, used to size how many tiles fill a row
 
-/* Builds a grid just dense enough to cover the current viewport edge-to-edge,
-   cycling back through the available photos if there aren't enough to fill it. */
-function useMosaicGrid(list) {
+/* Splits photos into rows sized to fill the viewport, each row offset so
+   rows don't all show the same photos at once. Direction alternates: row 0
+   moves right, row 1 moves left, row 2 moves right, and so on. Each row's
+   tiles are duplicated so the marquee loop is seamless. */
+function usePolaroidRows(list) {
   return React.useMemo(() => {
     const w = typeof window !== "undefined" ? window.innerWidth : 1200;
     const h = typeof window !== "undefined" ? window.innerHeight : 800;
-    const target = w < 600 ? 128 : w < 1000 ? 176 : 220;
-    const cols = Math.max(3, Math.round(w / target));
-    const rows = Math.max(3, Math.round(h / target));
-    const count = cols * rows;
-    const tiles = Array.from({ length: count }).map((_, i) => ({ ...list[i % list.length], key: i }));
-    return { cols, rows, tiles };
+    const rowHeight = w < 480 ? 118 : ROW_HEIGHT;
+    const tileWidth = w < 480 ? 114 : POLAROID_W;
+    const rowCount = Math.max(3, Math.min(6, Math.ceil(h / rowHeight)));
+    const perRow = Math.max(4, Math.ceil(w / tileWidth) + 2);
+    const rows = [];
+    for (let r = 0; r < rowCount; r++) {
+      const offset = (r * 3) % list.length;
+      const tiles = Array.from({ length: perRow }).map((_, i) => {
+        const item = list[(offset + i) % list.length];
+        const angle = ((r * 7 + i * 13) % 9) - 4;
+        return { ...item, key: r + "-" + i, angle };
+      });
+      rows.push({
+        id: r,
+        tiles,
+        dir: r % 2 === 0 ? "right" : "left",
+        duration: 42 + ((r * 5) % 3) * 8 // slow, with slight per-row variation
+      });
+    }
+    return rows;
   }, [list]);
 }
 
-function SectionHero({ photos, message }) {
+function SectionHero({ photos, message, startTyping }) {
   const list = photos && photos.length ? photos.map((p) => (typeof p === "string" ? { url: p } : p)) : PLACEHOLDER_PHOTOS;
-  const { cols, rows, tiles } = useMosaicGrid(list);
+  const rows = usePolaroidRows(list);
   return (
     <FadeSection id="hero" className="section-hero">
       {({ visitId }) => (
         <React.Fragment>
-          <div
-            className="photo-mosaic"
-            style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}
-          >
-            {tiles.map((p) => (
-              <div key={p.key} className="photo-tile">
-                {p.url ? (
-                  <img src={p.url} alt={p.caption || ""} />
-                ) : (
-                  <div className="photo-tile-placeholder">
-                    <CameraGlyph />
-                    <span>a memory</span>
-                  </div>
-                )}
+          <div className="polaroid-rows">
+            {rows.map((row) => (
+              <div key={row.id} className={`polaroid-row dir-${row.dir}`}>
+                <div className="polaroid-row-track" style={{ animationDuration: row.duration + "s" }}>
+                  {[...row.tiles, ...row.tiles].map((p, i) => (
+                    <div key={p.key + "-" + i} className="polaroid" style={{ transform: `rotate(${p.angle}deg)` }}>
+                      {p.url ? (
+                        <img src={p.url} alt={p.caption || ""} />
+                      ) : (
+                        <div className="polaroid-placeholder">
+                          <CameraGlyph />
+                          <span>a memory</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
           <div className="hero-overlay" />
+          <div className="hero-glow" />
           <h1 className="hero-text">
-            <Typewriter key={visitId} text={message} speed={55} />
+            {startTyping ? <Typewriter key={visitId} text={message} speed={55} /> : <span className="tw-cursor">|</span>}
           </h1>
         </React.Fragment>
       )}
@@ -807,6 +1186,11 @@ function SectionLetter({ title, body }) {
         <div className="letter-card">
           <div className="letter-title">
             <Typewriter key={"t" + visitId} text={title} speed={45} />
+          </div>
+          <div className="letter-flourish" aria-hidden="true">
+            <span className="fl-line" />
+            <MiniHeart />
+            <span className="fl-line right" />
           </div>
           <p className="letter-body">
             <Typewriter key={"b" + visitId} text={body} speed={14} delay={title.length * 45 + 400} />
@@ -825,9 +1209,26 @@ const ALBUM_GRADIENTS = [
   "linear-gradient(135deg,#233d5c,#3d6b8a)"
 ];
 
+function getSpotifyTrackId(url) {
+  if (!url) return null;
+  const m = url.match(/track[/:]([a-zA-Z0-9]+)/);
+  return m ? m[1] : null;
+}
+
 function SongCard({ song, index }) {
   const width = 25 + ((index * 37) % 55);
   const href = song.spotify_url || `https://open.spotify.com/search/${encodeURIComponent(song.title + " " + song.artist)}`;
+  const trackId = getSpotifyTrackId(song.spotify_url);
+  const [playing, setPlaying] = React.useState(false);
+
+  function handlePlay() {
+    if (trackId) {
+      setPlaying((p) => !p);
+    } else {
+      window.open(href, "_blank", "noopener,noreferrer");
+    }
+  }
+
   return (
     <div className="song-card">
       <div className="song-top">
@@ -848,16 +1249,35 @@ function SongCard({ song, index }) {
           <SoundMarkIcon />
         </a>
       </div>
-      <div className="song-bottom">
-        <div className="progress">
-          <div className="progress-fill" style={{ width: width + "%" }} />
+      {playing && trackId ? (
+        <div className="song-embed">
+          <iframe
+            src={`https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`}
+            width="100%"
+            height="80"
+            frameBorder="0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            title={song.title + " player"}
+          />
         </div>
-        <span className="duration">{song.duration}</span>
-        <button type="button" className="more-btn" aria-label="More options">•••</button>
-        <a className="play-btn" href={href} target="_blank" rel="noreferrer" aria-label="Play on Spotify">
-          <PlayIcon />
-        </a>
-      </div>
+      ) : (
+        <div className="song-bottom">
+          <div className="progress">
+            <div className="progress-fill" style={{ width: width + "%" }} />
+          </div>
+          <span className="duration">{song.duration}</span>
+          <button type="button" className="more-btn" aria-label="More options">•••</button>
+          <button
+            type="button"
+            className="play-btn"
+            onClick={handlePlay}
+            aria-label={trackId ? "Play in site" : "Search on Spotify"}
+          >
+            <PlayIcon />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -882,13 +1302,105 @@ function SectionSongs({ songs }) {
   );
 }
 
-function SectionFinal({ message }) {
+/* ---------------------------------------------------------------------
+   Ambient floating hearts + the "catch" in the final section
+--------------------------------------------------------------------- */
+function MiniHeart() {
+  return (
+    <svg viewBox="0 0 32 28" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 27C10 22.5 2 16 2 9.2 2 4.4 5.7 1 10.1 1c2.6 0 5 1.3 6 3.4C17.1 2.3 19.5 1 22.1 1 26.5 1 30 4.4 30 9.2 30 16 22 22.5 16 27z" />
+    </svg>
+  );
+}
+
+const HEART_TINTS = ["rgba(232,135,159,.6)", "rgba(232,194,122,.6)", "rgba(194,24,91,.5)"];
+
+/* A slow, sparse drift of hearts down the whole page — purely ambient,
+   never blocks clicks (pointer-events:none). Skipped entirely for
+   prefers-reduced-motion. */
+function FloatingHearts() {
+  const hearts = React.useMemo(() => {
+    const prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return [];
+    return Array.from({ length: 16 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      size: 10 + Math.random() * 14,
+      duration: 18 + Math.random() * 16,
+      delay: -Math.random() * 30, // negative delay staggers hearts mid-flight from the start
+      drift: (Math.random() - 0.5) * 70,
+      color: HEART_TINTS[i % HEART_TINTS.length]
+    }));
+  }, []);
+
+  if (!hearts.length) return null;
+
+  return (
+    <div className="floating-hearts" aria-hidden="true">
+      {hearts.map((h) => (
+        <div
+          key={h.id}
+          className="floating-heart"
+          style={{
+            left: h.left + "%",
+            width: h.size,
+            height: h.size,
+            color: h.color,
+            animationDuration: h.duration + "s",
+            animationDelay: h.delay + "s",
+            "--drift": h.drift + "px"
+          }}
+        >
+          <MiniHeart />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* A slow, full-bleed crossfade through a few of the project's own photos —
+   each one fills the entire section (not sliced into strips) so it reads
+   as one big, lively background rather than a thumbnail row. */
+function FinalBackdrop({ photos }) {
+  const list = React.useMemo(
+    () =>
+      (photos || [])
+        .map((p) => (typeof p === "string" ? { url: p } : p))
+        .filter((p) => p && p.url)
+        .slice(0, 4),
+    [photos]
+  );
+  const [idx, setIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    if (list.length < 2) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % list.length), 6000);
+    return () => clearInterval(t);
+  }, [list.length]);
+
+  if (!list.length) return null;
+
+  return (
+    <div className="final-backdrop">
+      {list.map((p, i) => (
+        <img key={p.url + i} src={p.url} alt="" className={"final-backdrop-img" + (i === idx ? " active" : "")} />
+      ))}
+    </div>
+  );
+}
+
+function SectionFinal({ message, photos }) {
   return (
     <FadeSection id="final" className="section-final">
       {({ visitId }) => (
-        <h1 className="final-text">
-          <Typewriter key={visitId} text={message} speed={62} />
-        </h1>
+        <React.Fragment>
+          <FinalBackdrop photos={photos} />
+          <div className="final-backdrop-overlay" />
+          <div className="final-glow" />
+          <h1 className="final-text">
+            <Typewriter key={visitId} text={message} speed={62} />
+          </h1>
+        </React.Fragment>
       )}
     </FadeSection>
   );
@@ -896,19 +1408,20 @@ function SectionFinal({ message }) {
 
 function GoToStart() {
   return (
-    <button type="button" className="go-start" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+    <button type="button" className="go-start" onClick={() => window.location.reload()}>
       <span className="arrow">↑</span> Go to the start
     </button>
   );
 }
 
-function MainApp({ config }) {
+function MainApp({ config, flowersCleared }) {
   return (
     <div className="main-app">
-      <SectionHero photos={config.photos} message={config.intro_message} />
+      <FloatingHearts />
+      <SectionHero photos={config.photos} message={config.intro_message} startTyping={flowersCleared} />
       <SectionLetter title={config.letter_title} body={config.letter_body} />
       <SectionSongs songs={config.songs} />
-      <SectionFinal message={config.final_message} />
+      <SectionFinal message={config.final_message} photos={config.photos} />
       <GoToStart />
     </div>
   );
@@ -918,14 +1431,18 @@ function MainApp({ config }) {
    App root
 --------------------------------------------------------------------- */
 function App() {
-  const [stage, setStage] = React.useState("login"); // login -> unlocking -> flowers -> main
+  const [stage, setStage] = React.useState("loading"); // loading -> login -> unlocking -> flowers -> main
   const [config, setConfig] = React.useState(DEFAULT_CONFIG);
-  const [ready, setReady] = React.useState(false);
+  const [imagesReady, setImagesReady] = React.useState(false);
 
   React.useEffect(() => {
     loadConfig().then((c) => {
       setConfig(c);
-      setReady(true);
+      // Start fetching every image now, and only flip imagesReady once
+      // they've actually finished (or failed) — not just been requested.
+      const flowerUrls = (c.flower_images || []).map(urlOf).filter(Boolean);
+      const photoUrls = (c.photos || []).map(urlOf).filter(Boolean);
+      preloadImages([...flowerUrls, ...photoUrls], 9000).then(() => setImagesReady(true));
     });
   }, []);
 
@@ -940,8 +1457,9 @@ function App() {
 
   return (
     <React.Fragment>
-      {showLogin && <LoginScreen correctPin={config.pin} onCorrect={handleCorrect} fading={stage === "unlocking"} ready={ready} />}
-      {showMain && <MainApp config={config} />}
+      {stage === "loading" && <LoadingGate imagesReady={imagesReady} onDone={() => setStage("login")} />}
+      {showLogin && <LoginScreen correctPin={config.pin} onCorrect={handleCorrect} fading={stage === "unlocking"} />}
+      {showMain && <MainApp config={config} flowersCleared={stage === "main"} />}
       {stage === "flowers" && <FlowerReveal images={config.flower_images} onDone={() => setStage("main")} />}
     </React.Fragment>
   );
