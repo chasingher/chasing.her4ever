@@ -164,7 +164,7 @@
   .key:active{ transform: translateY(0) scale(.93); }
   .key-alt{ background:#fbdce6; color: var(--rose-deep); }
   .key-alt svg{ width:20px; height:20px; }
-  .key:focus-visible, .go-start:focus-visible{ outline:3px solid var(--rose); outline-offset:3px; }
+  .key:focus-visible, .relive-btn:focus-visible{ outline:3px solid var(--rose); outline-offset:3px; }
 
   @keyframes fadeInUp{ from{ opacity:0; transform: translateY(14px);} to{ opacity:1; transform:translateY(0);} }
 
@@ -289,6 +289,8 @@
     border-radius:28px; padding: 56px 46px;
     text-align:center;
     box-shadow: 0 32px 64px rgba(0,0,0,.4), 0 0 60px rgba(232,194,122,.08);
+    transform: translateZ(0);
+    will-change: transform;
   }
   .letter-title{
     font-family: var(--font-script); font-weight:700;
@@ -296,8 +298,8 @@
     min-height: 1.3em;
   }
   .letter-flourish{ display:flex; align-items:center; justify-content:center; gap:12px; margin: 0 0 26px; opacity:.85; }
-  .letter-flourish .fl-line{ width:44px; height:1px; background: linear-gradient(90deg, transparent, var(--gold)); }
-  .letter-flourish .fl-line.right{ background: linear-gradient(90deg, var(--gold), transparent); }
+  .fl-line{ width:44px; height:1px; background: linear-gradient(90deg, transparent, var(--gold)); }
+  .fl-line.right{ background: linear-gradient(90deg, var(--gold), transparent); }
   .letter-flourish svg{ width:13px; height:13px; color: var(--gold); }
   .letter-body{
     font-family: var(--font-hand); font-weight:500;
@@ -321,6 +323,11 @@
     transition: transform .2s ease, border-color .2s ease;
   }
   .song-card:hover{ transform: translateY(-4px); border-color: rgba(255,255,255,.22); }
+  .song-card-embed{
+    padding:0; overflow:hidden; background: rgba(0,0,0,.18);
+    box-shadow: 0 10px 26px rgba(0,0,0,.32);
+  }
+  .song-card-embed iframe{ display:block; width:100%; }
   .song-top{ display:flex; gap:14px; align-items:flex-start; }
   .album-art{
     width:64px; height:64px; border-radius:12px; flex-shrink:0;
@@ -333,9 +340,6 @@
   .song-title .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .explicit-tag{ font-size:.6rem; background: rgba(255,255,255,.2); padding:1px 5px; border-radius:3px; flex-shrink:0; }
   .song-artist{ color: rgba(255,255,255,.6); font-size:.85rem; margin:2px 0 10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .save-btn{ display:inline-flex; align-items:center; gap:6px; font-size:.78rem; color:#fff; text-decoration:none; opacity:.85; }
-  .save-btn:hover{ opacity:1; }
-  .save-btn svg{ width:15px; height:15px; }
   .spotify-badge{ opacity:.8; flex-shrink:0; }
   .spotify-badge svg{ width:22px; height:22px; }
   .spotify-badge:hover{ opacity:1; }
@@ -343,15 +347,11 @@
   .progress{ flex:1; height:4px; background: rgba(255,255,255,.15); border-radius:2px; overflow:hidden; }
   .progress-fill{ height:100%; background: rgba(255,255,255,.6); border-radius:2px; }
   .duration{ font-size:.7rem; color: rgba(255,255,255,.55); white-space:nowrap; }
-  .more-btn{ background:none; border:none; color: rgba(255,255,255,.45); cursor:pointer; font-size:.9rem; letter-spacing:1px; padding:2px; }
   .play-btn{
-    width:32px; height:32px; border-radius:50%; background:#fff; flex-shrink:0;
+    width:32px; height:32px; border-radius:50%; background:#fff; flex-shrink:0; border:none; cursor:pointer;
     display:flex; align-items:center; justify-content:center; color: var(--maroon-900);
   }
   .play-btn svg{ width:13px; height:13px; margin-left:1px; }
-  .play-btn{ border:none; cursor:pointer; }
-  .song-embed{ margin-top:14px; border-radius:12px; overflow:hidden; }
-  .song-embed iframe{ display:block; border:none; }
 
   /* Final */
   .section-final{
@@ -383,6 +383,11 @@
     z-index:0; pointer-events:none;
   }
   @keyframes glowPulse{ 0%,100%{ transform:translate(-50%,-50%) scale(1); opacity:.65; } 50%{ transform:translate(-50%,-50%) scale(1.18); opacity:1; } }
+  .final-eyebrow{
+    position:relative; z-index:1;
+    font-family: var(--font-ui); letter-spacing:.34em; font-size:.72rem;
+    color: rgba(255,255,255,.62); text-transform:uppercase; margin-bottom:16px;
+  }
   .final-text{
     position:relative; z-index:1;
     font-family: var(--font-script); font-weight:700;
@@ -391,8 +396,61 @@
     text-shadow: 0 4px 28px rgba(0,0,0,.55);
     padding: 0 20px; min-height:1.4em;
   }
+  .final-flourish{
+    position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    margin: 24px 0 32px; opacity:.85;
+  }
+  .final-flourish svg{ width:13px; height:13px; color: var(--gold); }
+  .relive-btn{
+    position:relative; z-index:1;
+    background: rgba(255,247,241,.1); border:1px solid rgba(232,194,122,.55);
+    color: var(--cream-text); padding:13px 28px; border-radius:999px;
+    font-family: var(--font-ui); font-size:.82rem; font-weight:600; letter-spacing:.03em;
+    cursor:pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transition: transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+  }
+  .relive-btn:hover{
+    transform: translateY(-2px); background: rgba(255,247,241,.18);
+    border-color: var(--gold); box-shadow: 0 10px 26px rgba(0,0,0,.35);
+  }
+  .hearts-rise{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+  .rise-heart{
+    position:absolute; bottom:-8%; opacity:0;
+    animation-name: heartRiseUp; animation-timing-function: cubic-bezier(.2,.6,.4,1); animation-fill-mode: forwards;
+  }
+  .rise-heart svg{ width:100%; height:100%; filter: drop-shadow(0 0 8px currentColor); }
+  @keyframes heartRiseUp{
+    0%{ transform: translateY(0) translateX(0) rotate(0deg) scale(.6); opacity:0; }
+    12%{ opacity:1; }
+    85%{ opacity:.9; }
+    100%{ transform: translateY(-118%) translateX(var(--riseDrift)) rotate(22deg) scale(1); opacity:0; }
+  }
 
   /* Ambient floating hearts */
+  /* Brand signature */
+  .site-footer{
+    background: var(--maroon-900);
+    padding: 44px 20px 56px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .brand-mark{ display:flex; align-items:center; gap:16px; max-width:420px; width:100%; }
+  .brand-mark-line{
+    flex:1; height:1px;
+    background: linear-gradient(90deg, transparent, rgba(232,194,122,.4));
+  }
+  .brand-mark-line:last-child{ background: linear-gradient(90deg, rgba(232,194,122,.4), transparent); }
+  .brand-mark-inner{
+    display:inline-flex; align-items:center; gap:9px; flex-shrink:0;
+    padding:9px 20px; border-radius:999px;
+    background: rgba(255,255,255,.04); border:1px solid rgba(232,194,122,.32);
+  }
+  .brand-mark-inner svg{ width:11px; height:11px; color: var(--rose); flex-shrink:0; }
+  .brand-mark-text{
+    font-family: var(--font-script); font-weight:600; font-size:1.1rem;
+    color: var(--gold); letter-spacing:.02em; white-space:nowrap;
+  }
+
   .floating-hearts{ position:fixed; inset:0; z-index:5; overflow:hidden; pointer-events:none; }
   .floating-heart{
     position:absolute; top:-8%; opacity:0;
@@ -407,24 +465,10 @@
     100%{ transform: translateY(112vh) translateX(0) rotate(360deg); opacity:0; }
   }
 
-  /* Go to start */
-  .go-start{
-    position:fixed; right:20px; bottom:20px; z-index:60;
-    background: rgba(255,247,241,.94); color: var(--rose-deep);
-    border:none; border-radius:999px; padding:12px 20px;
-    font-weight:600; font-size:.82rem;
-    display:inline-flex; align-items:center; gap:7px;
-    cursor:pointer; box-shadow: 0 12px 26px rgba(0,0,0,.4);
-    transition: transform .2s ease, box-shadow .2s ease;
-  }
-  .go-start:hover{ transform: translateY(-3px); box-shadow: 0 16px 30px rgba(0,0,0,.45); }
-  .go-start .arrow{ display:inline-block; }
-
   @media (max-width: 480px){
     .keypad{ grid-template-columns: repeat(3,64px); gap:14px 16px; }
     .key{ width:64px; height:64px; font-size:1.3rem; }
     .letter-card{ padding:38px 24px; }
-    .go-start{ padding:10px 16px; font-size:.74rem; }
     .polaroid{ width:100px; padding:6px 6px 18px; }
     .polaroid img, .polaroid-placeholder{ height:100px; }
     .polaroid-rows{ gap:10px; }
@@ -435,13 +479,10 @@
     .album-art{ width:52px; height:52px; border-radius:10px; }
     .album-art svg{ width:21px; height:21px; }
     .song-title{ font-size:.92rem; }
-    .save-btn{ font-size:.72rem; }
-    .save-btn svg{ width:13px; height:13px; }
     .song-bottom{ gap:7px; margin-top:12px; }
     .play-btn{ width:28px; height:28px; }
     .play-btn svg{ width:11px; height:11px; }
     .duration{ font-size:.65rem; }
-    .more-btn{ font-size:.78rem; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -690,27 +731,68 @@ function useSectionVisibility(threshold = 0.32, once = false) {
   const [visible, setVisible] = React.useState(false);
   const [visitId, setVisitId] = React.useState(0);
   const lockedRef = React.useRef(false);
+  const triggeredRef = React.useRef(false);
 
   React.useEffect(() => {
     const el = ref.current;
     if (!el) return;
     let wasVisible = false;
+
+    function reveal() {
+      if (triggeredRef.current) return;
+      triggeredRef.current = true;
+      lockedRef.current = true;
+      setVisible(true);
+      setVisitId((v) => v + 1);
+    }
+
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (lockedRef.current) return;
         const nowVisible = entry.isIntersecting && entry.intersectionRatio >= threshold;
-        setVisible(nowVisible);
-        if (nowVisible && !wasVisible) setVisitId((v) => v + 1);
-        wasVisible = nowVisible;
-        if (once && nowVisible) {
-          lockedRef.current = true;
-          obs.disconnect();
+        if (once) {
+          if (nowVisible) reveal();
+        } else {
+          setVisible(nowVisible);
+          if (nowVisible && !wasVisible) setVisitId((v) => v + 1);
+          wasVisible = nowVisible;
         }
       },
       { threshold: [0, threshold, 0.6, 1] }
     );
     obs.observe(el);
-    return () => obs.disconnect();
+
+    // Belt-and-suspenders for "once" sections (the letter): a plain,
+    // passive scroll check, entirely independent of the observer above.
+    // IntersectionObserver is normally reliable, but this guarantees the
+    // letter can never end up permanently stuck hidden if a callback is
+    // ever missed on an unusual device or a very fast scroll.
+    let onScroll;
+    if (once) {
+      let ticking = false;
+      const checkNow = () => {
+        if (triggeredRef.current || !ref.current) return;
+        const rect = ref.current.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const visibleHeight = Math.min(rect.bottom, vh) - Math.max(rect.top, 0);
+        if (rect.height > 0 && visibleHeight / rect.height >= threshold) reveal();
+      };
+      onScroll = () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          checkNow();
+          ticking = false;
+        });
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      checkNow();
+    }
+
+    return () => {
+      obs.disconnect();
+      if (onScroll) window.removeEventListener("scroll", onScroll);
+    };
   }, [threshold, once]);
 
   return { ref, visible, visitId };
@@ -1216,19 +1298,28 @@ function getSpotifyTrackId(url) {
 }
 
 function SongCard({ song, index }) {
-  const width = 25 + ((index * 37) % 55);
-  const href = song.spotify_url || `https://open.spotify.com/search/${encodeURIComponent(song.title + " " + song.artist)}`;
   const trackId = getSpotifyTrackId(song.spotify_url);
-  const [playing, setPlaying] = React.useState(false);
 
-  function handlePlay() {
-    if (trackId) {
-      setPlaying((p) => !p);
-    } else {
-      window.open(href, "_blank", "noopener,noreferrer");
-    }
+  if (trackId) {
+    return (
+      <div className="song-card song-card-embed">
+        <iframe
+          src={`https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`}
+          width="100%"
+          height="152"
+          frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          title={song.title + " by " + song.artist}
+        />
+      </div>
+    );
   }
 
+  // No real Spotify link for this one — fall back to a simple card that
+  // searches instead of pretending to play something we don't have.
+  const width = 25 + ((index * 37) % 55);
+  const href = `https://open.spotify.com/search/${encodeURIComponent(song.title + " " + song.artist)}`;
   return (
     <div className="song-card">
       <div className="song-top">
@@ -1241,43 +1332,20 @@ function SongCard({ song, index }) {
             {song.explicit && <span className="explicit-tag">E</span>}
           </div>
           <div className="song-artist">{song.artist}</div>
-          <a className="save-btn" href={href} target="_blank" rel="noreferrer">
-            <PlusCircleIcon /> Save on Spotify
-          </a>
         </div>
-        <a className="spotify-badge" href={href} target="_blank" rel="noreferrer" aria-label="Open on Spotify">
+        <a className="spotify-badge" href={href} target="_blank" rel="noreferrer" aria-label="Search on Spotify">
           <SoundMarkIcon />
         </a>
       </div>
-      {playing && trackId ? (
-        <div className="song-embed">
-          <iframe
-            src={`https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`}
-            width="100%"
-            height="80"
-            frameBorder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy"
-            title={song.title + " player"}
-          />
+      <div className="song-bottom">
+        <div className="progress">
+          <div className="progress-fill" style={{ width: width + "%" }} />
         </div>
-      ) : (
-        <div className="song-bottom">
-          <div className="progress">
-            <div className="progress-fill" style={{ width: width + "%" }} />
-          </div>
-          <span className="duration">{song.duration}</span>
-          <button type="button" className="more-btn" aria-label="More options">•••</button>
-          <button
-            type="button"
-            className="play-btn"
-            onClick={handlePlay}
-            aria-label={trackId ? "Play in site" : "Search on Spotify"}
-          >
-            <PlayIcon />
-          </button>
-        </div>
-      )}
+        <span className="duration">{song.duration}</span>
+        <a className="play-btn" href={href} target="_blank" rel="noreferrer" aria-label="Search on Spotify">
+          <PlayIcon />
+        </a>
+      </div>
     </div>
   );
 }
@@ -1389,6 +1457,46 @@ function FinalBackdrop({ photos }) {
   );
 }
 
+/* A one-time burst of hearts rising from the bottom of the final section,
+   replayed each time it's scrolled into view — the "reward" moment the
+   ambient floating hearts have been building toward the whole time. */
+function HeartsRise() {
+  const hearts = React.useMemo(
+    () =>
+      Array.from({ length: 14 }).map((_, i) => ({
+        id: i,
+        left: 4 + Math.random() * 92,
+        size: 11 + Math.random() * 13,
+        delay: Math.random() * 900,
+        dur: 2600 + Math.random() * 1500,
+        drift: (Math.random() - 0.5) * 90,
+        color: HEART_TINTS[i % HEART_TINTS.length]
+      })),
+    []
+  );
+  return (
+    <div className="hearts-rise" aria-hidden="true">
+      {hearts.map((h) => (
+        <span
+          key={h.id}
+          className="rise-heart"
+          style={{
+            left: h.left + "%",
+            width: h.size,
+            height: h.size,
+            color: h.color,
+            animationDelay: h.delay + "ms",
+            animationDuration: h.dur + "ms",
+            "--riseDrift": h.drift + "px"
+          }}
+        >
+          <MiniHeart />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function SectionFinal({ message, photos }) {
   return (
     <FadeSection id="final" className="section-final">
@@ -1397,20 +1505,39 @@ function SectionFinal({ message, photos }) {
           <FinalBackdrop photos={photos} />
           <div className="final-backdrop-overlay" />
           <div className="final-glow" />
+          <HeartsRise key={visitId} />
+          <div className="final-eyebrow">Forever Yours</div>
           <h1 className="final-text">
             <Typewriter key={visitId} text={message} speed={62} />
           </h1>
+          <div className="final-flourish" aria-hidden="true">
+            <span className="fl-line" />
+            <MiniHeart />
+            <span className="fl-line right" />
+          </div>
+          <button type="button" className="relive-btn" onClick={() => window.location.reload()}>
+            Relive this moment
+          </button>
         </React.Fragment>
       )}
     </FadeSection>
   );
 }
 
-function GoToStart() {
+/* A quiet signature at the very end of the scroll — not a persistent
+   watermark, just a small mark of who put this together. */
+function BrandMark() {
   return (
-    <button type="button" className="go-start" onClick={() => window.location.reload()}>
-      <span className="arrow">↑</span> Go to the start
-    </button>
+    <footer className="site-footer">
+      <div className="brand-mark">
+        <span className="brand-mark-line" />
+        <span className="brand-mark-inner">
+          <MiniHeart />
+          <span className="brand-mark-text">Chasing Her</span>
+        </span>
+        <span className="brand-mark-line" />
+      </div>
+    </footer>
   );
 }
 
@@ -1422,7 +1549,7 @@ function MainApp({ config, flowersCleared }) {
       <SectionLetter title={config.letter_title} body={config.letter_body} />
       <SectionSongs songs={config.songs} />
       <SectionFinal message={config.final_message} photos={config.photos} />
-      <GoToStart />
+      <BrandMark />
     </div>
   );
 }
