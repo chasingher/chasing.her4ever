@@ -128,6 +128,14 @@
     display:block; background:#1c0b0b; border-radius:8px; padding:10px 12px;
     font-size:.78rem; color:#ffd3a8; overflow-x:auto; white-space:pre; margin-bottom:10px;
   }
+  .fix-banner-actions{ display:flex; gap:10px; }
+  .fix-banner-check{
+    background: var(--accent); border:1px solid var(--accent); color:#fff;
+    border-radius:8px; padding:6px 14px; font-size:.76rem; font-weight:600;
+    transition: background .16s ease;
+  }
+  .fix-banner-check:hover{ background: var(--accent-deep); }
+  .fix-banner-check:disabled{ opacity:.6; cursor:default; }
   .fix-banner-dismiss{
     background:transparent; border:1px solid rgba(255,255,255,.3); color:#ffe3e3;
     border-radius:8px; padding:6px 14px; font-size:.76rem;
@@ -617,6 +625,7 @@ function Dashboard() {
   const [publishing, setPublishing] = React.useState(false);
   const [status, setStatus] = React.useState({ text: "", kind: "" });
   const [fixBanner, setFixBanner] = React.useState(null); // { text, sql } | null
+  const [checkingColumns, setCheckingColumns] = React.useState(false);
 
   const refreshList = React.useCallback(async () => {
     if (!supabaseClient) { setLoadingList(false); return; }
@@ -631,8 +640,9 @@ function Dashboard() {
 
   React.useEffect(() => { refreshList(); }, [refreshList]);
 
-  React.useEffect(() => {
+  const checkRequiredColumns = React.useCallback(() => {
     if (!supabaseClient) return;
+    setCheckingColumns(true);
     const checks = [
       { col: "flower_images", def: "flower_images jsonb default '[]'" },
       { col: "github_repo", def: "github_repo text" },
@@ -648,7 +658,12 @@ function Dashboard() {
       )
     ).then((results) => {
       const missing = results.filter((r) => r.missing);
-      if (!missing.length) return;
+      setCheckingColumns(false);
+      if (!missing.length) {
+        setFixBanner(null);
+        setStatus({ text: "All set — everything checks out.", kind: "ok" });
+        return;
+      }
       const names = missing.map((m) => '"' + m.col + '"').join(", ");
       const sql = missing.map((m) => "alter table projects add column if not exists " + m.def + ";").join("\n");
       setFixBanner({
@@ -657,11 +672,15 @@ function Dashboard() {
           (missing.length > 1 ? "these columns: " : "this column: ") +
           names +
           ". Some features (flower photos, publishing) won't save until this is fixed — even if things " +
-          "appear to work at first. Run this once in Supabase's SQL Editor:",
+          "appear to work at first. Run this once in Supabase's SQL Editor, then click \"Check again\" below:",
         sql
       });
     });
   }, []);
+
+  React.useEffect(() => {
+    checkRequiredColumns();
+  }, [checkRequiredColumns]);
 
   function startNew() {
     setCurrentSlug(null);
@@ -917,9 +936,14 @@ function Dashboard() {
             <div className="fix-banner">
               <div className="fix-banner-text">{fixBanner.text}</div>
               <code className="fix-banner-sql">{fixBanner.sql}</code>
-              <button type="button" className="fix-banner-dismiss" onClick={() => setFixBanner(null)}>
-                Dismiss
-              </button>
+              <div className="fix-banner-actions">
+                <button type="button" className="fix-banner-check" onClick={checkRequiredColumns} disabled={checkingColumns}>
+                  {checkingColumns ? "Checking…" : "Check again"}
+                </button>
+                <button type="button" className="fix-banner-dismiss" onClick={() => setFixBanner(null)}>
+                  Dismiss
+                </button>
+              </div>
             </div>
           )}
           <div className="topline">
