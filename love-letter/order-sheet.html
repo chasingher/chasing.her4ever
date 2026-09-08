@@ -1,1 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chaing Her — Admin</title>
+<meta name="robots" content="noindex, nofollow">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ivory:#FBF3EA;
+    --ivory-deep:#F5E9DC;
+    --blush:#F5DAD5;
+    --wine:#5A1A2C;
+    --wine-deep:#33101B;
+    --gold:#B98A4E;
+    --gold-light:#DCC397;
+    --ink:#2B1710;
+    --brown:#7A5A47;
+    --brown-soft:#9C7C68;
+    --white:#FFFDFB;
+    --danger:#8A2A2A;
+    --danger-bg:#FBEAEA;
+    --ok:#2F6B3F;
+    --ok-bg:#EAF4EC;
+    --serif:"Fraunces", ui-serif, Georgia, serif;
+    --sans:"Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--ivory-deep);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:var(--serif); font-weight:600; margin:0; color:var(--wine-deep); }
+  p{ margin:0; }
+  button, input, select, textarea{ font-family:var(--sans); font-size:15px; }
+  ::selection{ background:var(--blush); }
+
+  /* ---------- shared bits ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 20px; border-radius:10px; border:1.5px solid transparent;
+    font-weight:700; font-size:14px; cursor:pointer;
+    transition:background .2s ease, border-color .2s ease, opacity .2s ease, transform .15s ease;
+    white-space:nowrap;
+  }
+  .btn-primary{ background:var(--wine); color:var(--ivory); box-shadow:0 8px 18px -10px rgba(90,26,44,.5); }
+  .btn-primary:hover{ background:#6E2138; }
+  .btn-primary:disabled{ opacity:.6; cursor:not-allowed; }
+  .btn-ghost{ background:transparent; color:var(--wine-deep); border-color:rgba(90,26,44,.25); }
+  .btn-ghost:hover{ background:rgba(90,26,44,.06); }
+  .btn-danger{ background:transparent; color:var(--danger); border-color:rgba(138,42,42,.3); }
+  .btn-danger:hover{ background:var(--danger-bg); }
+  .btn-sm{ padding:7px 13px; font-size:12.5px; border-radius:8px; }
+
+  input[type="text"], input[type="email"], input[type="password"], input[type="tel"],
+  input[type="url"], input[type="number"], select, textarea{
+    width:100%; padding:11px 13px; border-radius:9px;
+    border:1.5px solid rgba(90,26,44,.16); background:var(--white); color:var(--ink);
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--wine); outline-offset:1px; }
+  label{ display:block; font-size:13px; font-weight:700; color:var(--wine-deep); margin-bottom:6px; }
+  .field{ margin-bottom:16px; }
+  textarea{ resize:vertical; min-height:70px; }
+
+  .card{
+    background:var(--white); border-radius:16px; padding:22px;
+    box-shadow:0 14px 30px -22px rgba(51,16,27,.35); border:1px solid rgba(90,26,44,.06);
+  }
+
+  .badge{
+    display:inline-flex; align-items:center; padding:3px 10px; border-radius:100px;
+    font-size:11.5px; font-weight:700;
+  }
+  .badge-gold{ background:var(--blush); color:var(--wine-deep); }
+  .badge-ok{ background:var(--ok-bg); color:var(--ok); }
+  .badge-off{ background:#EFE9E2; color:var(--brown-soft); }
+
+  /* ---------- login screen ---------- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .login-card{ width:100%; max-width:360px; text-align:center; }
+  .login-brand{
+    display:flex; align-items:center; justify-content:center; gap:9px; margin-bottom:22px;
+  }
+  .login-brand span{ font-family:var(--serif); font-style:italic; font-weight:600; font-size:21px; color:var(--wine-deep); }
+  .login-card h1{ font-size:22px; margin-bottom:6px; }
+  .login-card > p{ color:var(--brown); font-size:13.5px; margin-bottom:22px; }
+  #loginError{
+    display:none; margin-top:14px; text-align:left; font-size:13px; font-weight:600;
+    color:var(--danger); background:var(--danger-bg); border-radius:10px; padding:10px 12px;
+  }
+  #loginError.is-active{ display:block; }
+  #configWarning{
+    display:none; margin-top:16px; text-align:left; font-size:12.5px; color:var(--brown);
+    background:var(--ivory); border:1px dashed var(--gold); border-radius:10px; padding:12px 14px; line-height:1.6;
+  }
+  #configWarning.is-active{ display:block; }
+  #configWarning code{ background:rgba(90,26,44,.08); padding:1px 5px; border-radius:4px; }
+
+  /* ---------- app shell ---------- */
+  #appShell[hidden]{ display:none; }
+  .topbar{
+    position:sticky; top:0; z-index:10;
+    background:var(--ivory-deep); border-bottom:1px solid rgba(90,26,44,.1);
+    padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .topbar-brand{ display:flex; align-items:center; gap:8px; }
+  .topbar-brand span{ font-family:var(--serif); font-style:italic; font-weight:600; font-size:18px; color:var(--wine-deep); }
+
+  .tabs{
+    max-width:1080px; margin:0 auto; padding:18px 24px 0; display:flex; gap:6px;
+  }
+  .tab-btn{
+    background:none; border:none; padding:10px 16px; border-radius:10px 10px 0 0;
+    font-weight:700; font-size:14px; color:var(--brown); cursor:pointer;
+  }
+  .tab-btn.is-active{ background:var(--white); color:var(--wine-deep); }
+
+  main{ max-width:1080px; margin:0 auto; padding:24px; }
+  .panel{ display:none; }
+  .panel.is-active{ display:block; }
+
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+  .panel-head h2{ font-size:20px; }
+
+  /* ---------- leads table ---------- */
+  .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .toolbar input[type="text"]{ max-width:240px; }
+  .table-scroll{ overflow-x:auto; border-radius:14px; }
+  table{ width:100%; border-collapse:collapse; min-width:760px; }
+  thead th{
+    text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--brown-soft); font-weight:700; padding:10px 14px; border-bottom:1.5px solid rgba(90,26,44,.1);
+  }
+  tbody td{ padding:12px 14px; border-bottom:1px solid rgba(90,26,44,.08); font-size:13.5px; vertical-align:top; }
+  tbody tr:hover{ background:rgba(90,26,44,.03); }
+  td.msg-cell{ max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .status-select{ padding:6px 8px; border-radius:7px; font-size:12.5px; font-weight:700; }
+  .empty-state{ padding:40px 20px; text-align:center; color:var(--brown-soft); font-size:14px; }
+
+  /* ---------- testimonials ---------- */
+  .t-grid{ display:grid; grid-template-columns:1fr; gap:20px; }
+  @media (min-width:820px){ .t-grid{ grid-template-columns:.85fr 1.15fr; align-items:start; } }
+
+  .t-form-row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .t-list{ display:flex; flex-direction:column; gap:12px; }
+  .t-item{ display:flex; gap:14px; padding:14px; }
+  .t-item img{ width:64px; height:64px; border-radius:10px; object-fit:cover; flex:none; background:var(--ivory-deep); }
+  .t-item .ph-fallback{
+    width:64px; height:64px; border-radius:10px; flex:none; background:var(--ivory-deep);
+    display:flex; align-items:center; justify-content:center; color:var(--brown-soft); font-size:11px; text-align:center;
+  }
+  .t-item-body{ flex:1; min-width:0; }
+  .t-item-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+  .t-item-quote{ font-size:13.5px; color:var(--ink); margin:4px 0 6px; }
+  .t-item-name{ font-size:12px; color:var(--brown-soft); }
+  .t-item-actions{ display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .order-input{ width:56px !important; padding:6px 8px !important; text-align:center; }
+
+  /* ---------- settings ---------- */
+  .settings-card{ max-width:520px; }
+  .save-note{ font-size:12.5px; color:var(--ok); margin-top:10px; display:none; }
+  .save-note.is-active{ display:block; }
+
+  .hint{ font-size:12.5px; color:var(--brown-soft); margin-top:-8px; margin-bottom:16px; }
+
+  .loading-row td{ text-align:center; color:var(--brown-soft); padding:24px; }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen">
+  <div class="login-card card">
+    <div class="login-brand" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 27.5s-11-7-11-14.6C5 8.4 8.2 5 12 5c1.9 0 3.6.9 4.6 2.4C17.6 5.9 19.3 5 21.2 5 25 5 28 8.4 28 12.9c0 7.6-11 14.6-11 14.6z" fill="#5A1A2C"/>
+      </svg>
+      <span>Chaing Her</span>
+    </div>
+    <h1>Admin</h1>
+    <p>Sign in to manage testimonials, leads and settings.</p>
+
+    <form id="loginForm">
+      <div class="field" style="text-align:left;">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required autocomplete="username">
+      </div>
+      <div class="field" style="text-align:left;">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;" id="loginBtn">Sign in</button>
+    </form>
+
+    <p id="loginError"></p>
+    <p id="configWarning">
+      This page isn't connected to a Supabase project yet. Open <code>admin.html</code> and fill in
+      <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> near the top of the script, then create
+      your login under Supabase → Authentication → Users.
+    </p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appShell" hidden>
+  <div class="topbar">
+    <div class="topbar-brand" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 27.5s-11-7-11-14.6C5 8.4 8.2 5 12 5c1.9 0 3.6.9 4.6 2.4C17.6 5.9 19.3 5 21.2 5 25 5 28 8.4 28 12.9c0 7.6-11 14.6-11 14.6z" fill="#5A1A2C"/>
+      </svg>
+      <span>Chaing Her · Admin</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="signOutBtn">Sign out</button>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab-btn is-active" data-tab="leads">Leads</button>
+    <button class="tab-btn" data-tab="testimonials">Testimonials</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
+  </nav>
+
+  <main>
+
+    <!-- ===== LEADS PANEL ===== -->
+    <section class="panel is-active" id="panel-leads">
+      <div class="panel-head">
+        <h2>Order form submissions</h2>
+        <div class="toolbar">
+          <input type="text" id="leadSearch" placeholder="Search name, email, WhatsApp...">
+          <button class="btn btn-ghost btn-sm" id="refreshLeadsBtn">Refresh</button>
+          <button class="btn btn-primary btn-sm" id="exportLeadsBtn">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>WhatsApp</th>
+                <th>Email</th>
+                <th>For</th>
+                <th>Message</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="leadsBody">
+              <tr class="loading-row"><td colspan="7">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TESTIMONIALS PANEL ===== -->
+    <section class="panel" id="panel-testimonials">
+      <div class="panel-head">
+        <h2>Testimonials</h2>
+      </div>
+
+      <div class="t-grid">
+        <div class="card">
+          <h3 id="tFormTitle" style="font-size:16px; margin-bottom:16px;">Add a testimonial</h3>
+          <form id="testimonialForm">
+            <div class="field">
+              <label for="tKind">Type</label>
+              <select id="tKind">
+                <option value="photo">Photo</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="tName">Customer name (or "a happy customer")</label>
+              <input type="text" id="tName" placeholder="a happy customer">
+            </div>
+
+            <div class="field">
+              <label for="tQuote">Quote</label>
+              <textarea id="tQuote" required placeholder="What they said..."></textarea>
+            </div>
+
+            <div class="field">
+              <label for="tMedia">Photo (or video thumbnail)</label>
+              <input type="file" id="tMedia" accept="image/*">
+              <p class="hint" style="margin-top:6px;">Uploads to your Supabase "testimonials" storage bucket.</p>
+            </div>
+
+            <div class="field" id="tVideoUrlField" style="display:none;">
+              <label for="tVideoUrl">Video link (opens when the play button is tapped)</label>
+              <input type="url" id="tVideoUrl" placeholder="https://...">
+            </div>
+
+            <div class="t-form-row2">
+              <div class="field">
+                <label for="tOrder">Display order</label>
+                <input type="number" id="tOrder" value="0">
+              </div>
+              <div class="field">
+                <label for="tPublished">Published</label>
+                <select id="tPublished">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+
+            <p class="form-error" id="tFormError" style="display:none; color:var(--danger); background:var(--danger-bg); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:14px;"></p>
+
+            <div style="display:flex; gap:10px;">
+              <button type="submit" class="btn btn-primary" id="tSaveBtn" style="flex:1;">Save testimonial</button>
+              <button type="button" class="btn btn-ghost" id="tCancelBtn" style="display:none;">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <div>
+          <div id="testimonialsList" class="t-list">
+            <p class="empty-state">Loading…</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SETTINGS PANEL ===== -->
+    <section class="panel" id="panel-settings">
+      <div class="panel-head"><h2>Settings</h2></div>
+
+      <div class="card settings-card">
+        <div class="field">
+          <label for="redirectUrl">Redirect link after form submission</label>
+          <input type="url" id="redirectUrl" placeholder="https://wa.me/...">
+        </div>
+        <p class="hint">Sent to the person right after they submit the order form on the main site — a WhatsApp chat link, a payment page, a thank-you page, whatever fits your flow.</p>
+        <button class="btn btn-primary" id="saveSettingsBtn">Save</button>
+        <p class="save-note" id="settingsSaveNote">Saved.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================================
+     SUPABASE CONFIG — same project as index.html.
+  ===================================================================== */
+  var SUPABASE_URL = "https://yaisiawnqlfosfawcxle.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_KZbznu5oAKqKtCTQ36PM1A_eiBCvm8-";
+
+  var configured = window.supabase && SUPABASE_URL.indexOf("YOUR_") !== 0;
+  var supabaseClient = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  if(!configured){
+    document.getElementById("configWarning").classList.add("is-active");
+  }
+
+  function escapeHtml(str){
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+  function escapeAttr(str){ return escapeHtml(str).replace(/`/g, "&#096;"); }
+
+  var loginScreen = document.getElementById("loginScreen");
+  var appShell = document.getElementById("appShell");
+  var loginForm = document.getElementById("loginForm");
+  var loginError = document.getElementById("loginError");
+  var loginBtn = document.getElementById("loginBtn");
+
+  function showApp(){
+    loginScreen.style.display = "none";
+    appShell.hidden = false;
+    loadLeads();
+    loadTestimonials();
+    loadSettings();
+  }
+  function showLogin(){
+    appShell.hidden = true;
+    loginScreen.style.display = "flex";
+  }
+
+  /* ---------- auth ---------- */
+  if(configured){
+    supabaseClient.auth.getSession().then(function(res){
+      if(res.data && res.data.session){ showApp(); } else { showLogin(); }
+    });
+    supabaseClient.auth.onAuthStateChange(function(_event, session){
+      if(session){ showApp(); } else { showLogin(); }
+    });
+  }
+
+  loginForm.addEventListener("submit", async function(e){
+    e.preventDefault();
+    if(!configured) return;
+    loginError.classList.remove("is-active");
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Signing in...";
+    try{
+      var email = document.getElementById("loginEmail").value.trim();
+      var password = document.getElementById("loginPassword").value;
+      var res = await supabaseClient.auth.signInWithPassword({ email:email, password:password });
+      if(res.error) throw res.error;
+    }catch(err){
+      loginError.textContent = err.message || "Could not sign in. Check your email and password.";
+      loginError.classList.add("is-active");
+    }finally{
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Sign in";
+    }
+  });
+
+  document.getElementById("signOutBtn").addEventListener("click", async function(){
+    if(!configured) return;
+    await supabaseClient.auth.signOut();
+  });
+
+  /* ---------- tabs ---------- */
+  document.querySelectorAll(".tab-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("is-active"); });
+      document.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("is-active"); });
+      btn.classList.add("is-active");
+      document.getElementById("panel-" + btn.dataset.tab).classList.add("is-active");
+    });
+  });
+
+  /* =====================================================================
+     LEADS
+  ===================================================================== */
+  var allLeads = [];
+
+  function renderLeads(rows){
+    var tbody = document.getElementById("leadsBody");
+    if(!rows.length){
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No submissions yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(function(lead){
+      var date = new Date(lead.created_at).toLocaleString();
+      return (
+        '<tr>' +
+          '<td>' + escapeHtml(date) + '</td>' +
+          '<td>' + escapeHtml(lead.full_name) + '</td>' +
+          '<td>' + escapeHtml(lead.whatsapp) + '</td>' +
+          '<td>' + escapeHtml(lead.email) + '</td>' +
+          '<td>' + escapeHtml(lead.recipient) + '</td>' +
+          '<td class="msg-cell" title="' + escapeAttr(lead.message || "") + '">' + escapeHtml(lead.message || "—") + '</td>' +
+          '<td>' +
+            '<select class="status-select" data-id="' + lead.id + '">' +
+              ['new','contacted','paid','closed'].map(function(s){
+                return '<option value="' + s + '"' + (lead.status === s ? ' selected' : '') + '>' + s + '</option>';
+              }).join('') +
+            '</select>' +
+          '</td>' +
+        '</tr>'
+      );
+    }).join("");
+
+    tbody.querySelectorAll(".status-select").forEach(function(sel){
+      sel.addEventListener("change", async function(){
+        try{
+          await supabaseClient.from("leads").update({ status:sel.value }).eq("id", sel.dataset.id);
+        }catch(err){ console.error(err); }
+      });
+    });
+  }
+
+  async function loadLeads(){
+    if(!configured) return;
+    var tbody = document.getElementById("leadsBody");
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Loading…</td></tr>';
+    try{
+      var res = await supabaseClient.from("leads").select("*").order("created_at", { ascending:false });
+      if(res.error) throw res.error;
+      allLeads = res.data || [];
+      renderLeads(allLeads);
+    }catch(err){
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Could not load leads: ' + escapeHtml(err.message || err) + '</td></tr>';
+    }
+  }
+
+  document.getElementById("refreshLeadsBtn").addEventListener("click", loadLeads);
+
+  document.getElementById("leadSearch").addEventListener("input", function(){
+    var q = this.value.trim().toLowerCase();
+    if(!q){ renderLeads(allLeads); return; }
+    renderLeads(allLeads.filter(function(l){
+      return (l.full_name || "").toLowerCase().indexOf(q) > -1 ||
+             (l.email || "").toLowerCase().indexOf(q) > -1 ||
+             (l.whatsapp || "").toLowerCase().indexOf(q) > -1;
+    }));
+  });
+
+  document.getElementById("exportLeadsBtn").addEventListener("click", function(){
+    if(!allLeads.length) return;
+    var cols = ["created_at","full_name","whatsapp","email","recipient","message","status"];
+    var lines = [cols.join(",")];
+    allLeads.forEach(function(lead){
+      lines.push(cols.map(function(c){
+        var v = String(lead[c] == null ? "" : lead[c]).replace(/"/g, '""');
+        return '"' + v + '"';
+      }).join(","));
+    });
+    var blob = new Blob([lines.join("\n")], { type:"text/csv" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "chaing-her-leads.csv";
+    a.click();
+  });
+
+  /* =====================================================================
+     TESTIMONIALS
+  ===================================================================== */
+  var editingId = null;
+  var tKind = document.getElementById("tKind");
+  var tVideoUrlField = document.getElementById("tVideoUrlField");
+
+  tKind.addEventListener("change", function(){
+    tVideoUrlField.style.display = tKind.value === "video" ? "block" : "none";
+  });
+
+  function renderTestimonialsList(rows){
+    var list = document.getElementById("testimonialsList");
+    if(!rows.length){
+      list.innerHTML = '<p class="empty-state">No testimonials yet — add your first one on the left.</p>';
+      return;
+    }
+    list.innerHTML = rows.map(function(t){
+      var thumb = t.media_url
+        ? '<img src="' + escapeAttr(t.media_url) + '" alt="">'
+        : '<div class="ph-fallback">No photo</div>';
+      return (
+        '<div class="card t-item">' +
+          thumb +
+          '<div class="t-item-body">' +
+            '<div class="t-item-top">' +
+              '<span class="badge badge-gold">' + escapeHtml(t.kind) + '</span>' +
+              '<span class="badge ' + (t.is_published ? 'badge-ok' : 'badge-off') + '">' + (t.is_published ? "Published" : "Hidden") + '</span>' +
+              '<span class="badge badge-off">order ' + t.display_order + '</span>' +
+            '</div>' +
+            '<p class="t-item-quote">' + escapeHtml(t.quote) + '</p>' +
+            '<p class="t-item-name">— ' + escapeHtml(t.customer_name) + '</p>' +
+            '<div class="t-item-actions">' +
+              '<button class="btn btn-ghost btn-sm" data-edit="' + t.id + '">Edit</button>' +
+              '<button class="btn btn-danger btn-sm" data-delete="' + t.id + '">Delete</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join("");
+
+    list.querySelectorAll("[data-edit]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var row = rows.find(function(r){ return r.id === btn.dataset.edit; });
+        if(row) startEditTestimonial(row);
+      });
+    });
+    list.querySelectorAll("[data-delete]").forEach(function(btn){
+      btn.addEventListener("click", async function(){
+        if(!confirm("Delete this testimonial?")) return;
+        try{
+          await supabaseClient.from("testimonials").delete().eq("id", btn.dataset.delete);
+          loadTestimonials();
+        }catch(err){ alert("Could not delete: " + (err.message || err)); }
+      });
+    });
+  }
+
+  var cachedTestimonials = [];
+
+  async function loadTestimonials(){
+    if(!configured) return;
+    var list = document.getElementById("testimonialsList");
+    list.innerHTML = '<p class="empty-state">Loading…</p>';
+    try{
+      var res = await supabaseClient.from("testimonials").select("*").order("display_order", { ascending:true });
+      if(res.error) throw res.error;
+      cachedTestimonials = res.data || [];
+      renderTestimonialsList(cachedTestimonials);
+    }catch(err){
+      list.innerHTML = '<p class="empty-state">Could not load testimonials: ' + escapeHtml(err.message || err) + '</p>';
+    }
+  }
+
+  function startEditTestimonial(row){
+    editingId = row.id;
+    document.getElementById("tFormTitle").textContent = "Edit testimonial";
+    document.getElementById("tKind").value = row.kind;
+    tVideoUrlField.style.display = row.kind === "video" ? "block" : "none";
+    document.getElementById("tName").value = row.customer_name || "";
+    document.getElementById("tQuote").value = row.quote || "";
+    document.getElementById("tVideoUrl").value = row.video_url || "";
+    document.getElementById("tOrder").value = row.display_order || 0;
+    document.getElementById("tPublished").value = row.is_published ? "true" : "false";
+    document.getElementById("tSaveBtn").textContent = "Update testimonial";
+    document.getElementById("tCancelBtn").style.display = "inline-flex";
+    window.scrollTo({ top:0, behavior:"smooth" });
+  }
+
+  function resetTestimonialForm(){
+    editingId = null;
+    document.getElementById("testimonialForm").reset();
+    document.getElementById("tFormTitle").textContent = "Add a testimonial";
+    document.getElementById("tSaveBtn").textContent = "Save testimonial";
+    document.getElementById("tCancelBtn").style.display = "none";
+    tVideoUrlField.style.display = "none";
+    document.getElementById("tFormError").style.display = "none";
+  }
+
+  document.getElementById("tCancelBtn").addEventListener("click", resetTestimonialForm);
+
+  document.getElementById("testimonialForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    var errEl = document.getElementById("tFormError");
+    errEl.style.display = "none";
+    var saveBtn = document.getElementById("tSaveBtn");
+    saveBtn.disabled = true;
+    var originalLabel = saveBtn.textContent;
+    saveBtn.textContent = "Saving...";
+
+    try{
+      var mediaUrl = editingId ? (cachedTestimonials.find(function(r){ return r.id === editingId; }) || {}).media_url : null;
+
+      var fileInput = document.getElementById("tMedia");
+      if(fileInput.files && fileInput.files[0]){
+        var file = fileInput.files[0];
+        var path = Date.now() + "_" + file.name.replace(/\s+/g, "_");
+        var uploadRes = await supabaseClient.storage.from("testimonials").upload(path, file);
+        if(uploadRes.error) throw uploadRes.error;
+        var pub = supabaseClient.storage.from("testimonials").getPublicUrl(path);
+        mediaUrl = pub.data.publicUrl;
+      }
+
+      var payload = {
+        kind: document.getElementById("tKind").value,
+        customer_name: document.getElementById("tName").value.trim() || "a happy customer",
+        quote: document.getElementById("tQuote").value.trim(),
+        media_url: mediaUrl || null,
+        video_url: document.getElementById("tKind").value === "video" ? (document.getElementById("tVideoUrl").value.trim() || null) : null,
+        display_order: parseInt(document.getElementById("tOrder").value, 10) || 0,
+        is_published: document.getElementById("tPublished").value === "true"
+      };
+
+      if(editingId){
+        var updRes = await supabaseClient.from("testimonials").update(payload).eq("id", editingId);
+        if(updRes.error) throw updRes.error;
+      }else{
+        var insRes = await supabaseClient.from("testimonials").insert([payload]);
+        if(insRes.error) throw insRes.error;
+      }
+
+      resetTestimonialForm();
+      loadTestimonials();
+
+    }catch(err){
+      errEl.textContent = err.message || "Something went wrong saving this testimonial.";
+      errEl.style.display = "block";
+    }finally{
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalLabel;
+    }
+  });
+
+  /* =====================================================================
+     SETTINGS
+  ===================================================================== */
+  async function loadSettings(){
+    if(!configured) return;
+    try{
+      var res = await supabaseClient.from("settings").select("value").eq("key", "redirect_url").single();
+      if(res.data){ document.getElementById("redirectUrl").value = res.data.value || ""; }
+    }catch(err){ console.warn("Could not load settings", err); }
+  }
+
+  document.getElementById("saveSettingsBtn").addEventListener("click", async function(){
+    var note = document.getElementById("settingsSaveNote");
+    note.classList.remove("is-active");
+    try{
+      var value = document.getElementById("redirectUrl").value.trim();
+      var res = await supabaseClient.from("settings").upsert({ key:"redirect_url", value:value });
+      if(res.error) throw res.error;
+      note.textContent = "Saved.";
+      note.classList.add("is-active");
+    }catch(err){
+      note.textContent = "Could not save: " + (err.message || err);
+      note.style.color = "var(--danger)";
+      note.classList.add("is-active");
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
