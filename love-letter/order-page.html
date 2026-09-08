@@ -835,6 +835,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   }
   .field textarea{ resize:vertical; min-height:88px; }
   .hp-field{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+  .field.is-hidden{ display:none; }
 
   .form-note{
     margin-top:20px;
@@ -1238,10 +1239,30 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
           <label for="fullName">Full name</label>
           <input type="text" id="fullName" name="fullName" placeholder="Your name" required autocomplete="name">
         </div>
-
+        
+        <div class="field">
+          <label for="country">Country</label>
+          <select id="country" name="country" required>
+            <option value="" disabled selected>Choose your country</option>
+            <option>Nigeria</option>
+            <option>Ghana</option>
+            <option>Kenya</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        
+        <div class="field is-hidden" id="otherCountryField">
+          <label for="countryOther">Please tell us your country</label>
+          <input type="text" id="countryOther" name="countryOther" placeholder="Type your country">
+        </div>
+        
         <div class="field">
           <label for="whatsapp">WhatsApp number</label>
           <input type="tel" id="whatsapp" name="whatsapp" placeholder="e.g. 080..." required autocomplete="tel">
+        </div>
+        
+        <div class="form-note">
+          <strong>Please include your country code</strong> so we can reach you on WhatsApp — e.g. <strong>+234 801 234 5678</strong> (Nigeria), <strong>+233 24 123 4567</strong> (Ghana), or <strong>+254 712 345 678</strong> (Kenya).
         </div>
 
         <div class="field">
@@ -1519,6 +1540,20 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   var formError = document.getElementById("formError");
   var submitBtn = form.querySelector('button[type="submit"]');
   var submitBtnDefaultLabel = submitBtn.textContent;
+  var countrySelect = document.getElementById("country");
+  var otherCountryField = document.getElementById("otherCountryField");
+  var otherCountryInput = document.getElementById("countryOther");
+  
+  function toggleOtherCountry(){
+    var isOther = countrySelect.value === "Other";
+    otherCountryField.classList.toggle("is-hidden", !isOther);
+    otherCountryInput.required = isOther;
+    if(!isOther){ otherCountryInput.value = ""; }
+  }
+  if(countrySelect){
+    countrySelect.addEventListener("change", toggleOtherCountry);
+    toggleOtherCountry();
+  }
 
   form.addEventListener("submit", async function(e){
     e.preventDefault();
@@ -1544,10 +1579,15 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     submitBtn.disabled = true;
     submitBtn.textContent = "Sending...";
 
+    var resolvedCountry = form.country.value === "Other"
+  ? form.countryOther.value.trim()
+  : form.country.value;
+
     var payload = {
       full_name: form.fullName.value.trim(),
       whatsapp: form.whatsapp.value.trim(),
       email: form.email.value.trim(),
+      country: resolvedCountry,
       recipient: form.recipient.value,
       message: form.message.value.trim() || null
     };
