@@ -526,6 +526,18 @@
     color:var(--ivory);
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 12px 24px -8px rgba(0,0,0,.4);
+    border:none;
+    cursor:pointer;
+    z-index:2;
+  }
+  .testi-media iframe,
+  .testi-media video{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
+    background:#000;
   }
   .testi-body{ padding:18px 18px 20px; }
   .testi-kind{
@@ -1379,6 +1391,47 @@
 
   /* ---------- testimonials: load from Supabase, fall back to the
      placeholder cards already in the HTML if unavailable ---------- */
+
+  // Turns a Google Drive share link, a YouTube link, or a direct video
+  // file URL into something that will actually play inline on the page.
+  // Google Drive: the file must be shared as "Anyone with the link" —
+  // otherwise the embed shows an access-denied screen instead of the video.
+  function resolveVideoEmbed(url){
+    if(!url) return null;
+
+    var drive = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                url.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/) ||
+                url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if(drive && url.indexOf("drive.google.com") > -1){
+      return { type:"iframe", src:"https://drive.google.com/file/d/" + drive[1] + "/preview" };
+    }
+
+    var yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{6,})/);
+    if(yt){
+      return { type:"iframe", src:"https://www.youtube.com/embed/" + yt[1] + "?autoplay=1" };
+    }
+
+    if(/\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url)){
+      return { type:"video", src:url };
+    }
+
+    // Unrecognized format — try it as an iframe anyway.
+    return { type:"iframe", src:url };
+  }
+
+  function playInlineVideo(button){
+    var wrapper = button.closest(".testi-media");
+    var raw = button.getAttribute("data-video-src");
+    var embed = resolveVideoEmbed(raw);
+    if(!wrapper || !embed) return;
+
+    if(embed.type === "video"){
+      wrapper.innerHTML = '<video src="' + embed.src + '" controls autoplay playsinline></video>';
+    } else {
+      wrapper.innerHTML = '<iframe src="' + embed.src + '" allow="autoplay; encrypted-media; fullscreen" allowfullscreen loading="lazy"></iframe>';
+    }
+  }
+
   function renderTestimonials(rows){
     var scroller = document.getElementById("testiScroller");
     if(!scroller || !rows || !rows.length){ return; }
@@ -1389,12 +1442,11 @@
       var media = t.media_url ? escapeHtml(t.media_url) : "";
 
       if(t.kind === "video"){
-        var videoUrl = t.video_url ? escapeHtml(t.video_url) : "#";
         var bg = media ? 'style="background-image:url(\'' + media + '\');background-size:cover;background-position:center;"' : "";
         return (
           '<article class="testi-card" style="--i:' + i + '">' +
             '<div class="testi-media" ' + bg + '>' +
-              '<button class="play" type="button" aria-label="Watch video testimonial" onclick="window.open(\'' + videoUrl + '\', \'_blank\')">' +
+              '<button class="play" type="button" aria-label="Play video testimonial" data-video-src="' + (t.video_url ? escapeHtml(t.video_url) : "") + '">' +
                 '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>' +
               '</button>' +
             '</div>' +
@@ -1421,6 +1473,10 @@
     }).join("");
 
     scroller.innerHTML = html;
+
+    scroller.querySelectorAll(".play[data-video-src]").forEach(function(btn){
+      btn.addEventListener("click", function(){ playInlineVideo(btn); });
+    });
   }
 
   async function loadTestimonials(){
