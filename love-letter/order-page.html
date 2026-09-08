@@ -1291,7 +1291,9 @@
 
   // Used only if the "redirect_url" row in the settings table can't be
   // reached for some reason — always keep this as a working fallback link.
-  var FALLBACK_REDIRECT_URL = "https://wa.me/2340000000000";
+  // Assumes thank-you.html is deployed in the same folder as this file;
+  // change it to a full URL if you host it somewhere else.
+  var FALLBACK_REDIRECT_URL = "thank-you.html";
 
   var supabaseClient = null;
   if(window.supabase && SUPABASE_URL.indexOf("YOUR_") !== 0){
