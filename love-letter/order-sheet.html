@@ -251,6 +251,7 @@
               <tr>
                 <th>Date</th>
                 <th>Name</th>
+                <th>Country</th>
                 <th>WhatsApp</th>
                 <th>Email</th>
                 <th>For</th>
@@ -259,7 +260,7 @@
               </tr>
             </thead>
             <tbody id="leadsBody">
-              <tr class="loading-row"><td colspan="7">Loading…</td></tr>
+              <tr class="loading-row"><td colspan="8">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -454,7 +455,7 @@
   function renderLeads(rows){
     var tbody = document.getElementById("leadsBody");
     if(!rows.length){
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No submissions yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No submissions yet.</td></tr>';
       return;
     }
     tbody.innerHTML = rows.map(function(lead){
@@ -463,6 +464,7 @@
         '<tr>' +
           '<td>' + escapeHtml(date) + '</td>' +
           '<td>' + escapeHtml(lead.full_name) + '</td>' +
+          '<td>' + escapeHtml(lead.country || "—") + '</td>' +
           '<td>' + escapeHtml(lead.whatsapp) + '</td>' +
           '<td>' + escapeHtml(lead.email) + '</td>' +
           '<td>' + escapeHtml(lead.recipient) + '</td>' +
@@ -490,14 +492,14 @@
   async function loadLeads(){
     if(!configured) return;
     var tbody = document.getElementById("leadsBody");
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Loading…</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">Loading…</td></tr>';
     try{
       var res = await supabaseClient.from("leads").select("*").order("created_at", { ascending:false });
       if(res.error) throw res.error;
       allLeads = res.data || [];
       renderLeads(allLeads);
     }catch(err){
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Could not load leads: ' + escapeHtml(err.message || err) + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Could not load leads: ' + escapeHtml(err.message || err) + '</td></tr>';
     }
   }
 
@@ -515,7 +517,7 @@
 
   document.getElementById("exportLeadsBtn").addEventListener("click", function(){
     if(!allLeads.length) return;
-    var cols = ["created_at","full_name","whatsapp","email","recipient","message","status"];
+    var cols = ["created_at","full_name","country","whatsapp","email","recipient","message","status"];
     var lines = [cols.join(",")];
     allLeads.forEach(function(lead){
       lines.push(cols.map(function(c){
