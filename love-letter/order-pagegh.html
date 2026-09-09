@@ -1631,5 +1631,137 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
 })();
 </script>
 
+  <!-- ================= ORDER BUMP / RECENT ACTIVITY NOTIFICATION ================= -->
+<div id="orderBump" class="order-bump" role="status" aria-live="polite" aria-hidden="true">
+  <div class="order-bump-avatar" id="orderBumpAvatar"></div>
+  <div class="order-bump-body">
+    <p class="order-bump-text"><strong id="orderBumpName"></strong> <span id="orderBumpLine"></span></p>
+    <p class="order-bump-time" id="orderBumpTime"></p>
+  </div>
+  <button type="button" class="order-bump-close" id="orderBumpClose" aria-label="Dismiss notification">&times;</button>
+</div>
+
+<style>
+  .order-bump{
+    position:fixed;
+    left:20px;
+    bottom:24px;
+    z-index:60;
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    max-width:300px;
+    background:var(--white);
+    border-radius:16px;
+    padding:14px 16px;
+    box-shadow:0 18px 40px -18px rgba(51,16,27,.4);
+    border:1px solid rgba(90,26,44,.08);
+    transform:translateY(140%);
+    opacity:0;
+    transition:transform .5s cubic-bezier(.22,.61,.36,1), opacity .5s ease;
+    pointer-events:none;
+  }
+  .order-bump.is-visible{
+    transform:translateY(0);
+    opacity:1;
+    pointer-events:auto;
+  }
+  .order-bump-avatar{
+    flex:none;
+    width:38px; height:38px;
+    border-radius:50%;
+    background:linear-gradient(150deg, var(--rose), var(--gold-light));
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:15px;
+    color:var(--wine-deep);
+  }
+  .order-bump-body{ flex:1; min-width:0; }
+  .order-bump-text{ font-size:13.5px; line-height:1.45; color:var(--ink); margin:0; }
+  .order-bump-text strong{ color:var(--wine-deep); }
+  .order-bump-time{ margin-top:3px; font-size:11.5px; color:var(--brown-soft); }
+  .order-bump-close{
+    flex:none; background:none; border:none; color:var(--brown-soft);
+    font-size:18px; line-height:1; cursor:pointer; padding:2px;
+  }
+  .order-bump-close:hover{ color:var(--wine-deep); }
+
+  @media (max-width:859px){
+    .order-bump{ bottom:100px; left:14px; right:14px; max-width:none; }
+  }
+</style>
+
+<script>
+(function(){
+  "use strict";
+
+  var PEOPLE = [
+    { name:"Amara", location:"Lagos, Nigeria" },
+    { name:"Tunde", location:"Abuja, Nigeria" },
+    { name:"Ngozi", location:"Port Harcourt, Nigeria" },
+    { name:"Chidi", location:"Lagos, Nigeria" },
+    { name:"Aisha", location:"Kano, Nigeria" },
+    { name:"Kunle", location:"Ibadan, Nigeria" },
+    { name:"Ifeoma", location:"Enugu, Nigeria" },
+    { name:"Kwame", location:"Accra, Ghana" },
+    { name:"Ama", location:"Kumasi, Ghana" },
+    { name:"Kofi", location:"Accra, Ghana" },
+    { name:"Abena", location:"Takoradi, Ghana" },
+    { name:"Yaw", location:"Tema, Ghana" },
+    { name:"Wanjiru", location:"Nairobi, Kenya" },
+    { name:"Otieno", location:"Nairobi, Kenya" },
+    { name:"Achieng", location:"Kisumu, Kenya" },
+    { name:"Njeri", location:"Mombasa, Kenya" },
+    { name:"Kamau", location:"Nairobi, Kenya" }
+  ];
+
+  var LINES = [
+    "just started their love letter website",
+    "just placed an order",
+    "just began creating something beautiful",
+    "just secured their spot"
+  ];
+
+  var bump = document.getElementById("orderBump");
+  var avatarEl = document.getElementById("orderBumpAvatar");
+  var nameEl = document.getElementById("orderBumpName");
+  var lineEl = document.getElementById("orderBumpLine");
+  var timeEl = document.getElementById("orderBumpTime");
+  var closeBtn = document.getElementById("orderBumpClose");
+  var hideTimer = null;
+
+  function showRandomBump(){
+    var person = PEOPLE[Math.floor(Math.random() * PEOPLE.length)];
+    var line = LINES[Math.floor(Math.random() * LINES.length)];
+    var minutesAgo = Math.floor(Math.random() * 8) + 1; // 1–8 minutes ago
+
+    avatarEl.textContent = person.name.charAt(0);
+    nameEl.textContent = person.name + " from " + person.location;
+    lineEl.textContent = line;
+    timeEl.textContent = minutesAgo === 1 ? "1 minute ago" : minutesAgo + " minutes ago";
+
+    bump.classList.add("is-visible");
+    bump.setAttribute("aria-hidden", "false");
+
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideBump, 6000);
+  }
+
+  function hideBump(){
+    bump.classList.remove("is-visible");
+    bump.setAttribute("aria-hidden", "true");
+  }
+
+  closeBtn.addEventListener("click", function(){
+    clearTimeout(hideTimer);
+    hideBump();
+  });
+
+  setTimeout(showRandomBump, 6000);       // first one, shortly after load
+  setInterval(showRandomBump, 120000);    // then every 2 minutes
+})();
+</script>
+
 </body>
 </html>
