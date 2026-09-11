@@ -859,6 +859,10 @@ function Dashboard() {
 @keyframes bs-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 #bs-music-player .bs-vol-label{font-size:.62rem;color:#e8c27a;min-width:28px;text-align:center;letter-spacing:.02em;}
 @media (max-width:480px){#bs-music-player{right:12px;bottom:12px;padding:7px 8px;gap:6px;}#bs-music-player button{width:36px;height:36px;}#bs-music-player .bs-note{width:30px;height:30px;}}
+#bs-hint{position:absolute;bottom:calc(100% + 10px);right:0;background:rgba(32,0,0,.85);color:#fdf1e7;font-size:.72rem;line-height:1.35;padding:8px 12px;border-radius:12px;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.35);border:1px solid rgba(232,194,122,.35);opacity:0;transform:translateY(6px);transition:opacity .5s ease, transform .5s ease;pointer-events:none;}
+#bs-hint.bs-hint-show{opacity:1;transform:translateY(0);}
+#bs-hint::after{content:"";position:absolute;top:100%;right:16px;border:6px solid transparent;border-top-color:rgba(32,0,0,.85);}
+@media (max-width:480px){#bs-hint{font-size:.68rem;padding:7px 10px;white-space:normal;max-width:180px;}}
 </style>
 <script>
 (function(){
@@ -900,6 +904,7 @@ function Dashboard() {
 
       function unlockAudio(){
         tryStart();
+        hintEl.classList.remove("bs-hint-show");
         if (audio.muted){ audio.muted = false; audio.volume = 0; fadeTo(target(), 2200); updateUI(); }
         document.removeEventListener("click", unlockAudio);
         document.removeEventListener("keydown", unlockAudio);
@@ -912,12 +917,14 @@ function Dashboard() {
       var wrap = document.createElement("div");
       wrap.id = "bs-music-player";
       wrap.innerHTML =
+        '<div class="bs-hint" id="bs-hint">🎵 Tap anywhere to turn on the music</div>' +
         '<div class="bs-note" id="bs-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M9 17.5a2.5 2.5 0 11-2.5-2.5A2.5 2.5 0 019 17.5zm9-2a2.5 2.5 0 11-2.5-2.5 2.5 2.5 0 012.5 2.5zM9 17.5V6l9-2v9.5" stroke-linejoin="round"/></svg></div>' +
         '<button type="button" id="bs-mute" aria-label="Mute or unmute the music"></button>' +
         '<button type="button" id="bs-vol" aria-label="Raise the volume"><span class="bs-vol-label" id="bs-vol-label">35%</span></button>' +
         '<button type="button" id="bs-restart" aria-label="Restart the song"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 102.13-9.36L1 10"></path></svg></button>';
       document.body.appendChild(wrap);
 
+      var hintEl = wrap.querySelector("#bs-hint");
       var muteBtn = wrap.querySelector("#bs-mute");
       var volBtn = wrap.querySelector("#bs-vol");
       var volLabel = wrap.querySelector("#bs-vol-label");
@@ -933,6 +940,8 @@ function Dashboard() {
       }
       updateUI();
       setTimeout(function(){ wrap.classList.add("bs-show"); }, 900);
+      setTimeout(function(){ if (audio.muted) hintEl.classList.add("bs-hint-show"); }, 1700);
+      setTimeout(function(){ hintEl.classList.remove("bs-hint-show"); }, 8700);
 
       muteBtn.addEventListener("click", function(){
         audio.muted = !audio.muted;
