@@ -666,45 +666,124 @@ function MusicUploader({ slug, value, onChange }) {
     </div>
   );
 }
-function useUploadedSongs(slug) {
+function AllSongsManager({ currentUrl, onPick, onCurrentDeleted }) {
   const [songs, setSongs] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState("");
+  const [renamingPath, setRenamingPath] = React.useState(null);
+  const [renameValue, setRenameValue] = React.useState("");
+  const [busyPath, setBusyPath] = React.useState(null);
 
   const refresh = React.useCallback(async () => {
-    if (!slug || !supabaseClient) { setSongs([]); return; }
+    if (!supabaseClient) { setSongs([]); return; }
     setLoading(true);
+    setError("");
     try {
-      const { data, error } = await supabaseClient.storage.from("photos").list(`${slug}/music`, { limit: 100 });
-      if (!error && data) {
-        const list = data
-          .filter((f) => f.name && !f.name.startsWith("."))
-          .map((f) => {
+      const { data: topLevel, error: topErr } = await supabaseClient.storage.from("photos").list("", { limit: 200 });
+      if (topErr) throw topErr;
+      const folders = (topLevel || []).filter((item) => item.id === null);
+      const all = [];
+      for (const folder of folders) {
+        const slug = folder.name;
+        try {
+          const { data: files } = await supabaseClient.storage.from("photos").list(`${slug}/music`, { limit: 200 });
+          (files || []).forEach((f) => {
+            if (!f.name || f.id === null) return;
             const path = `${slug}/music/${f.name}`;
             const { data: pub } = supabaseClient.storage.from("photos").getPublicUrl(path);
-            return { name: f.name, url: pub.publicUrl };
+            all.push({ slug, name: f.name, path, url: pub.publicUrl });
           });
-        setSongs(list);
+        } catch (e) { /* this project has no music folder yet — skip it */ }
       }
-    } catch (e) { /* ignore */ }
+      all.sort((a, b) => (a.slug + a.name).localeCompare(b.slug + b.name));
+      setSongs(all);
+    } catch (e) {
+      setError("Couldn't load your uploaded songs: " + (e.message || e));
+    }
     setLoading(false);
-  }, [slug]);
+  }, []);
 
   React.useEffect(() => { refresh(); }, [refresh]);
-  return { songs, loading, refresh };
-}
 
-function UploadedSongsDropdown({ slug, onPick }) {
-  const { songs, loading, refresh } = useUploadedSongs(slug);
+  async function handleDelete(song) {
+    if (!window.confirm(`Delete "${song.name}" from ${song.slug}? This removes the file for good.`)) return;
+    setBusyPath(song.path);
+    try {
+      const { error: delErr } = await supabaseClient.storage.from("photos").remove([song.path]);
+      if (delErr) throw delErr;
+      if (song.url === currentUrl && onCurrentDeleted) onCurrentDeleted();
+      await refresh();
+    } catch (e) {
+      setError("Couldn't delete: " + (e.message || e));
+    }
+    setBusyPath(null);
+  }
+
+  function startRename(song) {
+    setRenamingPath(song.path);
+    const dot = song.name.lastIndexOf(".");
+    setRenameValue(dot > 0 ? song.name.slice(0, dot) : song.name);
+  }
+
+  async function confirmRename(song) {
+    const dot = song.name.lastIndexOf(".");
+    const ext = dot > 0 ? song.name.slice(dot) : "";
+    const cleanBase = renameValue.trim().replace(/[^a-zA-Z0-9-_ ]/g, "").replace(/\s+/g, "-");
+    if (!cleanBase) { setError("Give it a name first."); return; }
+    const newPath = `${song.slug}/music/${cleanBase}${ext}`;
+    setBusyPath(song.path);
+    try {
+      const { error: moveErr } = await supabaseClient.storage.from("photos").move(song.path, newPath);
+      if (moveErr) throw moveErr;
+      if (song.url === currentUrl && onPick) {
+        const { data: pub } = supabaseClient.storage.from("photos").getPublicUrl(newPath);
+        onPick(pub.publicUrl);
+      }
+      setRenamingPath(null);
+      await refresh();
+    } catch (e) {
+      setError("Couldn't rename: " + (e.message || e));
+    }
+    setBusyPath(null);
+  }
+
   return (
     <div className="field">
-      <label>Or pick a song you already uploaded to this project</label>
-      <select value="" onChange={(e) => { if (e.target.value) onPick(e.target.value); }}>
-        <option value="">{loading ? "Loading…" : songs.length ? "— Choose a previous upload —" : "No previous uploads yet"}</option>
-        {songs.map((s) => (
-          <option key={s.url} value={s.url}>{s.name}</option>
-        ))}
-      </select>
-      <button type="button" onClick={refresh} style={{ border: "none", background: "none", color: "var(--ink-soft)", cursor: "pointer", fontSize: ".72rem", marginTop: "6px", padding: 0, textDecoration: "underline" }}>
+      <label>Songs uploaded across all your projects</label>
+      {error && <div className="field-hint" style={{ color: "var(--bad)" }}>{error}</div>}
+      {loading && <div className="field-hint">Loading…</div>}
+      {!loading && !songs.length && <div className="field-hint">No songs uploaded yet.</div>}
+      {!!songs.length && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "260px", overflowY: "auto" }}>
+          {songs.map((s) => (
+            <div key={s.path} style={{ display: "flex", alignItems: "center", gap: "8px", background: "var(--panel-soft)", borderRadius: "8px", padding: "8px 10px" }}>
+              {renamingPath === s.path ? (
+                <React.Fragment>
+                  <input
+                    type="text"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    style={{ flex: 1, padding: "6px 8px", borderRadius: "6px", border: "1px solid var(--line)", fontSize: ".8rem" }}
+                  />
+                  <button type="button" className="fix-banner-check" style={{ padding: "5px 10px" }} onClick={() => confirmRename(s)} disabled={busyPath === s.path}>Save</button>
+                  <button type="button" className="fix-banner-dismiss" style={{ padding: "5px 10px", color: "var(--ink)" }} onClick={() => setRenamingPath(null)}>Cancel</button>
+                </React.Fragment>
+              ) : (
+                <React.Fragment>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: ".82rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                    <div style={{ fontSize: ".68rem", color: "var(--ink-soft)" }}>from project: {s.slug}{s.url === currentUrl ? " — in use now" : ""}</div>
+                  </div>
+                  <button type="button" className="add-row-btn" style={{ padding: "6px 12px", fontSize: ".72rem" }} onClick={() => onPick(s.url)} disabled={busyPath === s.path}>Use</button>
+                  <button type="button" className="icon-btn" title="Rename" onClick={() => startRename(s)} disabled={busyPath === s.path} style={{ color: "var(--ink-soft)" }}>✎</button>
+                  <button type="button" className="icon-btn" title="Delete" onClick={() => handleDelete(s)} disabled={busyPath === s.path}>✕</button>
+                </React.Fragment>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      <button type="button" onClick={refresh} style={{ border: "none", background: "none", color: "var(--ink-soft)", cursor: "pointer", fontSize: ".72rem", marginTop: "8px", padding: 0, textDecoration: "underline" }}>
         ↻ Refresh this list
       </button>
     </div>
@@ -1382,7 +1461,7 @@ function Dashboard() {
               <input type="text" value={form.music_url} onChange={(e) => set("music_url", e.target.value)} placeholder="https://…/song.mp3" />
             </div>
             <MusicUploader slug={slugify(form.slug)} value={form.music_url} onChange={(v) => set("music_url", v)} />
-            <UploadedSongsDropdown slug={slugify(form.slug)} onPick={(url) => set("music_url", url)} />
+                        <AllSongsManager currentUrl={form.music_url} onPick={(url) => set("music_url", url)} onCurrentDeleted={() => set("music_url", "")} />
             <MusicRangeEditor
               url={form.music_url}
               start={form.music_start}
