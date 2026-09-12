@@ -582,8 +582,8 @@ const DEFAULT_CONFIG = {
       "title": "",
       "artist": "",
       "duration": "",
-      "spotify_url": "https://open.spotify.com/track/4Hyq4SHES7k6da6vlTJa8u?si=cd36ab61062848c5",
-      "explicit": true
+      "explicit": true,
+      "spotify_url": "https://open.spotify.com/track/4Hyq4SHES7k6da6vlTJa8u?si=cd36ab61062848c5"
     }
   ]
 };
@@ -1637,25 +1637,26 @@ root.render(<App />);
 #bs-music-player button{width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,194,122,.4);background:rgba(255,255,255,.06);color:#fdf1e7;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .18s ease, transform .18s ease, border-color .18s ease;}
 #bs-music-player button:hover{background:rgba(255,255,255,.16);border-color:#e8c27a;transform:translateY(-2px);}
 #bs-music-player button svg{width:17px;height:17px;}
-#bs-music-player .bs-note{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#c2185b,#5c0b0b);color:#fdf1e7;}
+#bs-music-player .bs-note{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#c2185b,#5c0b0b);color:#fdf1e7;position:relative;}
 #bs-music-player .bs-note svg{width:15px;height:15px;}
 #bs-music-player .bs-note.bs-spin{animation:bs-spin 6s linear infinite;}
 @keyframes bs-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 #bs-music-player .bs-vol-label{font-size:.62rem;color:#e8c27a;min-width:28px;text-align:center;letter-spacing:.02em;}
-@media (max-width:480px){#bs-music-player{right:12px;bottom:12px;padding:7px 8px;gap:6px;}#bs-music-player button{width:36px;height:36px;}#bs-music-player .bs-note{width:30px;height:30px;}}
 #bs-hint{position:absolute;bottom:calc(100% + 10px);right:0;background:rgba(32,0,0,.85);color:#fdf1e7;font-size:.72rem;line-height:1.35;padding:8px 12px;border-radius:12px;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.35);border:1px solid rgba(232,194,122,.35);opacity:0;transform:translateY(6px);transition:opacity .5s ease, transform .5s ease;pointer-events:none;}
 #bs-hint.bs-hint-show{opacity:1;transform:translateY(0);}
 #bs-hint::after{content:"";position:absolute;top:100%;right:16px;border:6px solid transparent;border-top-color:rgba(32,0,0,.85);}
-@media (max-width:480px){#bs-hint{font-size:.68rem;padding:7px 10px;white-space:normal;max-width:180px;}}
+@media (max-width:480px){#bs-music-player{right:12px;bottom:12px;padding:7px 8px;gap:6px;}#bs-music-player button{width:36px;height:36px;}#bs-music-player .bs-note{width:30px;height:30px;}#bs-hint{font-size:.68rem;padding:7px 10px;white-space:normal;max-width:180px;}}
 </style>
 <script>
 (function(){
   var SUPABASE_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc";
   var PROJECT_SLUG = "for-bb-2026";
-  var DEFAULT_MUSIC_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-bb-2026/music/1789167979310-song.mp3";
+  var DEFAULT_MUSIC_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-bb-2026/music/1789211669362-song.mp3";
+  var DEFAULT_MUSIC_START = 49;
+  var DEFAULT_MUSIC_END = null;
 
-  function boot(url){
+  function boot(url, startSec, endSec){
     if (!url) return;
     function init(){
       var audio = new Audio(url);
@@ -1663,9 +1664,19 @@ root.render(<App />);
       audio.preload = "auto";
       audio.muted = true;
       audio.volume = 0;
+      var START = Math.max(0, startSec || 0);
+      var END = (endSec !== null && endSec !== undefined && endSec > START) ? endSec : null;
+      var metaReady = false, seeked = false;
       var VOLUME_STEPS = [0.15, 0.35, 0.55, 0.75, 1];
       var stepIndex = 1, started = false, ended = false, fadeTimer = null;
 
+      audio.addEventListener("loadedmetadata", function(){
+        metaReady = true;
+        if (END === null || END > audio.duration) END = audio.duration;
+        if (!seeked){ try { audio.currentTime = START; } catch(e){} seeked = true; }
+      });
+
+      function endPoint(){ return END !== null ? END : (audio.duration || 0); }
       function target(){ return audio.muted ? 0 : VOLUME_STEPS[stepIndex]; }
       function fadeTo(vol, ms){
         if (fadeTimer) clearInterval(fadeTimer);
@@ -1676,13 +1687,27 @@ root.render(<App />);
           if (t>=1) clearInterval(fadeTimer);
         }, 40);
       }
-      function tryStart(){ started = true; audio.play().catch(function(){}); }
+      function seekToStart(){ try { audio.currentTime = START; } catch(e){} seeked = true; }
+      function tryStart(){
+        started = true;
+        if (metaReady && !seeked) seekToStart();
+        audio.play().catch(function(){});
+      }
       audio.play().catch(function(){});
 
       audio.addEventListener("timeupdate", function(){
-        if (audio.muted || !audio.duration || isNaN(audio.duration)) return;
-        var remaining = audio.duration - audio.currentTime;
-        if (remaining <= 3 && remaining >= 0) audio.volume = Math.max(0, VOLUME_STEPS[stepIndex] * (remaining/3));
+        if (!metaReady) return;
+        var ep = endPoint();
+        if (!ep || isNaN(ep)) return;
+        var remaining = ep - audio.currentTime;
+        if (!audio.muted && remaining <= 3 && remaining >= 0){
+          audio.volume = Math.max(0, VOLUME_STEPS[stepIndex] * (remaining/3));
+        }
+        if (audio.currentTime >= ep - 0.05 && !ended){
+          audio.pause();
+          ended = true;
+          updateUI();
+        }
       });
       audio.addEventListener("ended", function(){ ended = true; updateUI(); });
 
@@ -1741,7 +1766,7 @@ root.render(<App />);
       });
       restartBtn.addEventListener("click", function(){
         ended = false;
-        audio.currentTime = 0;
+        seekToStart();
         if (audio.muted) audio.muted = false;
         tryStart();
         fadeTo(target(), 900);
@@ -1754,13 +1779,20 @@ root.render(<App />);
   }
 
   if (SUPABASE_URL.indexOf("http") === 0) {
-    fetch(SUPABASE_URL + "/rest/v1/projects?slug=eq." + encodeURIComponent(PROJECT_SLUG) + "&select=music_url", {
+    fetch(SUPABASE_URL + "/rest/v1/projects?slug=eq." + encodeURIComponent(PROJECT_SLUG) + "&select=music_url,music_start,music_end", {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
     }).then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(rows){ boot((rows && rows[0] && rows[0].music_url) || DEFAULT_MUSIC_URL); })
-      .catch(function(){ boot(DEFAULT_MUSIC_URL); });
+      .then(function(rows){
+        var row = rows && rows[0];
+        boot(
+          (row && row.music_url) || DEFAULT_MUSIC_URL,
+          (row && row.music_start != null) ? row.music_start : DEFAULT_MUSIC_START,
+          (row && row.music_end != null) ? row.music_end : DEFAULT_MUSIC_END
+        );
+      })
+      .catch(function(){ boot(DEFAULT_MUSIC_URL, DEFAULT_MUSIC_START, DEFAULT_MUSIC_END); });
   } else {
-    boot(DEFAULT_MUSIC_URL);
+    boot(DEFAULT_MUSIC_URL, DEFAULT_MUSIC_START, DEFAULT_MUSIC_END);
   }
 })();
 </script>
