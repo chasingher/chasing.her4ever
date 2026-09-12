@@ -160,6 +160,11 @@
     font-size:.9rem; color:var(--ink); resize:vertical;
     transition: border-color .18s ease, box-shadow .18s ease;
   }
+  .field select{
+  width:100%; padding:11px 13px; border-radius:9px; border:1px solid var(--line); background:#fff;
+  font-size:.9rem; color:var(--ink);
+}
+.field select:focus{ outline:none; border-color:var(--accent); box-shadow: 0 0 0 3px rgba(194,24,91,.12); }
   .field input:focus, .field textarea:focus{
     outline:none; border-color:var(--accent);
     box-shadow: 0 0 0 3px rgba(194,24,91,.12);
@@ -344,6 +349,8 @@ function blankProject() {
     flower_images: DEFAULT_FLOWER_IMAGES.slice(),
     songs: [],
     music_url: "",
+    music_start: 0,
+    music_end: null,
     github_repo: "",
     published_url: ""
   };
@@ -659,6 +666,138 @@ function MusicUploader({ slug, value, onChange }) {
     </div>
   );
 }
+function useUploadedSongs(slug) {
+  const [songs, setSongs] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+
+  const refresh = React.useCallback(async () => {
+    if (!slug || !supabaseClient) { setSongs([]); return; }
+    setLoading(true);
+    try {
+      const { data, error } = await supabaseClient.storage.from("photos").list(`${slug}/music`, { limit: 100 });
+      if (!error && data) {
+        const list = data
+          .filter((f) => f.name && !f.name.startsWith("."))
+          .map((f) => {
+            const path = `${slug}/music/${f.name}`;
+            const { data: pub } = supabaseClient.storage.from("photos").getPublicUrl(path);
+            return { name: f.name, url: pub.publicUrl };
+          });
+        setSongs(list);
+      }
+    } catch (e) { /* ignore */ }
+    setLoading(false);
+  }, [slug]);
+
+  React.useEffect(() => { refresh(); }, [refresh]);
+  return { songs, loading, refresh };
+}
+
+function UploadedSongsDropdown({ slug, onPick }) {
+  const { songs, loading, refresh } = useUploadedSongs(slug);
+  return (
+    <div className="field">
+      <label>Or pick a song you already uploaded to this project</label>
+      <select value="" onChange={(e) => { if (e.target.value) onPick(e.target.value); }}>
+        <option value="">{loading ? "Loading…" : songs.length ? "— Choose a previous upload —" : "No previous uploads yet"}</option>
+        {songs.map((s) => (
+          <option key={s.url} value={s.url}>{s.name}</option>
+        ))}
+      </select>
+      <button type="button" onClick={refresh} style={{ border: "none", background: "none", color: "var(--ink-soft)", cursor: "pointer", fontSize: ".72rem", marginTop: "6px", padding: 0, textDecoration: "underline" }}>
+        ↻ Refresh this list
+      </button>
+    </div>
+  );
+}
+
+function MusicRangeEditor({ url, start, end, onChangeStart, onChangeEnd }) {
+  const [duration, setDuration] = React.useState(null);
+  const [error, setError] = React.useState("");
+  const previewRef = React.useRef(null);
+  const [previewing, setPreviewing] = React.useState(false);
+
+  React.useEffect(() => {
+    setDuration(null);
+    setError("");
+    if (!url) return;
+    const a = new Audio();
+    a.preload = "metadata";
+    a.src = url;
+    a.addEventListener("loadedmetadata", () => setDuration(a.duration));
+    a.addEventListener("error", () => setError("Couldn't read this song's length — the link may be wrong."));
+    return () => { a.src = ""; };
+  }, [url]);
+
+  function fmt(sec) {
+    if (sec == null || isNaN(sec)) return "--:--";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return m + ":" + String(s).padStart(2, "0");
+  }
+
+  function stopPreview() {
+    if (previewRef.current) { previewRef.current.pause(); previewRef.current = null; }
+    setPreviewing(false);
+  }
+
+  function playPreview() {
+    stopPreview();
+    const a = new Audio(url);
+    const s = start || 0;
+    const e = end && end > s ? end : duration;
+    a.currentTime = s;
+    a.play().catch(() => {});
+    previewRef.current = a;
+    setPreviewing(true);
+    const check = setInterval(() => {
+      if (!previewRef.current) { clearInterval(check); return; }
+      if (a.currentTime >= (e || duration || 999999) - 0.1) {
+        stopPreview();
+        clearInterval(check);
+      }
+    }, 200);
+  }
+
+  if (!url) return null;
+
+  return (
+    <div className="field">
+      <label>Which part of the song should play?</label>
+      {error && <div className="field-hint" style={{ color: "var(--bad)" }}>{error}</div>}
+      {!error && (
+        <React.Fragment>
+          <div className="row2">
+            <div>
+              <label style={{ fontWeight: 400, fontSize: ".72rem" }}>Start at (seconds)</label>
+              <input
+                type="number" min="0" step="1"
+                value={start || 0}
+                onChange={(e) => onChangeStart(Math.max(0, Number(e.target.value) || 0))}
+              />
+            </div>
+            <div>
+              <label style={{ fontWeight: 400, fontSize: ".72rem" }}>End at (seconds, blank = to the end)</label>
+              <input
+                type="number" min="0" step="1"
+                value={end || ""}
+                placeholder={duration ? String(Math.floor(duration)) : ""}
+                onChange={(e) => onChangeEnd(e.target.value === "" ? null : Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <div className="field-hint">
+            Full song length: {duration ? fmt(duration) : "loading…"} — playing from {fmt(start || 0)} to {fmt(end || duration)}
+          </div>
+          <button type="button" className="add-row-btn" style={{ marginTop: "8px" }} onClick={previewing ? stopPreview : playPreview} disabled={!duration}>
+            {previewing ? "■ Stop preview" : "▶ Preview this part"}
+          </button>
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+  
 function Dashboard() {
   const [projects, setProjects] = React.useState([]);
   const [loadingList, setLoadingList] = React.useState(true);
@@ -690,6 +829,8 @@ function Dashboard() {
     const checks = [
       { col: "flower_images", def: "flower_images jsonb default '[]'" },
       { col: "music_url", def: "music_url text" },
+      { col: "music_start", def: "music_start numeric default 0" },
+      { col: "music_end", def: "music_end numeric" },
       { col: "github_repo", def: "github_repo text" },
       { col: "published_url", def: "published_url text" }
     ];
@@ -846,6 +987,8 @@ function Dashboard() {
     output = output.split('"YOUR_SUPABASE_ANON_KEY"').join(JSON.stringify(SUPABASE_ANON_KEY));
     output = output.split('"YOUR_PROJECT_SLUG"').join(JSON.stringify(slug));
     const musicUrl = projectForm.music_url || "";
+    const musicStart = projectForm.music_start || 0;
+    const musicEnd = (projectForm.music_end === null || projectForm.music_end === undefined || projectForm.music_end === "") ? null : projectForm.music_end;
     const musicBlock = `
 <style>
 #bs-music-player{position:fixed;right:18px;bottom:18px;z-index:10001;display:flex;align-items:center;gap:8px;background:rgba(32,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(232,194,122,.35);border-radius:999px;padding:8px 10px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transform:translateY(10px);transition:opacity .6s ease, transform .6s ease;font-family:'Poppins',sans-serif;}
@@ -853,16 +996,15 @@ function Dashboard() {
 #bs-music-player button{width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,194,122,.4);background:rgba(255,255,255,.06);color:#fdf1e7;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .18s ease, transform .18s ease, border-color .18s ease;}
 #bs-music-player button:hover{background:rgba(255,255,255,.16);border-color:#e8c27a;transform:translateY(-2px);}
 #bs-music-player button svg{width:17px;height:17px;}
-#bs-music-player .bs-note{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#c2185b,#5c0b0b);color:#fdf1e7;}
+#bs-music-player .bs-note{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#c2185b,#5c0b0b);color:#fdf1e7;position:relative;}
 #bs-music-player .bs-note svg{width:15px;height:15px;}
 #bs-music-player .bs-note.bs-spin{animation:bs-spin 6s linear infinite;}
 @keyframes bs-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 #bs-music-player .bs-vol-label{font-size:.62rem;color:#e8c27a;min-width:28px;text-align:center;letter-spacing:.02em;}
-@media (max-width:480px){#bs-music-player{right:12px;bottom:12px;padding:7px 8px;gap:6px;}#bs-music-player button{width:36px;height:36px;}#bs-music-player .bs-note{width:30px;height:30px;}}
 #bs-hint{position:absolute;bottom:calc(100% + 10px);right:0;background:rgba(32,0,0,.85);color:#fdf1e7;font-size:.72rem;line-height:1.35;padding:8px 12px;border-radius:12px;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.35);border:1px solid rgba(232,194,122,.35);opacity:0;transform:translateY(6px);transition:opacity .5s ease, transform .5s ease;pointer-events:none;}
 #bs-hint.bs-hint-show{opacity:1;transform:translateY(0);}
 #bs-hint::after{content:"";position:absolute;top:100%;right:16px;border:6px solid transparent;border-top-color:rgba(32,0,0,.85);}
-@media (max-width:480px){#bs-hint{font-size:.68rem;padding:7px 10px;white-space:normal;max-width:180px;}}
+@media (max-width:480px){#bs-music-player{right:12px;bottom:12px;padding:7px 8px;gap:6px;}#bs-music-player button{width:36px;height:36px;}#bs-music-player .bs-note{width:30px;height:30px;}#bs-hint{font-size:.68rem;padding:7px 10px;white-space:normal;max-width:180px;}}
 </style>
 <script>
 (function(){
@@ -870,8 +1012,10 @@ function Dashboard() {
   var SUPABASE_ANON_KEY = ${JSON.stringify(SUPABASE_ANON_KEY)};
   var PROJECT_SLUG = ${JSON.stringify(slug)};
   var DEFAULT_MUSIC_URL = ${JSON.stringify(musicUrl)};
+  var DEFAULT_MUSIC_START = ${JSON.stringify(musicStart)};
+  var DEFAULT_MUSIC_END = ${JSON.stringify(musicEnd)};
 
-  function boot(url){
+  function boot(url, startSec, endSec){
     if (!url) return;
     function init(){
       var audio = new Audio(url);
@@ -879,9 +1023,19 @@ function Dashboard() {
       audio.preload = "auto";
       audio.muted = true;
       audio.volume = 0;
+      var START = Math.max(0, startSec || 0);
+      var END = (endSec !== null && endSec !== undefined && endSec > START) ? endSec : null;
+      var metaReady = false, seeked = false;
       var VOLUME_STEPS = [0.15, 0.35, 0.55, 0.75, 1];
       var stepIndex = 1, started = false, ended = false, fadeTimer = null;
 
+      audio.addEventListener("loadedmetadata", function(){
+        metaReady = true;
+        if (END === null || END > audio.duration) END = audio.duration;
+        if (!seeked){ try { audio.currentTime = START; } catch(e){} seeked = true; }
+      });
+
+      function endPoint(){ return END !== null ? END : (audio.duration || 0); }
       function target(){ return audio.muted ? 0 : VOLUME_STEPS[stepIndex]; }
       function fadeTo(vol, ms){
         if (fadeTimer) clearInterval(fadeTimer);
@@ -892,13 +1046,27 @@ function Dashboard() {
           if (t>=1) clearInterval(fadeTimer);
         }, 40);
       }
-      function tryStart(){ started = true; audio.play().catch(function(){}); }
+      function seekToStart(){ try { audio.currentTime = START; } catch(e){} seeked = true; }
+      function tryStart(){
+        started = true;
+        if (metaReady && !seeked) seekToStart();
+        audio.play().catch(function(){});
+      }
       audio.play().catch(function(){});
 
       audio.addEventListener("timeupdate", function(){
-        if (audio.muted || !audio.duration || isNaN(audio.duration)) return;
-        var remaining = audio.duration - audio.currentTime;
-        if (remaining <= 3 && remaining >= 0) audio.volume = Math.max(0, VOLUME_STEPS[stepIndex] * (remaining/3));
+        if (!metaReady) return;
+        var ep = endPoint();
+        if (!ep || isNaN(ep)) return;
+        var remaining = ep - audio.currentTime;
+        if (!audio.muted && remaining <= 3 && remaining >= 0){
+          audio.volume = Math.max(0, VOLUME_STEPS[stepIndex] * (remaining/3));
+        }
+        if (audio.currentTime >= ep - 0.05 && !ended){
+          audio.pause();
+          ended = true;
+          updateUI();
+        }
       });
       audio.addEventListener("ended", function(){ ended = true; updateUI(); });
 
@@ -957,7 +1125,7 @@ function Dashboard() {
       });
       restartBtn.addEventListener("click", function(){
         ended = false;
-        audio.currentTime = 0;
+        seekToStart();
         if (audio.muted) audio.muted = false;
         tryStart();
         fadeTo(target(), 900);
@@ -970,13 +1138,20 @@ function Dashboard() {
   }
 
   if (SUPABASE_URL.indexOf("http") === 0) {
-    fetch(SUPABASE_URL + "/rest/v1/projects?slug=eq." + encodeURIComponent(PROJECT_SLUG) + "&select=music_url", {
+    fetch(SUPABASE_URL + "/rest/v1/projects?slug=eq." + encodeURIComponent(PROJECT_SLUG) + "&select=music_url,music_start,music_end", {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
     }).then(function(r){ return r.ok ? r.json() : []; })
-      .then(function(rows){ boot((rows && rows[0] && rows[0].music_url) || DEFAULT_MUSIC_URL); })
-      .catch(function(){ boot(DEFAULT_MUSIC_URL); });
+      .then(function(rows){
+        var row = rows && rows[0];
+        boot(
+          (row && row.music_url) || DEFAULT_MUSIC_URL,
+          (row && row.music_start != null) ? row.music_start : DEFAULT_MUSIC_START,
+          (row && row.music_end != null) ? row.music_end : DEFAULT_MUSIC_END
+        );
+      })
+      .catch(function(){ boot(DEFAULT_MUSIC_URL, DEFAULT_MUSIC_START, DEFAULT_MUSIC_END); });
   } else {
-    boot(DEFAULT_MUSIC_URL);
+    boot(DEFAULT_MUSIC_URL, DEFAULT_MUSIC_START, DEFAULT_MUSIC_END);
   }
 })();
 <\/script>
@@ -1207,6 +1382,14 @@ function Dashboard() {
               <input type="text" value={form.music_url} onChange={(e) => set("music_url", e.target.value)} placeholder="https://…/song.mp3" />
             </div>
             <MusicUploader slug={slugify(form.slug)} value={form.music_url} onChange={(v) => set("music_url", v)} />
+            <UploadedSongsDropdown slug={slugify(form.slug)} onPick={(url) => set("music_url", url)} />
+            <MusicRangeEditor
+              url={form.music_url}
+              start={form.music_start}
+              end={form.music_end}
+              onChangeStart={(v) => set("music_start", v)}
+              onChangeEnd={(v) => set("music_end", v)}
+            />
           </div>
 
           <div className="card">
