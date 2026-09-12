@@ -673,6 +673,8 @@ function AllSongsManager({ currentUrl, onPick, onCurrentDeleted }) {
   const [renamingPath, setRenamingPath] = React.useState(null);
   const [renameValue, setRenameValue] = React.useState("");
   const [busyPath, setBusyPath] = React.useState(null);
+  const previewRef = React.useRef(null);
+  const [previewingPath, setPreviewingPath] = React.useState(null);
 
   const refresh = React.useCallback(async () => {
     if (!supabaseClient) { setSongs([]); return; }
@@ -704,9 +706,13 @@ function AllSongsManager({ currentUrl, onPick, onCurrentDeleted }) {
   }, []);
 
   React.useEffect(() => { refresh(); }, [refresh]);
+  React.useEffect(() => {
+    return () => { if (previewRef.current) previewRef.current.pause(); };
+  }, []);
 
   async function handleDelete(song) {
     if (!window.confirm(`Delete "${song.name}" from ${song.slug}? This removes the file for good.`)) return;
+    if (previewingPath === song.path) stopPreview();
     setBusyPath(song.path);
     try {
       const { error: delErr } = await supabaseClient.storage.from("photos").remove([song.path]);
@@ -747,6 +753,20 @@ function AllSongsManager({ currentUrl, onPick, onCurrentDeleted }) {
     setBusyPath(null);
   }
 
+  function stopPreview() {
+    if (previewRef.current) { previewRef.current.pause(); previewRef.current = null; }
+    setPreviewingPath(null);
+  }
+
+  function togglePreview(song) {
+    if (previewingPath === song.path) { stopPreview(); return; }
+    stopPreview();
+    const a = new Audio(song.url);
+    a.play().catch(() => {});
+    a.addEventListener("ended", () => setPreviewingPath(null));
+    previewRef.current = a;
+    setPreviewingPath(song.path);
+  }
   return (
     <div className="field">
       <label>Songs uploaded across all your projects</label>
@@ -775,6 +795,7 @@ function AllSongsManager({ currentUrl, onPick, onCurrentDeleted }) {
                     <div style={{ fontSize: ".68rem", color: "var(--ink-soft)" }}>from project: {s.slug}{s.url === currentUrl ? " — in use now" : ""}</div>
                   </div>
                   <button type="button" className="add-row-btn" style={{ padding: "6px 12px", fontSize: ".72rem" }} onClick={() => onPick(s.url)} disabled={busyPath === s.path}>Use</button>
+                  <button type="button" className="icon-btn" title={previewingPath === s.path ? "Stop preview" : "Preview this song"} onClick={() => togglePreview(s)} disabled={busyPath === s.path} style={{ color: "var(--accent-deep)" }}>{previewingPath === s.path ? "■" : "▶"}</button>
                   <button type="button" className="icon-btn" title="Rename" onClick={() => startRename(s)} disabled={busyPath === s.path} style={{ color: "var(--ink-soft)" }}>✎</button>
                   <button type="button" className="icon-btn" title="Delete" onClick={() => handleDelete(s)} disabled={busyPath === s.path}>✕</button>
                 </React.Fragment>
