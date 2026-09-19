@@ -117,8 +117,11 @@
   .steps-card .steps-list{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; }
   .steps-list li{ line-height:1.5; }
 
-  .notice-card{ border:1px solid rgba(194,24,91,.55); background:rgba(194,24,91,.12); }
-  .notice-list{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; line-height:1.5; }
+  .notice-card{ border:1px solid var(--accent); background:#fbe7ee !important; }
+  .notice-card h2{ color:var(--accent-deep); }
+  .notice-list{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; line-height:1.5; color:var(--ink) !important; }
+  .notice-list li{ color:var(--ink); }
+  .notice-list strong{ color:var(--accent-deep); }
 
   @media (max-width:640px){
     .action-bar{ flex-direction:column; }
@@ -373,6 +376,16 @@ const RLS_SQL = [
   'create policy "memory_projects update" on memory_projects for update using (true) with check (true);'
 ].join("\n");
 
+// The flower reveal is locked for customers — always the same set used in
+// Chasing Her, never editable here.
+const DEFAULT_FLOWER_IMAGES = [
+  { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107878935-chatgpt-image-aug-29-2026-09-25-26-pm.png", caption: "" },
+  { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107882144-chatgpt-image-aug-29-2026-09-23-28-pm.png", caption: "" },
+  { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107884823-chatgpt-image-aug-29-2026-09-17-41-pm.png", caption: "" },
+  { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107887156-chatgpt-image-aug-29-2026-09-17-34-pm.png", caption: "" },
+  { url: "https://zxnqoxyyzspvznehdpnj.supabase.co/storage/v1/object/public/photos/for-esther-2026/flowers/1788107889837-chatgpt-image-aug-29-2026-09-17-27-pm.png", caption: "" }
+];
+
 function blankProject(){
   return {
     slug: "", pin: "123456",
@@ -386,7 +399,7 @@ function blankProject(){
     letter_body: "",
     final_message: "I love you, to the moon and back.",
     memories: [],
-    flower_images: [],
+    flower_images: DEFAULT_FLOWER_IMAGES.slice(),
     music_url: "", music_start: 0, music_end: null,
     voice_url: "",
     github_repo: "", published_url: ""
