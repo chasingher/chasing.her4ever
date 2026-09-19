@@ -1596,11 +1596,6 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
       var insertRes = await supabaseClient.from("leads").insert([payload]);
       if(insertRes.error) throw insertRes.error;
 
-      // Show a brief confirmation, then send them to the custom link.
-      form.classList.add("is-hidden");
-      success.classList.add("is-active");
-      success.scrollIntoView({ behavior:"smooth", block:"center" });
-
       var redirectUrl = FALLBACK_REDIRECT_URL;
       try{
         var settingsRes = await supabaseClient
@@ -1620,9 +1615,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
         "name=" + encodeURIComponent(payload.full_name) +
         "&wa=" + encodeURIComponent(payload.whatsapp);
 
-      setTimeout(function(){
-        window.location.href = redirectUrl;
-      }, 1400);
+      window.location.href = redirectUrl;
 
     }catch(err){
       console.error(err);
