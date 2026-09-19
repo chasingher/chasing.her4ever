@@ -1295,6 +1295,16 @@ function BuildTool() {
 
   function set(field, value) { setForm((f) => ({ ...f, [field]: value })); }
 
+    // Sends people who want us to build it for them to the custom-build thank-you page.
+  function goCustomBuild() {
+    if (!window.confirm("Nothing on this page has been saved, so leaving now will clear what you've added. Continue to the custom-build page?")) return;
+    const qs = new URLSearchParams();
+    if (leadName) qs.set("name", leadName);
+    if (leadWa) qs.set("wa", leadWa);
+    qs.set("product", "chasing-her");
+    window.location.href = "thankyou-custom.html?" + qs.toString();
+  }
+
   // Preview happens right here on the page, in a small screen — never a
   // separate tab and never a link the customer could copy and send around.
   function previewSite() {
