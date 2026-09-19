@@ -505,7 +505,7 @@ function TemplateRow({ tmpl, onChanged }) {
         </span>
       </div>
       <div className="order-actions">
-        <a className="mini-btn primary" href={tmpl.html_url} target="_blank" rel="noreferrer">Preview</a>
+        <button className="mini-btn primary" onClick={preview}>Preview</button>
         <button className="mini-btn" disabled={busy} onClick={toggleActive}>{tmpl.is_active ? "Hide" : "Show"}</button>
         <button className="mini-btn danger" disabled={busy} onClick={remove}>Delete</button>
       </div>
