@@ -1107,16 +1107,6 @@ function Dashboard() {
 
   function set(field, value){ setForm((f) => ({...f, [field]: value})); }
 
-    // Sends people who want us to build it for them to the custom-build thank-you page.
-  function goCustomBuild() {
-    if (!window.confirm("Nothing on this page has been saved, so leaving now will clear what you've added. Continue to the custom-build page?")) return;
-    const qs = new URLSearchParams();
-    if (leadName) qs.set("name", leadName);
-    if (leadWa) qs.set("wa", leadWa);
-    qs.set("product", "memories");
-    window.location.href = "thankyou-custom.html?" + qs.toString();
-  }
-
   async function saveProject(){
     const slug = slugify(form.slug);
     if (!slug) { setStatus({text:"Give the project a slug before saving.",kind:"err"}); return; }
@@ -1332,17 +1322,6 @@ function Dashboard() {
             <div className="field"><label>Letter body</label><textarea rows={7} value={form.letter_body} onChange={(e)=>set("letter_body",e.target.value)} /></div>
             <div className="field"><label>Signature line</label><input type="text" value={form.final_message} onChange={(e)=>set("final_message",e.target.value)} /></div>
           </div>
-
-                  <div className="card">
-          <h2>Prefer we build it for you?</h2>
-          <p className="hint">
-            Not up for building it yourself? We can do a custom build of this site for you instead.
-            You send us the photos and words, and we put it all together.
-          </p>
-          <button type="button" className="btn btn-gold" style={{ width: "100%" }} onClick={goCustomBuild}>
-            I want a custom build instead
-          </button>
-        </div>
 
           <div className="action-bar">
             <button className="btn btn-primary" onClick={saveProject} disabled={saving}>{saving ? "Saving…" : "Save project"}</button>
