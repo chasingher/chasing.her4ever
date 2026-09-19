@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Pick your design — Chasing Her</title>
+<meta name="description" content="Choose which site design you want, then build it yourself in a few minutes.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ivory:#FBF3EA; --ivory-deep:#F5E9DC; --blush:#F5DAD5; --rose:#E1A6A3;
+    --wine:#5A1A2C; --wine-deep:#33101B; --gold:#B98A4E; --gold-light:#DCC397;
+    --ink:#2B1710; --brown:#7A5A47; --brown-soft:#9C7C68; --white:#FFFDFB;
+    --serif:"Fraunces", ui-serif, Georgia, serif;
+    --sans:"Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --ease: cubic-bezier(.22,.61,.36,1);
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  body{ margin:0; background:var(--ivory); color:var(--ink); font-family:var(--sans);
+    font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  img{ max-width:100%; display:block; }
+  h1,h2,h3{ font-family:var(--serif); font-weight:500; line-height:1.15; margin:0; color:var(--wine-deep); letter-spacing:-0.01em; }
+  p{ margin:0; }
+  a{ color:inherit; }
+  .wrap{ max-width:920px; margin:0 auto; padding:48px 20px 80px; }
+
+  .top{ text-align:center; margin-bottom:40px; }
+  .eyebrow{ font-family:var(--serif); font-style:italic; color:var(--brown); font-size:16px; margin-bottom:10px; }
+  .top h1{ font-size:clamp(28px,6vw,42px); }
+  .top p{ margin-top:14px; color:var(--brown); font-size:16px; max-width:480px; margin-left:auto; margin-right:auto; }
+
+  .cards{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:40px; }
+  @media (max-width:720px){ .cards{ grid-template-columns:1fr; } }
+
+  .card{ background:var(--white); border:1px solid var(--ivory-deep); border-radius:22px; padding:26px 22px 22px;
+    box-shadow:0 18px 40px -22px rgba(90,26,44,.25); display:flex; flex-direction:column; gap:14px; }
+  .card .tag{ display:inline-block; width:fit-content; background:var(--blush); color:var(--wine-deep);
+    font-size:12.5px; font-weight:700; letter-spacing:.02em; padding:5px 12px; border-radius:100px; }
+  .card h2{ font-size:24px; }
+  .card p.desc{ color:var(--brown); font-size:15px; line-height:1.65; }
+  .card .btns{ margin-top:auto; display:flex; flex-direction:column; gap:10px; padding-top:8px; }
+
+  .btn-primary, .btn-outline{
+    display:flex; align-items:center; justify-content:center; gap:.5em;
+    font-family:var(--sans); font-weight:700; font-size:16px; padding:15px 22px;
+    border-radius:100px; border:none; cursor:pointer; text-decoration:none;
+    transition:transform .3s var(--ease), box-shadow .3s var(--ease), background .3s var(--ease);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn-primary{ background:var(--wine); color:var(--ivory); box-shadow:0 10px 26px -10px rgba(90,26,44,.55); }
+  .btn-primary:hover{ background:#6E2138; transform:translateY(-2px); }
+  .btn-outline{ background:transparent; color:var(--wine-deep); border:1.5px solid var(--gold-light); }
+  .btn-outline:hover{ background:var(--ivory-deep); }
+
+  .note{ text-align:center; margin-top:34px; color:var(--brown-soft); font-size:13.5px; }
+
+  /* ---------- template preview modal ---------- */
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(43,23,16,.55); display:none;
+    align-items:center; justify-content:center; z-index:100; padding:18px; }
+  .modal-backdrop.is-open{ display:flex; }
+  .modal{ background:var(--white); border-radius:18px; width:100%; max-width:420px;
+    padding:22px 20px; box-shadow:0 30px 60px -20px rgba(0,0,0,.4); max-height:90vh; overflow:auto; }
+  .modal h3{ font-size:20px; margin-bottom:8px; }
+  .modal .pin-box{ background:var(--ivory-deep); border-radius:12px; padding:14px 16px; margin:14px 0; text-align:center; }
+  .modal .pin-box .pin-label{ font-size:12.5px; color:var(--brown-soft); text-transform:uppercase; letter-spacing:.05em; }
+  .modal .pin-box .pin-value{ font-family:var(--serif); font-size:26px; color:var(--wine-deep); font-weight:600; margin-top:4px; letter-spacing:.08em; }
+  .modal iframe{ width:100%; height:60vh; border:1px solid var(--ivory-deep); border-radius:12px; margin-top:6px; background:var(--ivory); }
+  .modal .close-row{ margin-top:14px; text-align:right; }
+  .modal .close-btn{ background:none; border:none; color:var(--brown); font-weight:700; cursor:pointer; font-size:14px; padding:8px 10px; }
+  .tmpl-link{ background:none; border:none; padding:0; font:inherit; color:var(--wine); text-decoration:underline;
+    cursor:pointer; font-size:14px; font-weight:600; }
+  .tmpl-empty{ font-size:13px; color:var(--brown-soft); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="eyebrow">You're in — one more step</div>
+    <h1>Which one do you want to build?</h1>
+    <p>Pick a design below. You'll add your own photos, your own words, and your own songs — it only takes a few minutes.</p>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <span class="tag">For someone you love</span>
+      <h2>Chasing Her</h2>
+      <p class="desc">A love-letter website. Photos, a letter that writes itself out, a song, and a flower reveal when they unlock it with a PIN.</p>
+      <button class="tmpl-link" data-tmpl="chasing-her" type="button">See a finished example first →</button>
+      <div class="btns">
+        <a class="btn-primary" id="link-chasing-her" href="build-chasingher.html">Build mine</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="tag">For any memory</span>
+      <h2>Memories</h2>
+      <p class="desc">A memory-box style site. Your photos, your favourite songs, and a voice note or message, wrapped up as a private gift.</p>
+      <button class="tmpl-link" data-tmpl="memories" type="button">See a finished example first →</button>
+      <div class="btns">
+        <a class="btn-primary" id="link-memories" href="build-memories.html">Build mine</a>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">Once you pick, you'll only be able to preview your site before paying — nothing is saved or published until you do.</p>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3 id="modalTitle">Example</h3>
+    <div class="pin-box">
+      <div class="pin-label">Unlock PIN for this example</div>
+      <div class="pin-value" id="modalPin">——</div>
+    </div>
+    <iframe id="modalFrame" src="about:blank" title="Example preview"></iframe>
+    <div class="close-row"><button class="close-btn" id="modalClose" type="button">Close</button></div>
+  </div>
+</div>
+
+<script>
+  // ---- carry the lead's name/WhatsApp number forward into the builder ----
+  var params = new URLSearchParams(window.location.search);
+  var carry = "";
+  if (params.get("name")) carry += "&name=" + encodeURIComponent(params.get("name"));
+  if (params.get("wa")) carry += "&wa=" + encodeURIComponent(params.get("wa"));
+  if (carry) {
+    document.getElementById("link-chasing-her").href += "?" + carry.slice(1);
+    document.getElementById("link-memories").href += "?" + carry.slice(1);
+  }
+
+  // ---- Supabase (same project as admin.html / memories-admin.html) ----
+  var SUPABASE_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc";
+
+  function fetchTemplate(product, cb) {
+    fetch(SUPABASE_URL + "/rest/v1/templates?product=eq." + encodeURIComponent(product) +
+      "&is_active=eq.true&select=label,pin,html_url&order=sort_order.asc&limit=1", {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (rows) { cb(rows && rows[0] ? rows[0] : null); })
+      .catch(function () { cb(null); });
+  }
+
+  var backdrop = document.getElementById("modalBackdrop");
+  var frame = document.getElementById("modalFrame");
+  var titleEl = document.getElementById("modalTitle");
+  var pinEl = document.getElementById("modalPin");
+
+  document.querySelectorAll(".tmpl-link").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var product = btn.getAttribute("data-tmpl");
+      titleEl.textContent = "Loading example…";
+      pinEl.textContent = "——";
+      frame.src = "about:blank";
+      backdrop.classList.add("is-open");
+      fetchTemplate(product, function (tmpl) {
+        if (!tmpl) {
+          titleEl.textContent = "No example yet";
+          pinEl.parentElement.style.display = "none";
+          frame.outerHTML = "<p class='tmpl-empty'>We haven't added an example for this design yet — go ahead and build your own, you can preview it as you go.</p>";
+          return;
+        }
+        titleEl.textContent = tmpl.label || "Example";
+        pinEl.textContent = tmpl.pin || "——";
+        frame.src = tmpl.html_url;
+      });
+    });
+  });
+
+  document.getElementById("modalClose").addEventListener("click", function () {
+    backdrop.classList.remove("is-open");
+    frame.src = "about:blank";
+  });
+  backdrop.addEventListener("click", function (e) {
+    if (e.target === backdrop) { backdrop.classList.remove("is-open"); frame.src = "about:blank"; }
+  });
+</script>
+
+</body>
+</html>

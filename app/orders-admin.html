@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="theme-color" content="#241010" />
+<title>Backstage — Orders</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='28'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root{ --ink:#241010; --ink-soft:#7a6a62; --panel:#fdf6ee; --panel-soft:#f6ead9; --line:rgba(36,16,16,.12);
+    --accent:#c2185b; --accent-deep:#96123f; --gold:#cf9f4e; --good:#3d7a4f; --bad:#b23b3b;
+    --font-display:'Dancing Script',cursive; --font-ui:'Poppins',sans-serif; }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{ font-family:var(--font-ui); background:var(--ink); color:#f3e3d3; }
+  button, input, select{ font-family:inherit; }
+
+  .gate{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px; padding:40px 20px; text-align:center; }
+  .gate-mark{ font-family:var(--font-display); font-size:40px; color:var(--gold); }
+  .gate-sub{ color:var(--ink-soft); max-width:320px; }
+  .gate form{ display:flex; gap:8px; }
+  .gate input{ padding:12px 14px; border-radius:10px; border:1px solid var(--line); font-size:15px; width:180px; }
+  .gate button{ padding:12px 18px; border-radius:10px; border:none; background:var(--accent); color:#fff; font-weight:700; cursor:pointer; }
+  .gate-error{ color:var(--bad); font-size:13px; min-height:18px; }
+
+  .wrap{ max-width:1000px; margin:0 auto; padding:28px 16px 80px; }
+  .head{ display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:6px; }
+  .head h1{ font-family:var(--font-display); font-size:32px; color:#fff; margin:0; }
+  .refresh-btn{ background:none; border:1px solid rgba(255,255,255,.3); color:#f3e3d3; padding:9px 16px;
+    border-radius:100px; cursor:pointer; font-size:13.5px; }
+  .subhead{ color:var(--ink-soft); font-size:13.5px; margin-bottom:20px; }
+
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .filters button{ background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.15); color:#f3e3d3;
+    padding:7px 14px; border-radius:100px; font-size:13px; cursor:pointer; }
+  .filters button.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .order-card{ background:var(--panel); color:var(--ink); border-radius:16px; padding:18px 18px 16px; margin-bottom:14px;
+    box-shadow:0 14px 30px -18px rgba(0,0,0,.5); }
+  .order-top{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-start; }
+  .order-name{ font-weight:700; font-size:16.5px; }
+  .order-meta{ color:var(--ink-soft); font-size:12.5px; margin-top:2px; }
+  .badge{ display:inline-block; padding:4px 11px; border-radius:100px; font-size:11.5px; font-weight:700; letter-spacing:.02em; }
+  .badge-pending{ background:#fdeccb; color:#8a5a10; }
+  .badge-paid{ background:#dcf2e1; color:#1f6b3a; }
+  .badge-hosted{ background:#dfe8fd; color:#28409e; }
+  .badge-expired{ background:#f8dada; color:#9c2d2d; }
+
+  .order-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .order-row .field{ flex:1 1 140px; }
+  .order-row label{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:3px; }
+  .order-row .value{ font-size:14px; }
+  .order-row select{ padding:6px 8px; border-radius:8px; border:1px solid var(--line); font-size:13px; }
+
+  .order-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .mini-btn{ padding:9px 14px; border-radius:9px; border:1px solid var(--line); background:#fff; color:var(--ink);
+    font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; }
+  .mini-btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .mini-btn.danger{ color:var(--bad); }
+
+  .empty{ text-align:center; color:var(--ink-soft); padding:60px 20px; }
+  .loading{ text-align:center; color:var(--ink-soft); padding:60px 20px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script type="text/babel" data-presets="react">
+// Same Supabase project as admin.html / memories-admin.html / select-product.html.
+const SUPABASE_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc";
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// Same light-deterrent PIN pattern as the other Backstage tools.
+const ADMIN_PASSWORD = "150406";
+
+const BUILDER_PATH = { "chasing-her": "admin.html", "memories": "memories-admin.html" };
+const PRODUCT_LABEL = { "chasing-her": "Chasing Her", "memories": "Memories" };
+
+function Gate({ onUnlock }) {
+  const [value, setValue] = React.useState("");
+  const [error, setError] = React.useState("");
+  function submit(e) {
+    e.preventDefault();
+    if (value === ADMIN_PASSWORD) { sessionStorage.setItem("orders_unlocked", "1"); onUnlock(); }
+    else setError("That's not it — try again.");
+  }
+  return (
+    <div className="gate">
+      <div className="gate-mark">Backstage</div>
+      <div className="gate-sub">Orders — everyone who reached WhatsApp to pay.</div>
+      <form onSubmit={submit}>
+        <input type="password" placeholder="Password" value={value}
+          onChange={(e) => { setValue(e.target.value); setError(""); }} autoFocus />
+        <button type="submit">Enter</button>
+      </form>
+      <div className="gate-error">{error}</div>
+    </div>
+  );
+}
+
+function timeLeft(expiresAt) {
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (ms <= 0) return "expired";
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return h + "h " + m + "m left";
+}
+
+function OrderCard({ order, onChanged }) {
+  const [busy, setBusy] = React.useState(false);
+
+  async function setStatus(status) {
+    setBusy(true);
+    await supabaseClient.from("submissions").update({ status }).eq("id", order.id);
+    setBusy(false);
+    onChanged();
+  }
+
+  async function remove() {
+    if (!window.confirm("Delete this order? This removes it from the list and deletes the saved HTML file. It does NOT delete the editable project.")) return;
+    setBusy(true);
+    await supabaseClient.storage.from("submissions").remove([order.html_path]);
+    await supabaseClient.from("submissions").delete().eq("id", order.id);
+    setBusy(false);
+    onChanged();
+  }
+
+  const badgeClass = "badge badge-" + (order.status === "pending_payment" ? "pending" : order.status);
+  const waLink = order.whatsapp ? "https://wa.me/" + order.whatsapp.replace(/[^0-9]/g, "") : null;
+
+  return (
+    <div className="order-card">
+      <div className="order-top">
+        <div>
+          <div className="order-name">{order.full_name || "(no name given)"}</div>
+          <div className="order-meta">{PRODUCT_LABEL[order.product] || order.product} · {order.slug}</div>
+        </div>
+        <span className={badgeClass}>{(order.status || "").replace("_", " ")}</span>
+      </div>
+
+      <div className="order-row">
+        <div className="field">
+          <label>WhatsApp</label>
+          <div className="value">{waLink ? <a href={waLink} target="_blank" rel="noreferrer">{order.whatsapp}</a> : "—"}</div>
+        </div>
+        <div className="field">
+          <label>PIN</label>
+          <div className="value">{order.pin || "—"}</div>
+        </div>
+        <div className="field">
+          <label>Submitted</label>
+          <div className="value">{new Date(order.created_at).toLocaleString()}</div>
+        </div>
+        <div className="field">
+          <label>If unpaid</label>
+          <div className="value">{order.status === "pending_payment" ? timeLeft(order.expires_at) : "—"}</div>
+        </div>
+      </div>
+
+      <div className="order-actions">
+        <a className="mini-btn primary" href={order.html_url} target="_blank" rel="noreferrer" download>Download HTML</a>
+        <a className="mini-btn" href={(BUILDER_PATH[order.product] || "admin.html") + "?slug=" + encodeURIComponent(order.slug)} target="_blank" rel="noreferrer">Edit project</a>
+        {order.status !== "paid" && <button className="mini-btn" disabled={busy} onClick={() => setStatus("paid")}>Mark paid</button>}
+        {order.status === "paid" && <button className="mini-btn" disabled={busy} onClick={() => setStatus("hosted")}>Mark hosted</button>}
+        <button className="mini-btn danger" disabled={busy} onClick={remove}>Delete</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [unlocked, setUnlocked] = React.useState(() => sessionStorage.getItem("orders_unlocked") === "1");
+  const [orders, setOrders] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [filter, setFilter] = React.useState("all");
+
+  const load = React.useCallback(async () => {
+    if (!supabaseClient) { setLoading(false); return; }
+    setLoading(true);
+    const { data, error } = await supabaseClient.from("submissions").select("*").order("created_at", { ascending: false });
+    if (!error && data) setOrders(data);
+    setLoading(false);
+  }, []);
+
+  React.useEffect(() => { if (unlocked) load(); }, [unlocked, load]);
+
+  if (!unlocked) return <Gate onUnlock={() => setUnlocked(true)} />;
+
+  const shown = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+
+  return (
+    <div className="wrap">
+      <div className="head">
+        <h1>Orders</h1>
+        <button className="refresh-btn" onClick={load}>Refresh</button>
+      </div>
+      <div className="subhead">Everyone who finished building and tapped through to WhatsApp to pay.</div>
+
+      <div className="filters">
+        {["all", "pending_payment", "paid", "hosted", "expired"].map((f) => (
+          <button key={f} className={filter === f ? "active" : ""} onClick={() => setFilter(f)}>
+            {f === "all" ? "All" : f.replace("_", " ")}
+          </button>
+        ))}
+      </div>
+
+      {loading && <div className="loading">Loading…</div>}
+      {!loading && !shown.length && <div className="empty">Nothing here yet.</div>}
+      {!loading && shown.map((o) => <OrderCard key={o.id} order={o} onChanged={load} />)}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
