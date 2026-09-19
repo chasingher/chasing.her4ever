@@ -480,6 +480,19 @@ function TemplateRow({ tmpl, onChanged }) {
     setBusy(false);
     onChanged();
   }
+  async function preview() {
+    const w = window.open("about:blank", "_blank");
+    try {
+      const res = await fetch(tmpl.html_url);
+      if (!res.ok) throw new Error("load failed");
+      const html = await res.text();
+      const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      if (w) w.location.href = url;
+    } catch (e) {
+      if (w) w.close();
+      window.alert("Couldn't load the preview.");
+    }
+  }
   return (
     <div className="order-card">
       <div className="order-top">
