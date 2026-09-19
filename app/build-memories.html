@@ -1199,6 +1199,16 @@ function BuildTool(){
 
   function set(field, value){ setForm((f) => ({...f, [field]: value})); }
 
+    // Sends people who want us to build it for them to the custom-build thank-you page.
+  function goCustomBuild() {
+    if (!window.confirm("Nothing on this page has been saved, so leaving now will clear what you've added. Continue to the custom-build page?")) return;
+    const qs = new URLSearchParams();
+    if (leadName) qs.set("name", leadName);
+    if (leadWa) qs.set("wa", leadWa);
+    qs.set("product", "memories");
+    window.location.href = "thankyou-custom.html?" + qs.toString();
+  }
+
   // Preview renders right here on the page, in a small screen — never a
   // separate tab, and never a link the customer could copy or send around.
   function previewSite(){
@@ -1354,6 +1364,17 @@ function BuildTool(){
             <li>Once you pay, we host your site and it becomes a real, working link you can share.</li>
             <li>If you don't pay within <strong>48 hours</strong>, your work is deleted from our system and you'd need to start again.</li>
           </ul>
+        </div>
+
+        <div className="card">
+          <h2>Prefer we build it for you?</h2>
+          <p className="hint">
+            Not up for building it yourself? We can do a custom build of this site for you instead.
+            You send us the photos and words, and we put it all together.
+          </p>
+          <button type="button" className="btn btn-gold" style={{ width: "100%" }} onClick={goCustomBuild}>
+            I want a custom build instead
+          </button>
         </div>
 
         <div className="action-bar">
