@@ -1597,19 +1597,6 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
       if(insertRes.error) throw insertRes.error;
 
       var redirectUrl = FALLBACK_REDIRECT_URL;
-      try{
-        var settingsRes = await supabaseClient
-          .from("settings")
-          .select("value")
-          .eq("key", "redirect_url")
-          .single();
-        if(settingsRes.data && settingsRes.data.value){
-          redirectUrl = settingsRes.data.value;
-        }
-      }catch(_settingsErr){
-        // fall back silently to FALLBACK_REDIRECT_URL
-      }
-
       var sep = redirectUrl.indexOf("?") === -1 ? "?" : "&";
       redirectUrl = redirectUrl + sep +
         "name=" + encodeURIComponent(payload.full_name) +
