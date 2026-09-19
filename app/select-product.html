@@ -147,19 +147,31 @@
       .catch(function () { cb(null); });
   }
 
-  var backdrop = document.getElementById("modalBackdrop");
+    var backdrop = document.getElementById("modalBackdrop");
   var frame = document.getElementById("modalFrame");
   var titleEl = document.getElementById("modalTitle");
   var pinEl = document.getElementById("modalPin");
+  var openToken = 0; // ignores late responses if the modal was closed/reopened
+
+  function clearFrame() { frame.srcdoc = ""; }
+
+  function closeModal() {
+    openToken++;
+    backdrop.classList.remove("is-open");
+    clearFrame(); // also stops any music playing inside the example
+  }
 
   document.querySelectorAll(".tmpl-link").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var product = btn.getAttribute("data-tmpl");
+      var token = ++openToken;
       titleEl.textContent = "Loading example…";
       pinEl.textContent = "——";
-      frame.src = "about:blank";
+      clearFrame();
       backdrop.classList.add("is-open");
+
       fetchTemplate(product, function (tmpl) {
+        if (token !== openToken) return;
         if (!tmpl) {
           titleEl.textContent = "No example yet";
           pinEl.parentElement.style.display = "none";
@@ -168,17 +180,23 @@
         }
         titleEl.textContent = tmpl.label || "Example";
         pinEl.textContent = tmpl.pin || "——";
-        frame.src = tmpl.html_url;
+
+        // Storage serves .html as text/plain, so fetch it and render via srcdoc
+        fetch(tmpl.html_url)
+          .then(function (r) { if (!r.ok) throw new Error("load failed"); return r.text(); })
+          .then(function (html) { if (token === openToken) frame.srcdoc = html; })
+          .catch(function () {
+            if (token === openToken) {
+              frame.srcdoc = "<p style='font-family:sans-serif;padding:20px;color:#7A5A47'>Couldn't load the example. Please close and try again.</p>";
+            }
+          });
       });
     });
   });
 
-  document.getElementById("modalClose").addEventListener("click", function () {
-    backdrop.classList.remove("is-open");
-    frame.src = "about:blank";
-  });
+  document.getElementById("modalClose").addEventListener("click", closeModal);
   backdrop.addEventListener("click", function (e) {
-    if (e.target === backdrop) { backdrop.classList.remove("is-open"); frame.src = "about:blank"; }
+    if (e.target === backdrop) closeModal();
   });
 </script>
 
