@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Pick your design — Chasing Her</title>
-<meta name="description" content="Choose which site design you want, then build it yourself in a few minutes.">
+<meta name="description" content="Choose which site design you want, then build it yourself, preview it free and pay only when you're happy.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,37 +26,87 @@
   h1,h2,h3{ font-family:var(--serif); font-weight:500; line-height:1.15; margin:0; color:var(--wine-deep); letter-spacing:-0.01em; }
   p{ margin:0; }
   a{ color:inherit; }
+  :focus-visible{ outline:2.5px solid var(--wine); outline-offset:3px; border-radius:4px; }
   .wrap{ max-width:920px; margin:0 auto; padding:48px 20px 80px; }
 
   .top{ text-align:center; margin-bottom:40px; }
   .eyebrow{ font-family:var(--serif); font-style:italic; color:var(--brown); font-size:16px; margin-bottom:10px; }
   .top h1{ font-size:clamp(28px,6vw,42px); }
-  .top p{ margin-top:14px; color:var(--brown); font-size:16px; max-width:480px; margin-left:auto; margin-right:auto; }
+  .top p{ margin-top:14px; color:var(--brown); font-size:16px; max-width:520px; margin-left:auto; margin-right:auto; }
 
   .cards{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:40px; }
   @media (max-width:720px){ .cards{ grid-template-columns:1fr; } }
 
-  .card{ background:var(--white); border:1px solid var(--ivory-deep); border-radius:22px; padding:26px 22px 22px;
+  .card{ background:var(--white); border:1px solid var(--ivory-deep); border-radius:22px; padding:16px 16px 22px;
     box-shadow:0 18px 40px -22px rgba(90,26,44,.25); display:flex; flex-direction:column; gap:14px; }
+  .card .body{ display:flex; flex-direction:column; gap:14px; padding:2px 6px 0; flex:1; }
+  .card .meta{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
   .card .tag{ display:inline-block; width:fit-content; background:var(--blush); color:var(--wine-deep);
     font-size:12.5px; font-weight:700; letter-spacing:.02em; padding:5px 12px; border-radius:100px; }
+  .card .time{ display:inline-flex; align-items:center; gap:5px; background:var(--ivory-deep); color:var(--wine-deep);
+    font-size:12.5px; font-weight:600; padding:5px 12px 5px 10px; border-radius:100px; }
+  .card .time svg{ flex:none; }
   .card h2{ font-size:24px; }
   .card p.desc{ color:var(--brown); font-size:15px; line-height:1.65; }
-  .card .btns{ margin-top:auto; display:flex; flex-direction:column; gap:10px; padding-top:8px; }
+  .card p.choose{ border-top:1px solid var(--gold-light); padding-top:12px; margin-top:2px;
+    font-family:var(--serif); font-style:italic; font-size:14.5px; line-height:1.55; color:var(--wine-deep); }
+  .card .btns{ margin-top:auto; display:flex; flex-direction:column; gap:10px; padding:8px 6px 0; }
+
+  /* S4: thumbnail with "See an example" over it */
+  .thumb{ position:relative; display:block; width:100%; aspect-ratio:16/10; padding:0; border:none; cursor:pointer;
+    border-radius:14px; overflow:hidden; background:var(--blush); -webkit-tap-highlight-color:transparent; font:inherit; text-align:left; }
+  .thumb-fallback{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    background:linear-gradient(155deg, var(--blush), var(--rose) 62%, var(--gold-light)); color:var(--wine-deep); }
+  .thumb-fallback .glyph{ font-size:34px; line-height:1; }
+  .thumb-fallback .name{ font-family:var(--serif); font-style:italic; font-size:19px; }
+  .thumb-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0;
+    transition:opacity .35s var(--ease), transform .5s var(--ease); }
+  .thumb-img.is-loaded{ opacity:1; }
+  .thumb::after{ content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(to top, rgba(51,16,27,.55), rgba(51,16,27,0) 55%); }
+  .thumb-pill{ position:absolute; left:12px; bottom:12px; z-index:1; display:inline-flex; align-items:center; gap:7px;
+    background:rgba(51,16,27,.8); color:var(--ivory); font-size:13.5px; font-weight:700; padding:8px 14px 8px 12px; border-radius:100px;
+    transition:transform .3s var(--ease), background .3s var(--ease); }
+  .thumb:hover .thumb-img.is-loaded, .thumb:focus-visible .thumb-img.is-loaded{ transform:scale(1.02); }
+  .thumb:hover .thumb-pill, .thumb:focus-visible .thumb-pill{ transform:translateY(-2px); background:rgba(51,16,27,.92); }
+  .thumb:focus-visible{ outline-offset:2px; border-radius:14px; }
+  @media (max-width:720px){ .thumb{ aspect-ratio:auto; height:160px; } }
+  @media (prefers-reduced-motion: reduce){ .thumb-img, .thumb-pill{ transition:none; } }
 
   .btn-primary, .btn-outline{
     display:flex; align-items:center; justify-content:center; gap:.5em;
     font-family:var(--sans); font-weight:700; font-size:16px; padding:15px 22px;
     border-radius:100px; border:none; cursor:pointer; text-decoration:none;
     transition:transform .3s var(--ease), box-shadow .3s var(--ease), background .3s var(--ease);
-    -webkit-tap-highlight-color:transparent;
+    -webkit-tap-highlight-color:transparent; white-space:nowrap;
   }
   .btn-primary{ background:var(--wine); color:var(--ivory); box-shadow:0 10px 26px -10px rgba(90,26,44,.55); }
   .btn-primary:hover{ background:#6E2138; transform:translateY(-2px); }
   .btn-outline{ background:transparent; color:var(--wine-deep); border:1.5px solid var(--gold-light); }
   .btn-outline:hover{ background:var(--ivory-deep); }
 
-  .note{ text-align:center; margin-top:34px; color:var(--brown-soft); font-size:13.5px; }
+  /* S6: third option, full width, reads as an alternative rather than a third design */
+  .card-custom{ grid-column:1 / -1; flex-direction:row; align-items:center; gap:28px; padding:24px 28px;
+    background:var(--ivory-deep); border:1.5px solid var(--gold-light); box-shadow:none; }
+  .card-custom .text{ flex:1; display:flex; flex-direction:column; gap:10px; align-items:flex-start; }
+  .card-custom h2{ font-size:22px; }
+  .card-custom .btns{ margin-top:0; padding:0; flex:none; }
+  .card-custom .tag{ background:var(--white); }
+  @media (max-width:720px){
+    .card-custom{ flex-direction:column; align-items:stretch; gap:16px; padding:22px 20px; }
+    .card-custom .btns{ width:100%; }
+  }
+
+  /* S8 + S9: reassurance under the cards */
+  .reassure{ display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:34px; }
+  .note{ display:inline-flex; align-items:center; justify-content:center; gap:8px; text-align:center;
+    background:var(--blush); color:var(--brown); font-weight:500; font-size:14.5px; padding:8px 16px; border-radius:100px; }
+  .note svg{ flex:none; color:var(--wine); }
+  .promise{ display:flex; align-items:center; gap:10px; max-width:560px; text-align:left; font-size:14px; line-height:1.5; color:var(--brown);
+    background:var(--ivory-deep); border:1.5px solid var(--gold-light); border-radius:14px; padding:11px 14px; }
+  .promise svg{ flex:none; color:var(--wine); }
+  .promise strong{ color:var(--wine-deep); }
+  .promise a{ color:var(--wine); font-weight:600; white-space:nowrap; }
 
   /* ---------- template preview modal ---------- */
   .modal-backdrop{ position:fixed; inset:0; background:rgba(43,23,16,.55); display:none;
@@ -71,9 +121,8 @@
   .modal iframe{ width:100%; height:60vh; border:1px solid var(--ivory-deep); border-radius:12px; margin-top:6px; background:var(--ivory); }
   .modal .close-row{ margin-top:14px; text-align:right; }
   .modal .close-btn{ background:none; border:none; color:var(--brown); font-weight:700; cursor:pointer; font-size:14px; padding:8px 10px; }
-  .tmpl-link{ background:none; border:none; padding:0; font:inherit; color:var(--wine); text-decoration:underline;
-    cursor:pointer; font-size:14px; font-weight:600; }
-  .tmpl-empty{ font-size:13px; color:var(--brown-soft); }
+  .tmpl-empty{ font-size:13.5px; color:var(--brown-soft); line-height:1.6; }
+  [hidden]{ display:none !important; }
 </style>
 </head>
 <body>
@@ -81,101 +130,191 @@
 <div class="wrap">
   <div class="top">
     <div class="eyebrow">You're in — one more step</div>
-    <h1>Which one do you want to build?</h1>
-    <p>Pick a design below. You'll add your own photos, your own words, and your own songs — it only takes a few minutes.</p>
+    <h1>Which design feels most like them?</h1>
+    <p>Pick a design below. You’ll add your own photos, words and songs in about 15 to 30 minutes, and you can preview it free before you pay.</p>
   </div>
 
   <div class="cards">
     <div class="card">
-      <span class="tag">For someone you love</span>
-      <h2>Chasing Her</h2>
-      <p class="desc">A love-letter website. Photos, a letter that writes itself out, a song, and a flower reveal when they unlock it with a PIN.</p>
-      <button class="tmpl-link" data-tmpl="chasing-her" type="button">See a finished example first →</button>
+      <button class="thumb" type="button" data-tmpl="chasing-her" aria-label="See an example of the Chasing Her design">
+        <span class="thumb-fallback" aria-hidden="true"><span class="glyph">💌</span><span class="name">Chasing Her</span></span>
+        <img class="thumb-img" alt="" loading="lazy" decoding="async">
+        <span class="thumb-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>See an example</span>
+      </button>
+      <div class="body">
+        <div class="meta">
+          <span class="tag">For someone you love</span>
+          <span class="time"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>About 15 minutes</span>
+        </div>
+        <h2>Chasing Her</h2>
+        <p class="desc">A love-letter website. Photos, a letter that writes itself out, a song, and a flower reveal when they unlock it with a PIN.</p>
+        <p class="choose">Choose this for one heartfelt letter, songs you both love and a flower reveal.</p>
+      </div>
       <div class="btns">
-        <a class="btn-primary" id="link-chasing-her" href="build-chasingher.html">Build mine</a>
+        <a class="btn-primary" id="link-chasing-her" href="build-chasingher.html">Craft Mine ❤️</a>
       </div>
     </div>
 
     <div class="card">
-      <span class="tag">For any memory</span>
-      <h2>Memories</h2>
-      <p class="desc">A memory-box style site. Your photos, your favourite songs, and a voice note or message, wrapped up as a private gift.</p>
-      <button class="tmpl-link" data-tmpl="memories" type="button">See a finished example first →</button>
+      <button class="thumb" type="button" data-tmpl="memories" aria-label="See an example of the Memories design">
+        <span class="thumb-fallback" aria-hidden="true"><span class="glyph">📸</span><span class="name">Memories</span></span>
+        <img class="thumb-img" alt="" loading="lazy" decoding="async">
+        <span class="thumb-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>See an example</span>
+      </button>
+      <div class="body">
+        <div class="meta">
+          <span class="tag">For any memory</span>
+          <span class="time"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>About 30 minutes</span>
+        </div>
+        <h2>Memories</h2>
+        <p class="desc">Your photos fly in one by one and build into a heart, followed by a slideshow of memories with captions, a voice note, background music and your letter.</p>
+        <p class="choose">Choose this if you have lots of photos and want a heart of memories with a voice note.</p>
+      </div>
       <div class="btns">
-        <a class="btn-primary" id="link-memories" href="build-memories.html">Build mine</a>
+        <a class="btn-primary" id="link-memories" href="build-memories.html">Craft Mine ❤️</a>
+      </div>
+    </div>
+
+    <div class="card card-custom">
+      <div class="text">
+        <span class="tag">Hands-off</span>
+        <h2>Have us build it for you</h2>
+        <p class="desc">Send us your photos and words on WhatsApp and we’ll build either design for you. Same 50 GHC launch price, delivered within 24 hours.</p>
+      </div>
+      <div class="btns">
+        <a class="btn-outline" id="link-custom" href="thankyou-custom.html">Request a custom build</a>
       </div>
     </div>
   </div>
 
-  <p class="note">Once you pick, you'll only be able to preview your site before paying — nothing is saved or published until you do.</p>
+  <div class="reassure">
+    <p class="note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Free to build and preview. Pay only when you’re happy.</span></p>
+    <p class="promise"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 10-4-1.6-7-5.5-7-10V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg><span><strong>Our promise:</strong> free edits until you’re happy. If we can’t fix it, you get a refund. <a href="terms.html#refunds" target="_blank" rel="noopener">Terms &amp; Refunds</a></span></p>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <h3 id="modalTitle">Example</h3>
-    <div class="pin-box">
+    <div class="pin-box" id="pinBox">
       <div class="pin-label">Unlock PIN for this example</div>
       <div class="pin-value" id="modalPin">——</div>
     </div>
     <iframe id="modalFrame" src="about:blank" title="Example preview"></iframe>
+    <p class="tmpl-empty" id="modalEmpty" hidden></p>
     <div class="close-row"><button class="close-btn" id="modalClose" type="button">Close</button></div>
   </div>
 </div>
 
 <script>
-  // ---- carry the lead's name/WhatsApp number forward into the builder ----
+  // ---- carry the lead's name/WhatsApp number forward into the builder and the custom page ----
   var params = new URLSearchParams(window.location.search);
   var carry = "";
   if (params.get("name")) carry += "&name=" + encodeURIComponent(params.get("name"));
   if (params.get("wa")) carry += "&wa=" + encodeURIComponent(params.get("wa"));
   if (carry) {
-    document.getElementById("link-chasing-her").href += "?" + carry.slice(1);
-    document.getElementById("link-memories").href += "?" + carry.slice(1);
+    ["link-chasing-her", "link-memories", "link-custom"].forEach(function (id) {
+      var a = document.getElementById(id);
+      a.href += "?" + carry.slice(1);
+    });
   }
 
   // ---- Supabase (same project as admin.html / memories-admin.html) ----
   var SUPABASE_URL = "https://zxnqoxyyzspvznehdpnj.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc";
 
-  function fetchTemplate(product, cb) {
-    fetch(SUPABASE_URL + "/rest/v1/templates?product=eq." + encodeURIComponent(product) +
-      "&is_active=eq.true&select=label,pin,html_url&order=sort_order.asc&limit=1", {
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
-    })
-      .then(function (r) { return r.json(); })
-      .then(function (rows) { cb(rows && rows[0] ? rows[0] : null); })
-      .catch(function () { cb(null); });
+  var THUMB_ALT = {
+    "chasing-her": "Preview of a Chasing Her love-letter site with photos, a written letter and a song",
+    "memories": "Preview of a Memories site where photos build into a heart shape"
+  };
+
+  // One request for both designs: gives us the thumbnails now and the modal content later.
+  // If the thumb_url column hasn't been added yet, retry without it so the modal still works.
+  var templatesPromise = loadTemplates();
+
+  function loadTemplates() {
+    var base = SUPABASE_URL + "/rest/v1/templates?product=in.(chasing-her,memories)&is_active=eq.true&order=sort_order.asc";
+    var headers = { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY };
+    function get(select) {
+      return fetch(base + "&select=" + select, { headers: headers }).then(function (r) {
+        if (!r.ok) throw new Error("templates " + r.status);
+        return r.json();
+      });
+    }
+    return get("product,label,pin,html_url,thumb_url")
+      .catch(function () { return get("product,label,pin,html_url"); })
+      .then(function (rows) {
+        var map = {};
+        (rows || []).forEach(function (t) { if (!map[t.product]) map[t.product] = t; });
+        return map;
+      })
+      .catch(function () { return null; }); // null = couldn't reach the database
   }
 
-    var backdrop = document.getElementById("modalBackdrop");
+  templatesPromise.then(function (map) {
+    if (!map) return;
+    Object.keys(map).forEach(function (product) {
+      var t = map[product];
+      if (!t.thumb_url || !/^https:\/\//.test(t.thumb_url)) return;
+      var img = document.querySelector('.thumb[data-tmpl="' + product + '"] .thumb-img');
+      if (!img) return;
+      img.onload = function () { img.classList.add("is-loaded"); };
+      img.alt = THUMB_ALT[product] || "";
+      img.src = t.thumb_url;
+    });
+  });
+
+  // ---- example modal ----
+  var backdrop = document.getElementById("modalBackdrop");
   var frame = document.getElementById("modalFrame");
   var titleEl = document.getElementById("modalTitle");
+  var pinBox = document.getElementById("pinBox");
   var pinEl = document.getElementById("modalPin");
-  var openToken = 0; // ignores late responses if the modal was closed/reopened
+  var emptyEl = document.getElementById("modalEmpty");
+  var closeBtn = document.getElementById("modalClose");
+  var openToken = 0;   // ignores late responses if the modal was closed/reopened
+  var lastTrigger = null;
 
-  function clearFrame() { frame.srcdoc = ""; }
+  function showEmpty(message) {
+    pinBox.hidden = true;
+    frame.hidden = true;
+    emptyEl.textContent = message;
+    emptyEl.hidden = false;
+  }
 
   function closeModal() {
     openToken++;
     backdrop.classList.remove("is-open");
-    clearFrame(); // also stops any music playing inside the example
+    frame.srcdoc = ""; // also stops any music playing inside the example
+    if (lastTrigger) { lastTrigger.focus(); lastTrigger = null; }
   }
 
-  document.querySelectorAll(".tmpl-link").forEach(function (btn) {
+  document.querySelectorAll(".thumb").forEach(function (btn) {
     btn.addEventListener("click", function () {
       var product = btn.getAttribute("data-tmpl");
       var token = ++openToken;
+      lastTrigger = btn;
+
       titleEl.textContent = "Loading example…";
       pinEl.textContent = "——";
-      clearFrame();
+      pinBox.hidden = false;
+      frame.hidden = false;
+      emptyEl.hidden = true;
+      frame.srcdoc = "";
       backdrop.classList.add("is-open");
+      closeBtn.focus();
 
-      fetchTemplate(product, function (tmpl) {
+      templatesPromise.then(function (map) {
         if (token !== openToken) return;
+        if (!map) {
+          titleEl.textContent = "Couldn't load the example";
+          showEmpty("Please close this and try again in a moment. You can still go ahead and build your own.");
+          return;
+        }
+        var tmpl = map[product];
         if (!tmpl) {
           titleEl.textContent = "No example yet";
-          pinEl.parentElement.style.display = "none";
-          frame.outerHTML = "<p class='tmpl-empty'>We haven't added an example for this design yet — go ahead and build your own, you can preview it as you go.</p>";
+          showEmpty("We haven't added an example for this design yet — go ahead and build your own, you can preview it as you go.");
           return;
         }
         titleEl.textContent = tmpl.label || "Example";
@@ -194,9 +333,10 @@
     });
   });
 
-  document.getElementById("modalClose").addEventListener("click", closeModal);
-  backdrop.addEventListener("click", function (e) {
-    if (e.target === backdrop) closeModal();
+  closeBtn.addEventListener("click", closeModal);
+  backdrop.addEventListener("click", function (e) { if (e.target === backdrop) closeModal(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && backdrop.classList.contains("is-open")) closeModal();
   });
 </script>
 

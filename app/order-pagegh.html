@@ -996,6 +996,157 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     .hero-float.blossom{ width:190px; left:-90px; top:-40px; }
     .hero-float.butterfly{ width:120px; right:-70px; }
   }
+
+  /* ================= FUNNEL FIXES (O1–O8) ================= */
+
+  /* O4: "Preview free" microcopy under every CTA */
+  .cta-block{ display:flex; flex-direction:column; align-items:center; }
+  .cta-note{
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    margin-top:10px;
+    font-family:var(--sans); font-size:13.5px; line-height:1.4;
+    color:var(--brown-soft); text-align:center;
+  }
+  .cta-note svg{ flex:none; color:var(--wine); }
+  /* on the dark offer card the brown-soft / wine pair has too little contrast, so it flips to gold-light */
+  .offer-card .cta-note{ color:var(--gold-light); }
+  .offer-card .cta-note svg{ color:var(--gold-light); }
+  .offer-card .cta-block{ margin-top:26px; }
+  .offer-card .cta-block .btn-primary{ margin-top:0; }
+  .sticky-cta .cta-block{ width:100%; }
+  .sticky-cta .cta-note{ font-size:12px; margin-top:6px; }
+
+  /* O5: hero one-liner + "Your three options" strip */
+  .hero-options-line{ font-size:13.5px; color:var(--brown); text-align:center; max-width:340px; line-height:1.5; }
+  .options-strip{ max-width:900px; margin:0 auto 30px; }
+  .options-strip h3{ text-align:center; font-size:clamp(21px,4.6vw,26px); margin-bottom:18px; }
+  .options-list{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  .option{
+    background:var(--white);
+    border:1px solid rgba(90,26,44,.14);
+    border-radius:22px;
+    padding:20px 18px;
+    display:flex; gap:13px; align-items:flex-start;
+  }
+  .option .ic{
+    flex:none; width:36px; height:36px; border-radius:50%;
+    background:var(--blush);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px;
+  }
+  .option strong{ display:block; font-family:var(--sans); font-weight:700; font-size:15.5px; color:var(--wine-deep); line-height:1.35; }
+  .option .desc{ display:block; margin-top:3px; font-size:14px; color:var(--brown); line-height:1.55; }
+  @media (max-width:859px){
+    .options-list{
+      grid-template-columns:1fr; gap:0;
+      background:var(--white);
+      border:1px solid rgba(90,26,44,.14);
+      border-radius:22px;
+      overflow:hidden;
+    }
+    .option{ border:none; border-radius:0; border-top:1px solid rgba(90,26,44,.1); }
+    .option:first-child{ border-top:none; }
+  }
+
+  /* O6: promise box */
+  .promise-box{
+    display:flex; align-items:flex-start; gap:11px;
+    width:100%;
+    background:var(--ivory-deep);
+    border:1.5px solid var(--gold-light);
+    border-radius:14px;
+    padding:14px 16px;
+    font-size:14.5px; line-height:1.55;
+    color:var(--brown);
+    text-align:left;
+  }
+  .promise-box .promise-ic{ flex:none; margin-top:1px; color:var(--wine); }
+  .promise-box strong{ color:var(--wine-deep); }
+  .promise-box a{ color:var(--wine); font-weight:600; white-space:nowrap; }
+  .promise-box.compact{ padding:11px 14px; font-size:13.5px; }
+  .offer-card .promise-box{ margin-top:22px; }
+  .form-card .promise-box{ margin-top:20px; }
+
+  /* O2/O7: form extras */
+  .form-consent{
+    margin-top:12px; text-align:center;
+    font-size:12.5px; line-height:1.55; color:var(--brown-soft);
+  }
+  .form-consent a{ color:var(--brown); text-decoration:underline; }
+  .form-consent a:hover{ color:var(--wine); }
+  .field input[type="text"], .field input[type="tel"]{ height:52px; }
+  .form-card .form-error{ margin-top:12px; }
+  /* the original rule was `.form-card > p.form-sub`, which never matched because the line sits inside <form> */
+  .form-card .form-sub{ text-align:center; margin-top:10px; color:var(--brown); font-size:14.5px; }
+
+  /* O3: country-code + number, one joined control */
+  .phone-field{
+    position:relative;
+    display:flex; align-items:stretch;
+    height:52px;
+    border:1.5px solid rgba(90,26,44,.16);
+    border-radius:12px;
+    background:var(--ivory);
+    transition:border-color .25s var(--ease), background .25s var(--ease);
+  }
+  .phone-field:focus-within{ border-color:var(--wine); background:var(--white); }
+  .phone-field.is-invalid{ border-color:#8A2A2A; }
+  .cc-btn{
+    flex:none; min-width:96px; width:96px;
+    display:flex; align-items:center; justify-content:center; gap:4px;
+    padding:0 8px;
+    background:transparent; border:none; border-right:1px solid rgba(90,26,44,.16);
+    border-radius:10.5px 0 0 10.5px;
+    font-family:var(--sans); font-size:15px; font-weight:600; color:var(--ink);
+    cursor:pointer; white-space:nowrap;
+  }
+  .cc-btn:focus-visible{ outline-offset:-4px; }
+  .cc-btn .cc-flag{ font-size:18px; line-height:1; }
+  .cc-btn svg{ flex:none; color:var(--brown-soft); transition:transform .2s var(--ease); }
+  .cc-btn[aria-expanded="true"] svg{ transform:rotate(180deg); }
+  .phone-field input.phone-input{
+    flex:1; min-width:0;
+    border:none; background:transparent; border-radius:0 10.5px 10.5px 0;
+    padding:0 15px; height:100%;
+  }
+  .phone-field input.phone-input:focus{ background:transparent; }
+  .cc-panel{
+    position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:30;
+    min-width:240px;
+    background:var(--white);
+    border:1px solid rgba(90,26,44,.14);
+    border-radius:14px;
+    box-shadow:0 24px 44px -18px rgba(51,16,27,.45);
+    overflow:hidden;
+  }
+  .cc-panel[hidden]{ display:none; }
+  .cc-search{ padding:10px; border-bottom:1px solid rgba(90,26,44,.1); }
+  .cc-search input{
+    width:100%; height:42px; padding:0 12px;
+    font-family:var(--sans); font-size:16px;
+    border:1.5px solid rgba(90,26,44,.16); border-radius:10px; background:var(--ivory); color:var(--ink);
+  }
+  .cc-search input:focus{ outline:none; border-color:var(--wine); background:var(--white); }
+  .cc-list{ list-style:none; margin:0; padding:6px; max-height:264px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .cc-opt{
+    width:100%; display:flex; align-items:center; gap:10px;
+    padding:10px 10px; border:none; border-radius:10px; background:transparent;
+    font-family:var(--sans); font-size:15px; color:var(--ink); text-align:left; cursor:pointer;
+  }
+  .cc-opt:hover, .cc-opt:focus-visible{ background:var(--ivory-deep); }
+  .cc-opt:focus-visible{ outline-offset:-2px; }
+  .cc-opt[aria-selected="true"]{ background:var(--blush); }
+  .cc-opt .o-flag{ font-size:18px; line-height:1; flex:none; }
+  .cc-opt .o-name{ flex:1; min-width:0; }
+  .cc-opt .o-code{ color:var(--brown-soft); font-variant-numeric:tabular-nums; flex:none; }
+  .cc-opt.is-other{ font-weight:600; color:var(--wine-deep); }
+  .cc-empty{ padding:14px 12px; font-size:14px; color:var(--brown-soft); }
+
+  /* O7: footer links */
+  .footer-links{ margin-top:8px; font-size:13px; color:var(--brown-soft); }
+  .footer-links a{ color:var(--brown-soft); text-decoration:none; padding:2px 2px; }
+  .footer-links a:hover{ text-decoration:underline; color:var(--wine); }
+  .footer-links .sep{ margin:0 8px; }
 </style>
 </head>
 <body>
@@ -1026,7 +1177,11 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
         <p class="hero-sub">We create beautiful personal websites made just for someone you love — your words, your pictures, your memories, your story, all in one beautiful place.</p>
 
         <div class="hero-offer">
-          <a href="#order-form" class="btn-primary cta-btn">Create Their Love Letter Website ❤️</a>
+          <div class="cta-block">
+            <a href="#order-form" class="btn-primary cta-btn">Craft Their Website ❤️</a>
+            <p class="cta-note"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Preview it free. Pay only when you’re happy.</span></p>
+          </div>
+          <p class="hero-options-line">Preview free, build it yourself, or ask us to build it for you.</p>
           <span class="hero-note">Just 50GHC for our first 15 customers · takes 2 minutes</span>
         </div>
       </div>
@@ -1157,7 +1312,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     </div>
 
     <div class="offer-card reveal">
-      <span class="offer-ribbon">80% off — first 15 customers TODAY ONLY!</span>
+      <span class="offer-ribbon">75% off — first 15 customers TODAY ONLY!</span>
       <div class="offer-price-row">
         <span class="offer-price">Just 50GHC</span>
         <span class="offer-was">200GHC</span>
@@ -1174,7 +1329,15 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
         <li><span class="ic">🛠️</span><span>Lifetime site maintenance</span></li>
       </ul>
 
-      <a href="#order-form" class="btn-primary cta-btn">They Are Worth It & More ❤️</a>
+      <div class="promise-box">
+        <svg class="promise-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 10-4-1.6-7-5.5-7-10V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+        <p><strong>Our promise:</strong> free edits until you’re happy. If we can’t fix it, you get a refund. <a href="terms.html#refunds" target="_blank" rel="noopener">Terms &amp; Refunds</a></p>
+      </div>
+
+      <div class="cta-block">
+        <a href="#order-form" class="btn-primary cta-btn">Craft Their Website ❤️</a>
+        <p class="cta-note"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Preview it free. Pay only when you’re happy.</span></p>
+      </div>
     </div>
 
     <p class="offer-why reveal">We're a legit upcoming brand, and we want to build more real customer testimonials — so we're giving our first 15 customers the full experience for More than half the normal price.</p>
@@ -1216,7 +1379,10 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
       and still treasure years from now.
     </blockquote>
     <div class="final-cta reveal">
-      <a href="#order-form" class="btn-primary cta-btn">They Are Worth It & More ❤️</a>
+      <div class="cta-block">
+        <a href="#order-form" class="btn-primary cta-btn">Craft Their Website ❤️</a>
+        <p class="cta-note"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Preview it free. Pay only when you’re happy.</span></p>
+      </div>
     </div>
   </div>
 </section>
@@ -1224,11 +1390,31 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
 <!-- ================= ORDER FORM ================= -->
 <section class="form-section" id="order-form">
   <div class="container">
+
+    <!-- Your three options (O5) — wording matches the select page's third card -->
+    <div class="options-strip reveal">
+      <h3>Your three options</h3>
+      <ol class="options-list">
+        <li class="option">
+          <span class="ic" aria-hidden="true">👁️</span>
+          <span><strong>1. Preview it free</strong><span class="desc">See exactly how it looks before you pay.</span></span>
+        </li>
+        <li class="option">
+          <span class="ic" aria-hidden="true">🔧</span>
+          <span><strong>2. Build it yourself</strong><span class="desc">Add your photos, words and songs in minutes.</span></span>
+        </li>
+        <li class="option">
+          <span class="ic" aria-hidden="true">✉️</span>
+          <span><strong>3. Or we build it for you</strong><span class="desc">Request a custom build at the same 50 GHC launch price.</span></span>
+        </li>
+      </ol>
+    </div>
+
     <div class="form-card reveal">
 
       <form class="form" id="orderForm" novalidate>
         <h2>Let's Start Their Website</h2>
-        <p class="form-sub">Tell us a little about them — we'll take it from here.</p>
+        <p class="form-sub">Just your name and WhatsApp number to begin.</p>
 
         <div class="hp-field" aria-hidden="true">
           <label for="company">Company</label>
@@ -1239,62 +1425,36 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
           <label for="fullName">Full name</label>
           <input type="text" id="fullName" name="fullName" placeholder="Your name" required autocomplete="name">
         </div>
-        
-        <div class="field">
-          <label for="country">Country</label>
-          <select id="country" name="country" required>
-            <option value="" disabled selected>Choose your country</option>
-            <option>Nigeria</option>
-            <option>Ghana</option>
-            <option>Kenya</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        
-        <div class="field is-hidden" id="otherCountryField">
-          <label for="countryOther">Please tell us your country</label>
-          <input type="text" id="countryOther" name="countryOther" placeholder="Type your country">
-        </div>
-        
+
         <div class="field">
           <label for="whatsapp">WhatsApp number</label>
-          <input type="tel" id="whatsapp" name="whatsapp" placeholder="e.g. 080..." required autocomplete="tel">
-        </div>
-        
-        <div class="form-note">
-          <strong>Please include your country code</strong> so we can reach you on WhatsApp — e.g. <strong>+234 801 234 5678</strong> (Nigeria), <strong>+233 24 123 4567</strong> (Ghana), or <strong>+254 712 345 678</strong> (Kenya).
-        </div>
-
-        <div class="field">
-          <label for="email">Email address</label>
-          <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
-        </div>
-
-        <div class="field">
-          <label for="recipient">Who is the website for?</label>
-          <select id="recipient" name="recipient" required>
-            <option value="" disabled selected>Choose one</option>
-            <option>My boyfriend / girlfriend</option>
-            <option>My husband / wife</option>
-            <option>My fiancé / fiancée</option>
-            <option>My parents / family</option>
-            <option>My best friend</option>
-            <option>Someone else special</option>
-          </select>
+          <div class="phone-field" id="phoneField">
+            <button type="button" class="cc-btn" id="ccBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="ccPanel" aria-label="Country code: Ghana +233">
+              <span class="cc-flag" id="ccFlag" aria-hidden="true">🇬🇭</span>
+              <span class="cc-code" id="ccCode">+233</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <input type="tel" class="phone-input" id="whatsapp" name="whatsapp" inputmode="tel" autocomplete="tel-national" placeholder="24 123 4567" required aria-describedby="phoneError">
+            <div class="cc-panel" id="ccPanel" hidden>
+              <div class="cc-search" id="ccSearchWrap" hidden>
+                <input type="text" id="ccSearch" placeholder="Search country or code" autocomplete="off" aria-label="Search country or code">
+              </div>
+              <ul class="cc-list" id="ccList" role="listbox" aria-label="Country code"></ul>
+            </div>
+          </div>
+          <p class="form-error" id="phoneError" role="alert">Please enter a valid WhatsApp number.</p>
         </div>
 
-        <div class="field">
-          <label for="message">A short message about what you want (optional)</label>
-          <textarea id="message" name="message" placeholder="Tell us a bit about them, or what you have in mind..."></textarea>
-        </div>
-
-        <div class="form-note">
-          <strong>Once you submit your details</strong>, one of our agents will reach out to you personally to help you complete your purchase and answer any questions you may have.
+        <div class="promise-box compact">
+          <svg class="promise-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 10-4-1.6-7-5.5-7-10V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+          <p><strong>Our promise:</strong> free edits until you’re happy. If we can’t fix it, you get a refund. <a href="terms.html#refunds" target="_blank" rel="noopener">Terms &amp; Refunds</a></p>
         </div>
 
         <p class="form-error" id="formError" role="alert"></p>
 
-        <button type="submit" class="btn-primary">Create Their Love Letter Website ❤️</button>
+        <button type="submit" class="btn-primary">Craft Their Website ❤️</button>
+        <p class="cta-note"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Preview it free. Pay only when you’re happy.</span></p>
+        <p class="form-consent">By continuing you agree to our <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
       </form>
 
       <div class="form-success" id="formSuccess">
@@ -1318,11 +1478,15 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     <span class="brand-name" style="font-size:16px;">Chasing Her</span>
   </div>
   <p>© 2026 Chasing Her. Made with love, for love.</p>
+  <p class="footer-links"><a href="privacy.html">Privacy Policy</a><span class="sep" aria-hidden="true">·</span><a href="terms.html">Terms &amp; Refunds</a></p>
 </footer>
 
 <!-- ================= STICKY MOBILE CTA ================= -->
 <div class="sticky-cta" id="stickyCta">
-  <a href="#order-form" class="btn-primary cta-btn">Create Their Love Letter Website ❤️</a>
+  <div class="cta-block">
+    <a href="#order-form" class="btn-primary cta-btn">Craft Their Website ❤️</a>
+    <p class="cta-note"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Preview free. Pay when happy.</span></p>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -1340,10 +1504,8 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   var SUPABASE_URL = "https://yaisiawnqlfosfawcxle.supabase.co";        // e.g. "https://xxxxxxxx.supabase.co"
   var SUPABASE_ANON_KEY = "sb_publishable_KZbznu5oAKqKtCTQ36PM1A_eiBCvm8-";
 
-  // Used only if the "redirect_url" row in the settings table can't be
-  // reached for some reason — always keep this as a working fallback link.
-  // Assumes thank-you.html is deployed in the same folder as this file;
-  // change it to a full URL if you host it somewhere else.
+  // Where people go after the form saves. Assumes select-product.html is
+  // deployed in the same folder as this file.
   var FALLBACK_REDIRECT_URL = "select-product.html";
 
   var supabaseClient = null;
@@ -1534,25 +1696,253 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   }
   loadTestimonials();
 
+  /* ---------- WhatsApp number: country code + number (O3) ---------- */
+
+  // ISO | name | dial code. Ghana / Nigeria / Kenya are pinned at the top of the picker.
+  var COUNTRY_DATA =
+    "AF|Afghanistan|93;AL|Albania|355;DZ|Algeria|213;AS|American Samoa|1684;AD|Andorra|376;AO|Angola|244;AI|Anguilla|1264;" +
+    "AG|Antigua and Barbuda|1268;AR|Argentina|54;AM|Armenia|374;AW|Aruba|297;AU|Australia|61;AT|Austria|43;AZ|Azerbaijan|994;" +
+    "BS|Bahamas|1242;BH|Bahrain|973;BD|Bangladesh|880;BB|Barbados|1246;BY|Belarus|375;BE|Belgium|32;BZ|Belize|501;BJ|Benin|229;" +
+    "BM|Bermuda|1441;BT|Bhutan|975;BO|Bolivia|591;BA|Bosnia and Herzegovina|387;BW|Botswana|267;BR|Brazil|55;" +
+    "VG|British Virgin Islands|1284;BN|Brunei|673;BG|Bulgaria|359;BF|Burkina Faso|226;BI|Burundi|257;KH|Cambodia|855;" +
+    "CM|Cameroon|237;CA|Canada|1;CV|Cape Verde|238;KY|Cayman Islands|1345;CF|Central African Republic|236;TD|Chad|235;" +
+    "CL|Chile|56;CN|China|86;CO|Colombia|57;KM|Comoros|269;CG|Congo|242;CD|Congo (DR)|243;CR|Costa Rica|506;" +
+    "CI|Côte d’Ivoire|225;HR|Croatia|385;CU|Cuba|53;CY|Cyprus|357;CZ|Czechia|420;DK|Denmark|45;DJ|Djibouti|253;" +
+    "DM|Dominica|1767;DO|Dominican Republic|1809;EC|Ecuador|593;EG|Egypt|20;SV|El Salvador|503;GQ|Equatorial Guinea|240;" +
+    "ER|Eritrea|291;EE|Estonia|372;SZ|Eswatini|268;ET|Ethiopia|251;FJ|Fiji|679;FI|Finland|358;FR|France|33;GA|Gabon|241;" +
+    "GM|Gambia|220;GE|Georgia|995;DE|Germany|49;GH|Ghana|233;GI|Gibraltar|350;GR|Greece|30;GL|Greenland|299;GD|Grenada|1473;" +
+    "GU|Guam|1671;GT|Guatemala|502;GN|Guinea|224;GW|Guinea-Bissau|245;GY|Guyana|592;HT|Haiti|509;HN|Honduras|504;" +
+    "HK|Hong Kong|852;HU|Hungary|36;IS|Iceland|354;IN|India|91;ID|Indonesia|62;IR|Iran|98;IQ|Iraq|964;IE|Ireland|353;" +
+    "IL|Israel|972;IT|Italy|39;JM|Jamaica|1876;JP|Japan|81;JO|Jordan|962;KZ|Kazakhstan|7;KE|Kenya|254;KI|Kiribati|686;" +
+    "XK|Kosovo|383;KW|Kuwait|965;KG|Kyrgyzstan|996;LA|Laos|856;LV|Latvia|371;LB|Lebanon|961;LS|Lesotho|266;LR|Liberia|231;" +
+    "LY|Libya|218;LI|Liechtenstein|423;LT|Lithuania|370;LU|Luxembourg|352;MO|Macau|853;MG|Madagascar|261;MW|Malawi|265;" +
+    "MY|Malaysia|60;MV|Maldives|960;ML|Mali|223;MT|Malta|356;MR|Mauritania|222;MU|Mauritius|230;MX|Mexico|52;MD|Moldova|373;" +
+    "MC|Monaco|377;MN|Mongolia|976;ME|Montenegro|382;MS|Montserrat|1664;MA|Morocco|212;MZ|Mozambique|258;MM|Myanmar|95;" +
+    "NA|Namibia|264;NP|Nepal|977;NL|Netherlands|31;NZ|New Zealand|64;NI|Nicaragua|505;NE|Niger|227;NG|Nigeria|234;" +
+    "MK|North Macedonia|389;NO|Norway|47;OM|Oman|968;PK|Pakistan|92;PS|Palestine|970;PA|Panama|507;PG|Papua New Guinea|675;" +
+    "PY|Paraguay|595;PE|Peru|51;PH|Philippines|63;PL|Poland|48;PT|Portugal|351;PR|Puerto Rico|1787;QA|Qatar|974;RO|Romania|40;" +
+    "RU|Russia|7;RW|Rwanda|250;KN|Saint Kitts and Nevis|1869;LC|Saint Lucia|1758;VC|Saint Vincent and the Grenadines|1784;" +
+    "WS|Samoa|685;SM|San Marino|378;ST|São Tomé and Príncipe|239;SA|Saudi Arabia|966;SN|Senegal|221;RS|Serbia|381;" +
+    "SC|Seychelles|248;SL|Sierra Leone|232;SG|Singapore|65;SK|Slovakia|421;SI|Slovenia|386;SB|Solomon Islands|677;" +
+    "SO|Somalia|252;ZA|South Africa|27;KR|South Korea|82;SS|South Sudan|211;ES|Spain|34;LK|Sri Lanka|94;SD|Sudan|249;" +
+    "SR|Suriname|597;SE|Sweden|46;CH|Switzerland|41;SY|Syria|963;TW|Taiwan|886;TJ|Tajikistan|992;TZ|Tanzania|255;TH|Thailand|66;" +
+    "TL|Timor-Leste|670;TG|Togo|228;TO|Tonga|676;TT|Trinidad and Tobago|1868;TN|Tunisia|216;TR|Türkiye|90;TM|Turkmenistan|993;" +
+    "TC|Turks and Caicos Islands|1649;UG|Uganda|256;UA|Ukraine|380;AE|United Arab Emirates|971;GB|United Kingdom|44;" +
+    "US|United States|1;UY|Uruguay|598;UZ|Uzbekistan|998;VU|Vanuatu|678;VE|Venezuela|58;VN|Vietnam|84;YE|Yemen|967;" +
+    "ZM|Zambia|260;ZW|Zimbabwe|263";
+
+  var COUNTRIES = COUNTRY_DATA.split(";").map(function(row){
+    var p = row.split("|");
+    return { iso:p[0], name:p[1], dial:p[2] };
+  });
+  var BY_ISO = {};
+  COUNTRIES.forEach(function(c){ BY_ISO[c.iso] = c; });
+  var QUICK = ["GH", "NG", "KE"].map(function(iso){ return BY_ISO[iso]; });
+
+  // How long the number should be once the code and any leading 0 are removed.
+  // The three launch countries are strict (a typo here means a broken WhatsApp link); everything else is lenient.
+  var NATIONAL_LEN = { GH:[9,9], NG:[10,10], KE:[9,9] };
+  var PLACEHOLDERS = { GH:"24 123 4567", NG:"801 234 5678", KE:"712 345 678" };
+
+  // When someone types or pastes a full "+…" number, find the country by its longest matching dial code.
+  var PREFER = { "1":"US", "7":"RU" };
+  function matchDial(digits){
+    var best = null;
+    COUNTRIES.forEach(function(c){
+      if(digits.indexOf(c.dial) !== 0) return;
+      if(!best || c.dial.length > best.dial.length ||
+         (c.dial.length === best.dial.length && PREFER[c.dial] === c.iso)){ best = c; }
+    });
+    return best;
+  }
+
+  function flagOf(iso){
+    if(!/^[A-Z]{2}$/.test(iso) || iso === "XK") return "🌐";
+    return String.fromCodePoint(0x1F1E6 + iso.charCodeAt(0) - 65, 0x1F1E6 + iso.charCodeAt(1) - 65);
+  }
+
+  var phoneField = document.getElementById("phoneField");
+  var phoneInput = document.getElementById("whatsapp");
+  var phoneError = document.getElementById("phoneError");
+  var ccBtn = document.getElementById("ccBtn");
+  var ccFlag = document.getElementById("ccFlag");
+  var ccCode = document.getElementById("ccCode");
+  var ccPanel = document.getElementById("ccPanel");
+  var ccList = document.getElementById("ccList");
+  var ccSearchWrap = document.getElementById("ccSearchWrap");
+  var ccSearch = document.getElementById("ccSearch");
+  var selected = BY_ISO.GH;
+  var panelMode = "quick"; // "quick" = Ghana / Nigeria / Kenya / Other, "all" = searchable list
+
+  function applySelected(c){
+    selected = c;
+    ccFlag.textContent = flagOf(c.iso);
+    ccCode.textContent = "+" + c.dial;
+    ccBtn.setAttribute("aria-label", "Country code: " + c.name + " +" + c.dial);
+    phoneInput.placeholder = PLACEHOLDERS[c.iso] || "Phone number";
+  }
+
+  function optionHtml(c, extraClass){
+    return '<li role="presentation"><button type="button" class="cc-opt' + (extraClass ? " " + extraClass : "") + '" role="option" data-iso="' + c.iso + '"' +
+      (c.iso === selected.iso ? ' aria-selected="true"' : ' aria-selected="false"') + '>' +
+      '<span class="o-flag" aria-hidden="true">' + flagOf(c.iso) + '</span>' +
+      '<span class="o-name">' + c.name + '</span>' +
+      '<span class="o-code">+' + c.dial + '</span></button></li>';
+  }
+
+  function renderQuick(){
+    panelMode = "quick";
+    ccSearchWrap.hidden = true;
+    ccList.innerHTML = QUICK.map(function(c){ return optionHtml(c); }).join("") +
+      '<li role="presentation"><button type="button" class="cc-opt is-other" role="option" aria-selected="false" data-other="1">' +
+      '<span class="o-flag" aria-hidden="true">🌍</span><span class="o-name">Other country…</span></button></li>';
+  }
+
+  function renderAll(filter){
+    panelMode = "all";
+    ccSearchWrap.hidden = false;
+    var q = (filter || "").trim().toLowerCase().replace(/^\+/, "");
+    var rows = COUNTRIES.filter(function(c){
+      return !q || c.name.toLowerCase().indexOf(q) !== -1 || c.dial.indexOf(q) === 0;
+    });
+    ccList.innerHTML = rows.length
+      ? rows.map(function(c){ return optionHtml(c); }).join("")
+      : '<li class="cc-empty">No country matches “' + q.replace(/[<>&"]/g, "") + '”.</li>';
+  }
+
+  function openPanel(){
+    renderQuick();
+    ccPanel.hidden = false;
+    ccBtn.setAttribute("aria-expanded", "true");
+    var first = ccList.querySelector(".cc-opt");
+    if(first) first.focus();
+  }
+  function closePanel(returnFocus){
+    if(ccPanel.hidden) return;
+    ccPanel.hidden = true;
+    ccBtn.setAttribute("aria-expanded", "false");
+    ccSearch.value = "";
+    if(returnFocus) ccBtn.focus();
+  }
+
+  ccBtn.addEventListener("click", function(){ ccPanel.hidden ? openPanel() : closePanel(false); });
+
+  ccList.addEventListener("click", function(e){
+    var btn = e.target.closest(".cc-opt");
+    if(!btn) return;
+    if(btn.getAttribute("data-other")){
+      renderAll("");
+      ccSearch.focus();
+      return;
+    }
+    applySelected(BY_ISO[btn.getAttribute("data-iso")]);
+    closePanel(false);
+    phoneInput.focus();
+    if(phoneField.classList.contains("is-invalid")) validatePhone(true);
+  });
+
+  ccSearch.addEventListener("input", function(){ renderAll(ccSearch.value); });
+  ccSearch.addEventListener("keydown", function(e){
+    if(e.key === "ArrowDown"){
+      e.preventDefault();
+      var f = ccList.querySelector(".cc-opt"); if(f) f.focus();
+    } else if(e.key === "Enter"){
+      e.preventDefault();
+      var first = ccList.querySelector(".cc-opt");
+      if(first) first.click();
+    }
+  });
+
+  ccPanel.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){ e.stopPropagation(); closePanel(true); return; }
+    if(e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    var opts = Array.prototype.slice.call(ccList.querySelectorAll(".cc-opt"));
+    var i = opts.indexOf(document.activeElement);
+    if(i === -1) return;
+    e.preventDefault();
+    if(e.key === "ArrowDown" && i < opts.length - 1) opts[i + 1].focus();
+    else if(e.key === "ArrowUp"){
+      if(i > 0) opts[i - 1].focus();
+      else if(!ccSearchWrap.hidden) ccSearch.focus();
+    }
+  });
+
+  // composedPath() is captured when the click starts, so it still works after the list re-renders
+  // (a re-render detaches the clicked button, which would make contains() wrongly say "outside").
+  document.addEventListener("click", function(e){
+    var path = e.composedPath ? e.composedPath() : [];
+    var inside = path.length ? path.indexOf(phoneField) !== -1 : phoneField.contains(e.target);
+    if(!ccPanel.hidden && !inside) closePanel(false);
+  });
+
+  // Turns whatever was typed into { ok, e164, country }.
+  //   "024 123 4567" (Ghana selected)  ->  +233241234567
+  //   "+234 803 123 4567"              ->  +2348031234567 (and the selector switches to Nigeria)
+  function parsePhone(){
+    var raw = phoneInput.value.trim();
+    var digits = raw.replace(/\D/g, "");
+    var country = selected, national;
+
+    if(/^(\+|00)/.test(raw)){
+      var intl = /^00/.test(raw) ? digits.slice(2) : digits;
+      var m = matchDial(intl);
+      if(!m) return { ok:false };
+      country = m;
+      national = intl.slice(m.dial.length);
+    } else {
+      national = digits;
+      var range = NATIONAL_LEN[country.iso] || [6, 12];
+      // someone typed the code themselves without a "+", e.g. 233241234567
+      if(national.indexOf(country.dial) === 0 && national.length >= country.dial.length + range[0]){
+        national = national.slice(country.dial.length);
+      }
+    }
+    national = national.replace(/^0+/, "");   // drop the local trunk 0
+
+    var lim = NATIONAL_LEN[country.iso] || [6, 12];
+    var ok = national.length >= lim[0] && national.length <= lim[1] && (country.dial.length + national.length) <= 15;
+    return { ok:ok, e164:"+" + country.dial + national, country:country };
+  }
+
+  function validatePhone(showErrors){
+    var r = parsePhone();
+    if(r.ok){
+      phoneField.classList.remove("is-invalid");
+      phoneError.classList.remove("is-active");
+      phoneInput.removeAttribute("aria-invalid");
+    } else if(showErrors){
+      phoneField.classList.add("is-invalid");
+      phoneError.classList.add("is-active");
+      phoneInput.setAttribute("aria-invalid", "true");
+    }
+    return r;
+  }
+
+  phoneInput.addEventListener("input", function(){
+    var raw = phoneInput.value.trim();
+    // pasted or typed a full international number: switch the selector and keep only the local part
+    if(/^(\+|00)/.test(raw)){
+      var digits = raw.replace(/\D/g, "");
+      var intl = /^00/.test(raw) ? digits.slice(2) : digits;
+      var m = matchDial(intl);
+      if(m && intl.length - m.dial.length >= 6){
+        applySelected(m);
+        phoneInput.value = intl.slice(m.dial.length);
+      }
+    }
+    if(phoneField.classList.contains("is-invalid")) validatePhone(true);
+  });
+
   /* ---------- form submit: save lead to Supabase, then redirect ---------- */
   var form = document.getElementById("orderForm");
   var success = document.getElementById("formSuccess");
   var formError = document.getElementById("formError");
   var submitBtn = form.querySelector('button[type="submit"]');
   var submitBtnDefaultLabel = submitBtn.textContent;
-  var countrySelect = document.getElementById("country");
-  var otherCountryField = document.getElementById("otherCountryField");
-  var otherCountryInput = document.getElementById("countryOther");
-  
-  function toggleOtherCountry(){
-    var isOther = countrySelect.value === "Other";
-    otherCountryField.classList.toggle("is-hidden", !isOther);
-    otherCountryInput.required = isOther;
-    if(!isOther){ otherCountryInput.value = ""; }
-  }
-  if(countrySelect){
-    countrySelect.addEventListener("change", toggleOtherCountry);
-    toggleOtherCountry();
+
+  function showFormError(msg){
+    formError.textContent = msg;
+    formError.classList.add("is-active");
   }
 
   form.addEventListener("submit", async function(e){
@@ -1562,34 +1952,35 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     var hp = document.getElementById("company");
     if(hp && hp.value){ return; }
 
-    if(!form.checkValidity()){
-      form.reportValidity();
-      return;
-    }
-
     formError.classList.remove("is-active");
     formError.textContent = "";
 
+    var fullName = form.fullName.value.trim();
+    if(!fullName){
+      showFormError("Please enter your name.");
+      form.fullName.focus();
+      return;
+    }
+
+    var phone = validatePhone(true);
+    if(!phone.ok){
+      phoneInput.focus();
+      return;
+    }
+
     if(!supabaseClient){
-      formError.textContent = "This form isn't connected yet — add your Supabase project details in index.html to enable submissions.";
-      formError.classList.add("is-active");
+      showFormError("This form isn't connected yet — add your Supabase project details in index.html to enable submissions.");
       return;
     }
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Sending...";
 
-    var resolvedCountry = form.country.value === "Other"
-  ? form.countryOther.value.trim()
-  : form.country.value;
-
+    // Only name + WhatsApp are collected now. Country is worked out from the phone code.
     var payload = {
-      full_name: form.fullName.value.trim(),
-      whatsapp: form.whatsapp.value.trim(),
-      email: form.email.value.trim(),
-      country: resolvedCountry,
-      recipient: form.recipient.value,
-      message: form.message.value.trim() || null
+      full_name: fullName,
+      whatsapp: phone.e164,
+      country: phone.country.name
     };
 
     try{
@@ -1608,8 +1999,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
       console.error(err);
       submitBtn.disabled = false;
       submitBtn.textContent = submitBtnDefaultLabel;
-      formError.textContent = "Something went wrong sending your details. Please try again in a moment.";
-      formError.classList.add("is-active");
+      showFormError("Something went wrong sending your details. Please try again in a moment.");
     }
   });
 
