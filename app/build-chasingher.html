@@ -1800,11 +1800,14 @@ function BuildTool() {
       }
       setSubmitted(true);
       setStatus({ text: "", kind: "" });
-      const waNumber = "2348094169489";
-      const msg = "Hi! I just finished building my Chasing Her site (reference: " + slug +
-        "). I'm ready to pay so it can be hosted.";
+      // Land on the thank-you page first; its WhatsApp button carries the message. The reference goes in
+      // sessionStorage, not the address bar: the Meta Pixel on that page sends the URL to Facebook, and the
+      // reference is private (it is also the key to this draft).
+      try {
+        sessionStorage.setItem("chasing_her_order", JSON.stringify({ ref: slug, product: "chasing-her", name: leadName || "" }));
+      } catch (e) { /* storage blocked: the thank-you page still works, just without the reference in the message */ }
       allowLeave.current = true;
-      window.location.href = "https://wa.me/" + waNumber + "?text=" + encodeURIComponent(msg);
+      window.location.href = "thank-you.html?product=chasing-her";
     } catch (e) {
       setStatus({ text: "Something went wrong saving your work: " + e.message + " — please try again.", kind: "err" });
     }
