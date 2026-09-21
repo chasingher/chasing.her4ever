@@ -1147,6 +1147,13 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   .footer-links a{ color:var(--brown-soft); text-decoration:none; padding:2px 2px; }
   .footer-links a:hover{ text-decoration:underline; color:var(--wine); }
   .footer-links .sep{ margin:0 8px; }
+
+  /* email field */
+  .field input[type="email"]{ height:52px; }
+  .field input.is-invalid{ border-color:#8A2A2A; }
+  .email-hint{ margin-top:8px; font-size:13.5px; color:var(--brown); }
+  .email-hint[hidden]{ display:none; }
+  .email-hint button{ background:none; border:none; padding:0; font:inherit; font-weight:700; color:var(--wine); text-decoration:underline; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -1414,7 +1421,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
 
       <form class="form" id="orderForm" novalidate>
         <h2>Let's Start Their Website</h2>
-        <p class="form-sub">Just your name and WhatsApp number to begin.</p>
+        <p class="form-sub">Just your name, WhatsApp number and email to begin.</p>
 
         <div class="hp-field" aria-hidden="true">
           <label for="company">Company</label>
@@ -1445,6 +1452,13 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
           <p class="form-error" id="phoneError" role="alert">Please enter a valid WhatsApp number.</p>
         </div>
 
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" inputmode="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="you@example.com" required aria-describedby="emailError">
+          <p class="email-hint" id="emailHint" hidden>Did you mean <button type="button" id="emailFix"></button>?</p>
+          <p class="form-error" id="emailError" role="alert">Please enter a valid email address.</p>
+        </div>
+
         <div class="promise-box compact">
           <svg class="promise-ic" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.4-7 10-4-1.6-7-5.5-7-10V6l7-3z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
           <p><strong>Our promise:</strong> free edits until you’re happy. If we can’t fix it, you get a refund. <a href="terms.html#refunds" target="_blank" rel="noopener">Terms &amp; Refunds</a></p>
@@ -1454,7 +1468,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
 
         <button type="submit" class="btn-primary">Craft Their Website ❤️</button>
         <p class="cta-note"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Preview it free. Pay only when you’re happy.</span></p>
-        <p class="form-consent">By continuing you agree to our <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+        <p class="form-consent">By continuing you agree to our <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>, and to us contacting you on WhatsApp or by email about your order.</p>
       </form>
 
       <div class="form-success" id="formSuccess">
@@ -1933,7 +1947,129 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     if(phoneField.classList.contains("is-invalid")) validatePhone(true);
   });
 
-  /* ---------- form submit: save lead to Supabase, then redirect ---------- */
+  /* ---------- email ---------- */
+  var EMAIL_REQUIRED = true;      // set to false to make the email field optional
+  var emailInput = document.getElementById("email");
+  var emailError = document.getElementById("emailError");
+  var emailHint = document.getElementById("emailHint");
+  var emailFix = document.getElementById("emailFix");
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  var DOMAIN_FIXES = {
+    "gmial.com":"gmail.com", "gmai.com":"gmail.com", "gmal.com":"gmail.com", "gnail.com":"gmail.com",
+    "gmail.co":"gmail.com", "gmail.con":"gmail.com", "gmail.cm":"gmail.com", "gmail.om":"gmail.com",
+    "yahooo.com":"yahoo.com", "yaho.com":"yahoo.com", "yahoo.co":"yahoo.com", "yahoo.con":"yahoo.com",
+    "hotmial.com":"hotmail.com", "hotmai.com":"hotmail.com", "hotmail.con":"hotmail.com",
+    "outlok.com":"outlook.com", "outlook.con":"outlook.com"
+  };
+
+  if (!EMAIL_REQUIRED) {
+    emailInput.required = false;
+    document.querySelector('label[for="email"]').textContent = "Email address (optional)";
+  }
+
+  function cleanEmail(){ return emailInput.value.trim().toLowerCase(); }
+
+  function validateEmail(showErrors){
+    var v = cleanEmail();
+    var ok = v ? EMAIL_RE.test(v) : !EMAIL_REQUIRED;
+    if (ok) {
+      emailInput.classList.remove("is-invalid");
+      emailError.classList.remove("is-active");
+      emailInput.removeAttribute("aria-invalid");
+    } else if (showErrors) {
+      emailInput.classList.add("is-invalid");
+      emailError.classList.add("is-active");
+      emailInput.setAttribute("aria-invalid", "true");
+    }
+    return ok;
+  }
+
+  // "ama@gmial.com" -> offer "ama@gmail.com" (a mistyped email is a lost customer)
+  function suggestEmail(){
+    emailHint.hidden = true;
+    var v = cleanEmail(), at = v.lastIndexOf("@");
+    if (at < 1) return;
+    var fix = DOMAIN_FIXES[v.slice(at + 1)];
+    if (!fix) return;
+    emailFix.textContent = v.slice(0, at + 1) + fix;
+    emailHint.hidden = false;
+  }
+  emailInput.addEventListener("blur", suggestEmail);
+  emailInput.addEventListener("input", function(){
+    emailHint.hidden = true;
+    if (emailInput.classList.contains("is-invalid")) validateEmail(true);
+  });
+  emailFix.addEventListener("click", function(){
+    emailInput.value = emailFix.textContent;
+    emailHint.hidden = true;
+    validateEmail(true);
+    emailInput.focus();
+  });
+
+  /* ---------- attribution: which ad brought this person? ----------
+     Read from the link they clicked (utm_* / fbclid) and kept for the visit, so the lead row can say
+     which campaign and ad it came from. Facebook's own cookies (_fbp / _fbc) are saved too, so purchases
+     can be matched back to the ad later. Nothing here is shown to the visitor. */
+  var ATTR_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid"];
+
+  function readCookie(name){
+    var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  function captureAttribution(){
+    var stored = null;
+    try { stored = JSON.parse(sessionStorage.getItem("ch_attr") || "null"); } catch (e) {}
+    var q = new URLSearchParams(window.location.search), fresh = {}, hasParams = false;
+    ATTR_KEYS.forEach(function(k){
+      var v = (q.get(k) || "").trim().slice(0, 200);
+      if (v) { fresh[k] = v; hasParams = true; }
+    });
+    // first touch wins for the visit, unless this page view arrived with new campaign parameters
+    if (stored && !hasParams) return stored;
+    fresh.landing_url = (window.location.origin + window.location.pathname + window.location.search).slice(0, 500);
+    fresh.referrer = (document.referrer || "").slice(0, 300);
+    try { sessionStorage.setItem("ch_attr", JSON.stringify(fresh)); } catch (e) {}
+    return fresh;
+  }
+  var attribution = captureAttribution();
+
+  function newEventId(){
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "lead-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function withTracking(core, eventId){
+    var fbc = readCookie("_fbc");
+    if (!fbc && attribution.fbclid) fbc = "fb.1." + Date.now() + "." + attribution.fbclid;
+    var t = {
+      utm_source: attribution.utm_source || null,
+      utm_medium: attribution.utm_medium || null,
+      utm_campaign: attribution.utm_campaign || null,
+      utm_content: attribution.utm_content || null,
+      utm_term: attribution.utm_term || null,
+      fbclid: attribution.fbclid || null,
+      fbp: readCookie("_fbp") || null,
+      fbc: fbc || null,
+      landing_url: attribution.landing_url || null,
+      referrer: attribution.referrer || null,
+      event_id: eventId
+    };
+    var out = {};
+    Object.keys(core).forEach(function(k){ out[k] = core[k]; });
+    Object.keys(t).forEach(function(k){ out[k] = t[k]; });
+    return out;
+  }
+
+  // If the tracking columns haven't been added to the table yet, the lead must still be saved.
+  function isMissingColumn(err){
+    if (!err) return false;
+    var m = String(err.message || "");
+    return err.code === "PGRST204" || err.code === "42703" ||
+      /could not find the '.*' column/i.test(m) || /column .* does not exist/i.test(m);
+  }
+
+  /* ---------- form submit: save lead to Supabase, tell Meta, then redirect ---------- */
   var form = document.getElementById("orderForm");
   var success = document.getElementById("formSuccess");
   var formError = document.getElementById("formError");
@@ -1968,6 +2104,11 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
       return;
     }
 
+    if(!validateEmail(true)){
+      emailInput.focus();
+      return;
+    }
+
     if(!supabaseClient){
       showFormError("This form isn't connected yet — add your Supabase project details in index.html to enable submissions.");
       return;
@@ -1976,16 +2117,27 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     submitBtn.disabled = true;
     submitBtn.textContent = "Sending...";
 
-    // Only name + WhatsApp are collected now. Country is worked out from the phone code.
-    var payload = {
+    // Country is worked out from the phone code.
+    var email = cleanEmail();
+    var core = {
       full_name: fullName,
       whatsapp: phone.e164,
-      country: phone.country.name
+      country: phone.country.name,
+      email: email || null
     };
+    var eventId = newEventId();
+    var payload = withTracking(core, eventId);
 
     try{
-      var insertRes = await supabaseClient.from("leads").insert([payload]);
-      if(insertRes.error) throw insertRes.error;
+      var res = await supabaseClient.from("leads").insert([payload]);
+      if(res.error && isMissingColumn(res.error)){
+        console.warn("Tracking columns are missing on leads (run order-page-migration.sql). Saving the lead without them.", res.error.message);
+        res = await supabaseClient.from("leads").insert([core]);
+      }
+      if(res.error) throw res.error;
+
+      // Standard Meta "Lead" event. The same id is saved on the lead row so it can be matched later.
+      try { if(window.fbq) fbq("track", "Lead", { content_name: "order_form" }, { eventID: eventId }); } catch(e2){}
 
       var redirectUrl = FALLBACK_REDIRECT_URL;
       var sep = redirectUrl.indexOf("?") === -1 ? "?" : "&";
@@ -1993,10 +2145,11 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
         "name=" + encodeURIComponent(payload.full_name) +
         "&wa=" + encodeURIComponent(payload.whatsapp);
 
-      window.location.href = redirectUrl;
+      // a short pause so the browser can send the Lead event before the page changes
+      setTimeout(function(){ window.location.href = redirectUrl; }, window.fbq ? 350 : 0);
 
     }catch(err){
-      console.error(err);
+      console.error("Lead save failed:", err && err.code, err && err.message, err);
       submitBtn.disabled = false;
       submitBtn.textContent = submitBtnDefaultLabel;
       showFormError("Something went wrong sending your details. Please try again in a moment.");
