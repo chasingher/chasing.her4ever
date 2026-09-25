@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="theme-color" content="#380000" />
+<title>A Puzzle For You</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='28'%3E%F0%9F%A7%A9%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cream:#fdf1e7; --cream-deep:#f7ddc9; --cream-text:#fdf3ea;
+    --rose:#c2185b; --rose-deep:#96123f; --rose-soft:#e8879f;
+    --maroon-900:#200000; --maroon-800:#380000; --maroon-700:#4a0909; --maroon-600:#5c0b0b;
+    --gold:#e8c27a; --good:#4c9a52; --bad:#d97070;
+    --font-script:'Dancing Script',cursive; --font-serif:'Cormorant Garamond',serif; --font-ui:'Poppins',sans-serif;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  html{ scroll-behavior:smooth; }
+  body{ font-family:var(--font-ui); background:var(--maroon-800); color:var(--cream-text); overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+  img{ max-width:100%; display:block; }
+  button{ font-family:inherit; cursor:pointer; }
+  ::selection{ background:var(--rose); color:#fff; }
+  :focus-visible{ outline:3px solid var(--gold); outline-offset:3px; }
+
+  /* ---------- Loading ---------- */
+  .loading-screen{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; padding:40px 20px;
+    background:radial-gradient(circle at 50% 15%,#fffaf5 0%,var(--cream) 55%,var(--cream-deep) 100%); color:var(--rose-deep); text-align:center; }
+  .loading-mark{ width:64px; height:64px; animation:pulse 2s ease-in-out infinite; }
+  .loading-text{ font-family:var(--font-serif); font-style:italic; font-size:1.05rem; color:#9b6f72; max-width:280px; }
+  @keyframes pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
+
+  /* ---------- PIN gate ---------- */
+  .login-screen{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:30px; padding:40px 20px;
+    background:radial-gradient(circle at 50% 15%,#fffaf5 0%,var(--cream) 55%,var(--cream-deep) 100%);
+    transition:opacity .8s ease, transform .8s ease; }
+  .login-screen.fading{ opacity:0; transform:scale(1.05); pointer-events:none; }
+  .login-whisper{ font-family:var(--font-serif); font-style:italic; font-size:1.1rem; color:#9b6f72; }
+  .pin-dots{ display:flex; gap:14px; }
+  .pin-dots.shake{ animation:shakeX .5s ease; }
+  .dot{ width:14px; height:14px; border-radius:50%; border:2px solid var(--rose); transition:all .3s cubic-bezier(.34,1.56,.64,1); }
+  .dot.filled{ background:var(--rose); transform:scale(1.15); }
+  .dot.success{ background:var(--good); border-color:var(--good); }
+  @keyframes shakeX{ 10%,90%{transform:translateX(-4px)} 20%,80%{transform:translateX(6px)} 30%,50%,70%{transform:translateX(-9px)} 40%,60%{transform:translateX(9px)} }
+  .keypad{ display:grid; grid-template-columns:repeat(3,68px); gap:16px 20px; }
+  .key{ width:68px; height:68px; border-radius:50%; border:none; background:#fff; color:#3a1220; font-size:1.4rem; font-weight:500;
+    box-shadow:0 6px 16px rgba(120,60,60,.12); transition:transform .16s ease, box-shadow .16s ease; }
+  .key:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(120,60,60,.18); }
+  .key:active{ transform:translateY(0) scale(.93); }
+  .key-alt{ background:#fbdce6; color:var(--rose-deep); }
+
+  /* ---------- Shell ---------- */
+  .stage{ min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:56px 18px 90px; position:relative; }
+  .eyebrow{ font-family:var(--font-serif); font-style:italic; font-size:1.05rem; color:rgba(255,235,220,.62); margin-bottom:10px; text-align:center; }
+  .title-text{ font-family:var(--font-script); font-weight:700; font-size:clamp(1.9rem,6vw,2.9rem); text-align:center; margin:0 0 8px; text-shadow:0 4px 24px rgba(0,0,0,.4); min-height:1.3em; }
+
+  /* Puzzle-count progress dots */
+  .chapter-dots{ display:flex; gap:10px; margin:6px 0 34px; }
+  .chapter-dot{ width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.22); transition:background .25s ease, transform .25s ease; }
+  .chapter-dot.done{ background:var(--good); }
+  .chapter-dot.active{ background:var(--gold); transform:scale(1.35); }
+
+  /* Countdown badge */
+  .countdown{ display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.06); border:1px solid rgba(232,194,122,.4);
+    padding:7px 16px; border-radius:999px; font-size:.8rem; color:var(--gold); margin-bottom:24px; letter-spacing:.02em; }
+  .countdown.urgent{ border-color:var(--bad); color:#ffb3b3; animation:pulse 1.4s ease-in-out infinite; }
+  .countdown svg{ width:14px; height:14px; }
+
+  /* Puzzle stage + tray */
+  .puzzle-wrap{ position:relative; width:100%; max-width:480px; touch-action:none; }
+  .puzzle-board{ position:relative; width:100%; aspect-ratio:1/1; border-radius:16px; overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.1); background:rgba(0,0,0,.2); }
+  .puzzle-board .ghost{ position:absolute; inset:0; opacity:.10; background-size:cover; background-position:center; }
+  .puzzle-board .grid-line{ position:absolute; background:rgba(255,255,255,.10); }
+  .piece-layer{ position:relative; width:100%; }
+  .piece{ position:absolute; cursor:grab; touch-action:none; will-change:left,top; }
+  .piece.solved{ cursor:default; }
+  .piece.dragging{ cursor:grabbing; }
+  .piece-img{ width:100%; height:100%; filter:drop-shadow(0 3px 6px rgba(0,0,0,.45)); }
+  .piece.solved .piece-img{ filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+
+  .puzzle-tray{ position:relative; margin-top:20px; border-radius:14px; border:1.5px dashed rgba(255,255,255,.18); background:rgba(0,0,0,.14); }
+  .tray-label{ position:absolute; top:-11px; left:16px; background:var(--maroon-800); padding:0 8px; font-size:.68rem; letter-spacing:.08em;
+    text-transform:uppercase; color:rgba(255,235,220,.45); }
+
+  .puzzle-caption{ font-family:var(--font-serif); font-style:italic; color:rgba(253,243,234,.7); font-size:.95rem; text-align:center; margin:22px 0 0; max-width:360px; }
+
+  /* Reveal panel */
+  .reveal-card{ max-width:440px; width:100%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.14); border-radius:24px;
+    padding:38px 30px; text-align:center; backdrop-filter:blur(8px); box-shadow:0 24px 50px rgba(0,0,0,.4); opacity:0; transform:translateY(16px) scale(.98);
+    animation:revealIn .8s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes revealIn{ to{ opacity:1; transform:translateY(0) scale(1); } }
+  .reveal-whisper{ font-family:var(--font-script); font-size:1.4rem; color:var(--gold); margin-bottom:14px; }
+  .reveal-photo{ width:100%; border-radius:10px; margin-bottom:14px; box-shadow:0 10px 26px rgba(0,0,0,.35); }
+  .reveal-caption{ font-family:var(--font-serif); font-style:italic; color:rgba(253,243,234,.8); }
+  .reveal-letter-title{ font-family:var(--font-script); font-weight:700; font-size:1.6rem; color:var(--gold); margin-bottom:10px; }
+  .reveal-letter-body{ font-family:var(--font-serif); font-size:1.15rem; line-height:1.8; white-space:pre-wrap; text-align:left; }
+  .reveal-song{ display:flex; align-items:center; gap:12px; background:rgba(0,0,0,.18); border-radius:14px; padding:14px 16px; text-align:left; }
+  .reveal-song .note{ width:40px; height:40px; border-radius:50%; background:radial-gradient(circle,var(--rose),var(--rose-deep)); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; }
+  .reveal-song .note svg{ width:18px; height:18px; }
+  .reveal-text{ font-family:var(--font-serif); font-style:italic; font-size:1.2rem; line-height:1.7; }
+  .expired-chip{ display:inline-block; font-size:.72rem; color:#ffcaca; background:rgba(217,112,112,.15); border:1px solid rgba(217,112,112,.4);
+    padding:3px 10px; border-radius:999px; margin-bottom:12px; }
+
+  .continue-btn{ margin-top:26px; background:linear-gradient(155deg,var(--rose),var(--rose-deep)); color:#fff; border:none; padding:14px 32px;
+    border-radius:999px; font-size:.92rem; font-weight:600; letter-spacing:.02em; box-shadow:0 10px 26px rgba(194,24,91,.4);
+    transition:transform .18s ease, box-shadow .18s ease; }
+  .continue-btn:hover{ transform:translateY(-2px); box-shadow:0 14px 32px rgba(194,24,91,.5); }
+
+  /* Final screen */
+  .final-backdrop{ position:fixed; inset:0; z-index:-1; }
+  .final-backdrop img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; filter:blur(1px) saturate(.85) brightness(.55);
+    transform:scale(1.08); transition:opacity 2.2s ease, transform 9s ease, filter 2.2s ease; }
+  .final-backdrop img.active{ opacity:1; transform:scale(1.18); filter:blur(0) saturate(.95) brightness(.62); }
+  .final-backdrop::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(32,0,0,.5),rgba(32,0,0,.82)); }
+  .final-text{ position:relative; font-family:var(--font-script); font-weight:700; font-size:clamp(2rem,6.5vw,3.2rem); text-align:center; text-shadow:0 4px 26px rgba(0,0,0,.5); min-height:1.3em; padding:0 10px; }
+  .relive-btn{ margin-top:24px; background:rgba(255,247,241,.08); border:1px solid rgba(232,194,122,.5); color:var(--cream-text); padding:13px 30px;
+    border-radius:999px; font-size:.95rem; letter-spacing:.04em; font-family:var(--font-serif); transition:all .2s ease; }
+  .relive-btn:hover{ background:rgba(255,247,241,.16); border-color:var(--gold); transform:translateY(-2px); }
+
+  .tw-cursor{ animation:blinkCursor 1s step-start infinite; }
+  @keyframes blinkCursor{ 50%{ opacity:0; } }
+
+  @media (prefers-reduced-motion:reduce){ *,*::before,*::after{ animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script type="text/babel" data-presets="react">
+/* =====================================================================
+   CONFIGURE ME — filled in automatically by admin-puzzle.html / build-puzzle.html
+===================================================================== */
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const PROJECT_SLUG = "YOUR_PROJECT_SLUG";
+
+/* DEFAULT_CONFIG:START */
+const DEFAULT_CONFIG = {
+  pin: "123456",
+  intro_message: "Three little puzzles. One at a time.",
+  final_message: "I love you, to the moon and back.",
+  puzzles: [
+    {
+      id: "p1", title: "Where it started", grid: "3x3", duration_hours: 24,
+      unlock_message: "Look closer…", reveal_type: "text",
+      image_url: null,
+      reveal: { text: "This is where I knew." }
+    }
+  ],
+  photos: [],
+  songs: [],
+  music_url: "", music_start: 0, music_end: null
+};
+/* DEFAULT_CONFIG:END */
+
+let supabaseClient = null;
+try {
+  if (window.supabase && typeof SUPABASE_URL === "string" && SUPABASE_URL.indexOf("http") === 0) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e) { console.warn("Supabase not configured, using local defaults.", e); }
+
+async function loadConfig() {
+  if (!supabaseClient) return DEFAULT_CONFIG;
+  try {
+    const { data, error } = await supabaseClient.from("puzzle_projects").select("*").eq("slug", PROJECT_SLUG).single();
+    if (error || !data) return DEFAULT_CONFIG;
+    return {
+      pin: data.pin || DEFAULT_CONFIG.pin,
+      intro_message: data.intro_message || DEFAULT_CONFIG.intro_message,
+      final_message: data.final_message || DEFAULT_CONFIG.final_message,
+      puzzles: (data.puzzles && data.puzzles.length) ? data.puzzles : DEFAULT_CONFIG.puzzles,
+      photos: data.photos || [],
+      songs: data.songs || [],
+      music_url: data.music_url || "", music_start: data.music_start || 0, music_end: data.music_end != null ? data.music_end : null
+    };
+  } catch (e) { return DEFAULT_CONFIG; }
+}
+async function logVisit() {
+  if (!supabaseClient) return;
+  try { await supabaseClient.from("puzzle_visits").insert({ project_slug: PROJECT_SLUG, opened_at: new Date().toISOString() }); }
+  catch (e) {}
+}
+
+/* ---------------------------------------------------------------- Icons */
+function HeartIcon(){ return (<svg viewBox="0 0 32 28" fill="none"><path d="M16 27C10 22.5 2 16 2 9.2 2 4.4 5.7 1 10.1 1c2.6 0 5 1.3 6 3.4C17.1 2.3 19.5 1 22.1 1 26.5 1 30 4.4 30 9.2 30 16 22 22.5 16 27z" fill="#c2185b"/></svg>); }
+function MiniHeart(){ return (<svg viewBox="0 0 32 28" fill="currentColor"><path d="M16 27C10 22.5 2 16 2 9.2 2 4.4 5.7 1 10.1 1c2.6 0 5 1.3 6 3.4C17.1 2.3 19.5 1 22.1 1 26.5 1 30 4.4 30 9.2 30 16 22 22.5 16 27z"/></svg>); }
+function BackspaceIcon(){ return (<svg viewBox="0 0 24 24" fill="none"><path d="M9 5h11a1 1 0 011 1v12a1 1 0 01-1 1H9l-6.5-7L9 5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M14 10l5 5m0-5l-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>); }
+function ClockIcon(){ return (<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6"/><path d="M12 7v5l3.5 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>); }
+function NoteIcon(){ return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M9 17.5a2.5 2.5 0 11-2.5-2.5A2.5 2.5 0 019 17.5zm9-2a2.5 2.5 0 11-2.5-2.5 2.5 2.5 0 012.5 2.5zM9 17.5V6l9-2v9.5" strokeLinejoin="round"/></svg>); }
+
+/* ---------------------------------------------------------------- Typewriter */
+function Typewriter({ text, speed = 40, delay = 0 }) {
+  const [display, setDisplay] = React.useState("");
+  const [done, setDone] = React.useState(false);
+  React.useEffect(() => {
+    let interval, idx = 0;
+    setDisplay(""); setDone(false);
+    const start = setTimeout(() => {
+      interval = setInterval(() => {
+        idx++; setDisplay((text || "").slice(0, idx));
+        if (idx >= (text || "").length) { clearInterval(interval); setDone(true); }
+      }, speed);
+    }, delay);
+    return () => { clearTimeout(start); clearInterval(interval); };
+  }, [text, speed, delay]);
+  return (<React.Fragment>{display}{!done && <span className="tw-cursor">|</span>}</React.Fragment>);
+}
+
+/* ==================================================================
+   JIGSAW ENGINE
+   Interlocking pieces via SVG clip-path polygons. Every internal edge
+   is generated once (a random tab direction) and shared: each of the
+   two neighbouring pieces reads the exact same point list, one forward
+   one reversed, so the tab on one piece is guaranteed to match the
+   notch on the other — no seams, no gaps.
+================================================================== */
+function edgePts(axis, fixed, a, b, dir, segments) {
+  // axis "v": vertical edge at x=fixed, from y=a to y=b, bulge = ±x
+  // axis "h": horizontal edge at y=fixed, from x=a to x=b, bulge = ±y
+  const len = b - a;
+  const knob = len * 0.19 * dir;
+  const pts = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const pos = a + len * t;
+    let off = 0;
+    if (t >= 0.32 && t <= 0.68) {
+      const tt = (t - 0.32) / 0.36;
+      off = Math.sin(Math.PI * tt) * knob;
+    }
+    pts.push(axis === "v" ? [fixed + off, pos] : [pos, fixed + off]);
+  }
+  return pts;
+}
+
+function buildJigsawGeometry(n, cell, overflow, segments) {
+  // dirV[r][c]: tab on the vertical edge to the RIGHT of piece[r][c]  (c: 0..n-2)
+  // dirH[r][c]: tab on the horizontal edge BELOW piece[r][c]          (r: 0..n-2)
+  const dirV = Array.from({ length: n }, () => Array.from({ length: n - 1 }, () => (Math.random() < 0.5 ? 1 : -1)));
+  const dirH = Array.from({ length: n - 1 }, () => Array.from({ length: n }, () => (Math.random() < 0.5 ? 1 : -1)));
+
+  const pieces = [];
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const xL = c * cell, xR = (c + 1) * cell, yT = r * cell, yB = (r + 1) * cell;
+      let pts = [];
+
+      // TOP: left -> right
+      if (r === 0) pts.push([xL, yT], [xR, yT]);
+      else pts = pts.concat(edgePts("h", yT, xL, xR, dirH[r - 1][c], segments));
+
+      // RIGHT: top -> bottom
+      if (c === n - 1) pts.push([xR, yB]);
+      else pts = pts.concat(edgePts("v", xR, yT, yB, dirV[r][c], segments).slice(1));
+
+      // BOTTOM: right -> left
+      if (r === n - 1) pts.push([xL, yB]);
+      else pts = pts.concat(edgePts("h", yB, xL, xR, dirH[r][c], segments).reverse().slice(1));
+
+      // LEFT: bottom -> top
+      if (c === 0) pts.push([xL, yT]);
+      else pts = pts.concat(edgePts("v", xL, yT, yB, dirV[r][c - 1], segments).reverse().slice(1, -1));
+
+      // bounding box (cell area plus whatever the tabs stick out by)
+      const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+      const minX = Math.min(...xs, xL - overflow), maxX = Math.max(...xs, xR + overflow);
+      const minY = Math.min(...ys, yT - overflow), maxY = Math.max(...ys, yB + overflow);
+
+      pieces.push({
+        key: r + "-" + c, r, c,
+        targetLeft: minX, targetTop: minY,
+        w: maxX - minX, h: maxY - minY,
+        bgLeft: -minX, bgTop: -minY,
+        points: pts.map((p) => (p[0] - minX) + "," + (p[1] - minY)).join(" ")
+      });
+    }
+  }
+  return pieces;
+}
+
+const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%234a0909'/%3E%3Ctext x='200' y='210' font-size='22' fill='%23e8c27a' text-anchor='middle' font-family='sans-serif'%3Eadd a photo%3C/text%3E%3C/svg%3E";
+
+function fmtCountdown(ms) {
+  if (ms <= 0) return "0:00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600), m = Math.floor((totalSec % 3600) / 60), s = totalSec % 60;
+  return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
+function JigsawPuzzle({ puzzle, boardImage, locked, onSolved }) {
+  const n = parseInt(String(puzzle.grid || "3x3").split("x")[0], 10) || 3;
+  const wrapRef = React.useRef(null);
+  const [boardPx, setBoardPx] = React.useState(0);
+  const [pieces, setPieces] = React.useState(null);
+  const [solvedIds, setSolvedIds] = React.useState({});
+  const [dragId, setDragId] = React.useState(null);
+  const zCounter = React.useRef(10);
+  const settledRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    function measure() { setBoardPx(el.getBoundingClientRect().width); }
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const trayGap = 20, trayRatio = 0.62;
+
+  React.useEffect(() => {
+    if (!boardPx) return;
+    const cell = boardPx / n;
+    const overflow = cell * 0.32;
+    const geo = buildJigsawGeometry(n, cell, overflow, 14);
+    const trayTop = boardPx + trayGap, trayH = boardPx * trayRatio;
+    const next = geo.map((g) => ({
+      ...g,
+      left: Math.random() * Math.max(1, boardPx - g.w),
+      top: trayTop + Math.random() * Math.max(1, trayH - g.h)
+    }));
+    setPieces(next);
+    setSolvedIds({});
+    settledRef.current = false;
+  }, [boardPx, n, puzzle.id]);
+
+  function onPointerDown(e, key) {
+    if (locked || solvedIds[key]) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const rect = wrapRef.current.getBoundingClientRect();
+    const piece = pieces.find((p) => p.key === key);
+    const offX = e.clientX - rect.left - piece.left, offY = e.clientY - rect.top - piece.top;
+    zCounter.current += 1;
+    const z = zCounter.current;
+    setDragId(key);
+    setPieces((arr) => arr.map((p) => (p.key === key ? { ...p, z, dragOffX: offX, dragOffY: offY } : p)));
+  }
+  function onPointerMove(e, key) {
+    if (dragId !== key) return;
+    const rect = wrapRef.current.getBoundingClientRect();
+    setPieces((arr) => arr.map((p) => {
+      if (p.key !== key) return p;
+      return { ...p, left: e.clientX - rect.left - p.dragOffX, top: e.clientY - rect.top - p.dragOffY };
+    }));
+  }
+  function onPointerUp(e, key) {
+    if (dragId !== key) return;
+    setDragId(null);
+    setPieces((arr) => {
+      const piece = arr.find((p) => p.key === key);
+      const dx = piece.left - piece.targetLeft, dy = piece.top - piece.targetTop;
+      const snapPx = (boardPx / n) * 0.30;
+      const isSnap = Math.hypot(dx, dy) < snapPx;
+      const updated = arr.map((p) => p.key === key
+        ? { ...p, left: isSnap ? piece.targetLeft : p.left, top: isSnap ? piece.targetTop : p.top, snapping: isSnap }
+        : p);
+      if (isSnap) {
+        setSolvedIds((s) => {
+          const next = { ...s, [key]: true };
+          if (!settledRef.current && Object.keys(next).length === n * n) {
+            settledRef.current = true;
+            setTimeout(() => onSolved(), 480);
+          }
+          return next;
+        });
+      }
+      return updated;
+    });
+  }
+
+  const img = boardImage || PLACEHOLDER_IMG;
+
+  return (
+    <div ref={wrapRef} className="puzzle-wrap">
+      <div className="puzzle-board">
+        <div className="ghost" style={{ backgroundImage: `url(${img})` }} />
+      </div>
+      <div className="puzzle-tray" style={{ marginTop: trayGap, height: boardPx ? boardPx * trayRatio : 200 }}>
+        <span className="tray-label">Pieces</span>
+      </div>
+      {boardPx > 0 && pieces && pieces.map((p) => (
+        <div key={p.key}
+          className={"piece" + (solvedIds[p.key] ? " solved" : "") + (dragId === p.key ? " dragging" : "")}
+          style={{
+            position: "absolute", left: p.left, top: p.top, width: p.w, height: p.h, zIndex: p.z || 10,
+            pointerEvents: locked ? "none" : "auto",
+            transition: p.snapping ? "left .26s cubic-bezier(.34,1.4,.4,1), top .26s cubic-bezier(.34,1.4,.4,1)" : "none"
+          }}
+          onPointerDown={(e) => onPointerDown(e, p.key)}
+          onPointerMove={(e) => onPointerMove(e, p.key)}
+          onPointerUp={(e) => onPointerUp(e, p.key)}
+          onPointerCancel={(e) => onPointerUp(e, p.key)}>
+          <svg width="0" height="0" style={{ position: "absolute" }}>
+            <defs><clipPath id={"clip-" + puzzle.id + "-" + p.key} clipPathUnits="userSpaceOnUse">
+              <polygon points={p.points} />
+            </clipPath></defs>
+          </svg>
+          <div className="piece-img" style={{
+            clipPath: `url(#clip-${puzzle.id}-${p.key})`, WebkitClipPath: `url(#clip-${puzzle.id}-${p.key})`,
+            backgroundImage: `url(${img})`, backgroundRepeat: "no-repeat",
+            backgroundSize: `${boardPx}px ${boardPx}px`,
+            backgroundPosition: `${p.bgLeft}px ${p.bgTop}px`
+          }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- Reveal panel */
+function RevealPanel({ puzzle, expired }) {
+  const r = puzzle.reveal || {};
+  return (
+    <div className="reveal-card">
+      {expired && <div className="expired-chip">⏳ time ran out — but here it is anyway</div>}
+      {puzzle.unlock_message && <div className="reveal-whisper">{puzzle.unlock_message}</div>}
+      {puzzle.reveal_type === "photo" && (
+        <React.Fragment>
+          <img className="reveal-photo" src={r.url || puzzle.image_url} alt="" />
+          {r.caption && <div className="reveal-caption">{r.caption}</div>}
+        </React.Fragment>
+      )}
+      {puzzle.reveal_type === "letter" && (
+        <React.Fragment>
+          <div className="reveal-letter-title">{r.letter_title}</div>
+          <div className="reveal-letter-body">{r.letter_body}</div>
+        </React.Fragment>
+      )}
+      {puzzle.reveal_type === "song" && (
+        <div className="reveal-song">
+          <div className="note"><NoteIcon /></div>
+          <div>
+            <div style={{ fontWeight: 600 }}>{r.title}</div>
+            <div style={{ fontSize: ".82rem", color: "rgba(253,243,234,.6)", fontStyle: "italic" }}>{r.artist}</div>
+          </div>
+        </div>
+      )}
+      {puzzle.reveal_type === "text" && <div className="reveal-text">{r.text}</div>}
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- PIN screen */
+function LoginScreen({ correctPin, onCorrect, fading }) {
+  const maxLen = (correctPin || "123456").length || 6;
+  const [digits, setDigits] = React.useState("");
+  const [shake, setShake] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+
+  React.useEffect(() => {
+    if (success) return;
+    if (digits.length > 0 && digits.length === maxLen) {
+      const t = setTimeout(() => {
+        if (digits === correctPin) { setSuccess(true); setTimeout(onCorrect, 600); }
+        else { setShake(true); setTimeout(() => { setShake(false); setDigits(""); }, 550); }
+      }, 220);
+      return () => clearTimeout(t);
+    }
+  }, [digits]);
+
+  const press = (d) => { if (!success) setDigits((p) => (p.length < maxLen ? p + d : p)); };
+
+  return (
+    <div className={"login-screen" + (fading ? " fading" : "")}>
+      <div className="login-whisper">{success ? "There you are." : "You'll know the code."}</div>
+      <div style={{ width: 74, height: 74 }}><HeartIcon /></div>
+      <div className={"pin-dots" + (shake ? " shake" : "")}>
+        {Array.from({ length: maxLen }).map((_, i) => (
+          <span key={i} className={"dot" + (i < digits.length ? " filled" : "") + (success ? " success" : "")} />
+        ))}
+      </div>
+      <div className="keypad">
+        {[1,2,3,4,5,6,7,8,9].map((n) => (<button key={n} type="button" className="key" onClick={() => press(String(n))}>{n}</button>))}
+        <button type="button" className="key key-alt" onClick={() => !success && setDigits("")}>C</button>
+        <button type="button" className="key" onClick={() => press("0")}>0</button>
+        <button type="button" className="key key-alt" onClick={() => !success && setDigits((p) => p.slice(0, -1))} aria-label="Backspace"><BackspaceIcon /></button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- Puzzle chapter */
+function PuzzleChapter({ puzzle, onDone }) {
+  const storageKey = "bs_puzzle_start_" + PROJECT_SLUG + "_" + puzzle.id;
+  const [startedAt] = React.useState(() => {
+    try {
+      const existing = localStorage.getItem(storageKey);
+      if (existing) return parseInt(existing, 10);
+      const now = Date.now();
+      localStorage.setItem(storageKey, String(now));
+      return now;
+    } catch (e) { return Date.now(); }
+  });
+  const durationMs = (puzzle.duration_hours || 0) * 3600 * 1000;
+  const [now, setNow] = React.useState(Date.now());
+  const [revealed, setRevealed] = React.useState(false);
+  const [expired, setExpired] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!durationMs || revealed) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [durationMs, revealed]);
+
+  const remaining = durationMs ? Math.max(0, startedAt + durationMs - now) : null;
+
+  React.useEffect(() => {
+    if (durationMs && remaining === 0 && !revealed) { setExpired(true); setRevealed(true); }
+  }, [remaining]);
+
+  function handleSolved() { setRevealed(true); }
+
+  return (
+    <React.Fragment>
+      <div className="eyebrow">{puzzle.title || "A puzzle for you"}</div>
+      {!revealed && remaining != null && (
+        <div className={"countdown" + (remaining < 30 * 60 * 1000 ? " urgent" : "")}>
+          <ClockIcon /> {fmtCountdown(remaining)} left
+        </div>
+      )}
+      {!revealed && (
+        <JigsawPuzzle puzzle={puzzle} boardImage={puzzle.image_url} locked={false} onSolved={handleSolved} />
+      )}
+      {revealed && (
+        <React.Fragment>
+          <RevealPanel puzzle={puzzle} expired={expired} />
+          <button type="button" className="continue-btn" onClick={onDone}>Continue</button>
+        </React.Fragment>
+      )}
+    </React.Fragment>
+  );
+}
+
+/* ---------------------------------------------------------------- Final screen */
+function FinalBackdrop({ photos }) {
+  const list = React.useMemo(() => (photos || [])
+    .map((p) => (typeof p === "string" ? { url: p } : p))
+    .filter((p) => p && p.url).slice(0, 5), [photos]);
+  const [idx, setIdx] = React.useState(0);
+  React.useEffect(() => {
+    if (list.length < 2) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % list.length), 6500);
+    return () => clearInterval(t);
+  }, [list.length]);
+  if (!list.length) return null;
+  return (
+    <div className="final-backdrop" aria-hidden="true">
+      {list.map((p, i) => (<img key={p.url + i} src={p.url} alt="" className={i === idx ? "active" : ""} />))}
+    </div>
+  );
+}
+function FinalScreen({ message, photos }) {
+  return (
+    <React.Fragment>
+      <FinalBackdrop photos={photos} />
+      <div className="eyebrow">forever yours</div>
+      <h1 className="final-text"><Typewriter text={message} speed={60} /></h1>
+      <button type="button" className="relive-btn" onClick={() => window.location.reload()}>Relive this moment</button>
+    </React.Fragment>
+  );
+}
+
+/* ---------------------------------------------------------------- App root */
+function App() {
+  const [stage, setStage] = React.useState("loading"); // loading -> login -> puzzles -> final
+  const [config, setConfig] = React.useState(DEFAULT_CONFIG);
+  const [chapterIndex, setChapterIndex] = React.useState(0);
+  const [pinFading, setPinFading] = React.useState(false);
+
+  React.useEffect(() => {
+    loadConfig().then((c) => { setConfig(c); setTimeout(() => setStage("login"), 1400); });
+  }, []);
+
+  function handleCorrect() {
+    logVisit();
+    setPinFading(true);
+    setTimeout(() => setStage("puzzles"), 650);
+  }
+
+  const puzzles = config.puzzles && config.puzzles.length ? config.puzzles : DEFAULT_CONFIG.puzzles;
+  const current = puzzles[chapterIndex];
+
+  function nextChapter() {
+    if (chapterIndex < puzzles.length - 1) setChapterIndex((i) => i + 1);
+    else setStage("final");
+  }
+
+  return (
+    <React.Fragment>
+      {stage === "loading" && (
+        <div className="loading-screen">
+          <div className="loading-mark"><HeartIcon /></div>
+          <div className="loading-text">Hold on, I'm putting the pieces together…</div>
+        </div>
+      )}
+      {(stage === "login") && (
+        <LoginScreen correctPin={config.pin} onCorrect={handleCorrect} fading={pinFading} />
+      )}
+      {(stage === "puzzles" || stage === "final") && (
+        <div className="stage">
+          {stage === "puzzles" && (
+            <React.Fragment>
+              <div className="title-text"><Typewriter text={config.intro_message} speed={45} /></div>
+              <div className="chapter-dots">
+                {puzzles.map((p, i) => (
+                  <span key={p.id} className={"chapter-dot" + (i < chapterIndex ? " done" : "") + (i === chapterIndex ? " active" : "")} />
+                ))}
+              </div>
+              <PuzzleChapter key={current.id} puzzle={current} onDone={nextChapter} />
+              <div className="puzzle-caption">Drag each piece into place. Once every piece is home, something's waiting for you.</div>
+            </React.Fragment>
+          )}
+          {stage === "final" && <FinalScreen message={config.final_message} photos={config.photos} />}
+        </div>
+      )}
+    </React.Fragment>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
