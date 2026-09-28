@@ -1651,6 +1651,9 @@ function BuildTool() {
   const draft = useDraft({ product: "chasing-her", form, setForm, paramName, paramWa, setStatus, onToken: setCurrentSlug });
   const leadName = draft.lead.name;
   const leadWa = draft.lead.wa;
+  const PAYMENT_URL = "https://YOUR-PAYMENT-LINK"; // TODO: your outbound payment link
+  const leadEmail = (new URLSearchParams(location.search).get("email") || localStorage.getItem("cust_email") || "").trim();
+  try { if (leadEmail) localStorage.setItem("cust_email", leadEmail); } catch (e) {}
 
   // Browser's own prompt for tab close / reload, only while there are changes that are not saved yet (B1).
   React.useEffect(() => {
@@ -1745,8 +1748,9 @@ function BuildTool() {
     const qs = new URLSearchParams();
     if (leadName) qs.set("name", leadName);
     if (leadWa) qs.set("wa", leadWa);
+    if (leadEmail) qs.set("email", leadEmail);
     qs.set("product", "chasing-her");
-    window.location.href = "thankyou-custom.html?" + qs.toString();
+    window.location.href = "custom-brief.html?" + qs.toString();
   }
 
   // Preview happens right here on the page, in a small screen — never a
@@ -1794,7 +1798,7 @@ function BuildTool() {
         // 3) A row in "submissions" is what orders-admin.html lists — it
         //    points at both the saved project (by slug) and the HTML file.
         await supabaseClient.from("submissions").insert([{
-          slug, product: "chasing-her", full_name: leadName || null, whatsapp: leadWa || null,
+          slug, product: "chasing-her", full_name: leadName || null, whatsapp: leadWa || null, email: leadEmail || null, progress: "received",
           pin: form.pin, html_path: path, html_url: htmlUrl, status: "pending_payment"
         }]);
       }
@@ -1807,7 +1811,7 @@ function BuildTool() {
         sessionStorage.setItem("chasing_her_order", JSON.stringify({ ref: slug, product: "chasing-her", name: leadName || "" }));
       } catch (e) { /* storage blocked: the thank-you page still works, just without the reference in the message */ }
       allowLeave.current = true;
-      window.location.href = "thank-you.html?product=chasing-her";
+      window.location.href = PAYMENT_URL + (PAYMENT_URL.indexOf("?") < 0 ? "?" : "&") + "email=" + encodeURIComponent(leadEmail);
     } catch (e) {
       setStatus({ text: "Something went wrong saving your work: " + e.message + " — please try again.", kind: "err" });
     }
