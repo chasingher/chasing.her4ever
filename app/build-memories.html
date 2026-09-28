@@ -1515,16 +1515,10 @@ function SaveLaterModal({ state, link, waHref, copied, onCopy, onRetry, onClose 
           </div>
         </React.Fragment>
       )}
-      {state === "ready" && (
+      {state === "redirecting" && (
         <React.Fragment>
           <h2 id="later-title">Your progress is saved</h2>
-          <p>Open this link on any device to pick up where you left off. Anyone with the link can edit your draft, so keep it to yourself.</p>
-          <input ref={inputRef} className="bm-link" type="text" readOnly value={link} aria-label="Resume link" onFocus={(e) => e.target.select()} />
-          <div className="bm-actions">
-            <a className="bm-primary" href={waHref} target="_blank" rel="noopener" autoFocus>Send to my WhatsApp</a>
-            <button type="button" className="bm-outline" onClick={() => onCopy(inputRef.current)}>{copied ? "Copied ✓" : "Copy link"}</button>
-            <button type="button" className="bm-text" onClick={onClose}>Close</button>
-          </div>
+          <p>Taking you to payment now. Once you're done, sign in any time at My Site with this email to keep building or check on your order.</p>
         </React.Fragment>
       )}
     </BModal>
@@ -1556,7 +1550,15 @@ function BuildTool(){
   const draft = useDraft({ product: "memories", form, setForm, paramName, paramWa, setStatus, onToken: setCurrentSlug });
   const leadName = draft.lead.name;
   const leadWa = draft.lead.wa;
-  const PAYMENT_URL = "https://YOUR-PAYMENT-LINK"; // TODO: your outbound payment link
+  const PAYMENT_URL_FALLBACK = "https://YOUR-PAYMENT-LINK"; // used only if no link is set in Backstage → Payments
+
+  async function getPaymentUrl(product, fallback) {
+    try {
+      var r = await supabaseClient.from("settings").select("value").eq("key", "payment_url_" + product).maybeSingle();
+      if (!r.error && r.data && r.data.value) return r.data.value;
+    } catch (e) {}
+    return fallback;
+  }
   const leadEmail = (new URLSearchParams(location.search).get("email") || localStorage.getItem("cust_email") || "").trim();
   try { if (leadEmail) localStorage.setItem("cust_email", leadEmail); } catch (e) {}
 
@@ -1591,6 +1593,26 @@ function BuildTool(){
     if (r.target) scrollToId(r.target);
   }
 
+  // Saves the draft, records/updates a "pending payment" order so it shows up in
+  // My Site, then sends them to pay. From My Site they can come back and keep
+  // building (via the resume link) any time before their site is hosted.
+  async function goToPaymentAfterSave() {
+    try {
+      if (supabaseClient) {
+        const existing = await supabaseClient.from("submissions").select("id").eq("slug", form.slug).maybeSingle();
+        const row = {
+          slug: form.slug, product: "memories", full_name: leadName || null, whatsapp: leadWa || null,
+          email: leadEmail || null, progress: "received", pin: form.pin || null, status: "pending_payment"
+        };
+        if (existing && existing.data) await supabaseClient.from("submissions").update(row).eq("id", existing.data.id);
+        else await supabaseClient.from("submissions").insert([row]);
+      }
+    } catch (e) { /* not fatal — the draft itself is already saved either way */ }
+    allowLeave.current = true;
+    const PAYMENT_URL = await getPaymentUrl("memories", PAYMENT_URL_FALLBACK);
+    window.location.href = PAYMENT_URL + (PAYMENT_URL.indexOf("?") < 0 ? "?" : "&")
+      + "email=" + encodeURIComponent(leadEmail) + "&resume=" + encodeURIComponent(form.slug);
+  }
   async function openSaveLater() {
     if (draft.pristine) {
       setStatus({ text: "Add a photo or some words first, then you can save and come back to it.", kind: "" });
@@ -1600,11 +1622,16 @@ function BuildTool(){
     setLaterOpen(true);
     setLaterState("saving");
     const ok = (draft.unsavedRef.current || draft.saveState === "error" || !draft.hasSaved) ? await draft.saveNow() : true;
-    setLaterState(ok ? "ready" : "error");
+    if (!ok) { setLaterState("error"); return; }
+    setLaterState("redirecting");
+    await goToPaymentAfterSave();
   }
   async function retrySaveLater() {
     setLaterState("saving");
-    setLaterState((await draft.saveNow()) ? "ready" : "error");
+    const ok = await draft.saveNow();
+    if (!ok) { setLaterState("error"); return; }
+    setLaterState("redirecting");
+    await goToPaymentAfterSave();
   }
   async function copyLink(inputEl) {
     const ok = await copyText(draft.resumeLink, inputEl);
@@ -1706,6 +1733,7 @@ function BuildTool(){
         sessionStorage.setItem("chasing_her_order", JSON.stringify({ ref: slug, product: "memories", name: leadName || "" }));
       } catch (e) { /* storage blocked: the thank-you page still works, just without the reference in the message */ }
       allowLeave.current = true;
+      var PAYMENT_URL = await getPaymentUrl("memories", PAYMENT_URL_FALLBACK);
       window.location.href = PAYMENT_URL + (PAYMENT_URL.indexOf("?") < 0 ? "?" : "&") + "email=" + encodeURIComponent(leadEmail);
     } catch(e){
       setStatus({text:"Something went wrong saving your work: " + e.message + " — please try again.", kind:"err"});
