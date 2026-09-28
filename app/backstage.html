@@ -1,10 +1,10 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Backstage</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--ivory:#FBF3EA;--deep:#F5E9DC;--wine:#5A1A2C;--ink:#33101B;--gold:#DCC397;--brown:#7A5A47}
+:root{--ivory:#FBF3EA;--deep:#F5E9DC;--wine:#5A1A2C;--ink:#33101B;--gold:#DCC397;--brown:#7A5A47;--ok:#2F6B3F;--ok-bg:#EAF4EC;--off:#EFE9E2}
 *{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--ivory);color:#2B1710;font:15px/1.5 Manrope,system-ui,sans-serif;display:flex;flex-direction:column}
-h2{font-family:Fraunces,serif;font-weight:500;margin:0;color:var(--ink);font-size:18px}
+h2{font-family:Fraunces,serif;font-weight:600;margin:0;color:var(--ink);font-size:18px}
 nav{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;background:var(--wine);padding-top:calc(10px + env(safe-area-inset-top))}
 nav button{flex:none;border:0;border-radius:100px;padding:9px 16px;font:700 14px Manrope;background:transparent;color:#f3dfd5;cursor:pointer}
 nav button.on{background:var(--ivory);color:var(--wine)}
@@ -16,29 +16,44 @@ main{flex:1;overflow:auto;padding:14px;min-height:0}iframe{width:100%;height:100
 input,select,textarea{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--gold);border-radius:10px;background:#fff;margin-top:6px}
 label{display:block;font-size:13px;font-weight:700;color:var(--brown);margin-top:10px}
 .b{border:0;border-radius:100px;background:var(--wine);color:#fff;font:700 14px Manrope;padding:11px 18px;cursor:pointer;margin-top:12px}
+.b:disabled{opacity:.6;cursor:not-allowed}
+.b-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--gold);border-radius:100px;font:700 13px Manrope;padding:8px 14px;cursor:pointer;margin-top:12px}
+.b-danger{background:transparent;color:#8A2A2A;border:1.5px solid rgba(138,42,42,.3);border-radius:100px;font:700 13px Manrope;padding:8px 14px;cursor:pointer;margin-top:12px}
 .m{color:var(--brown);font-size:13px}.t{background:var(--deep);border-radius:100px;padding:3px 10px;font-size:12px;font-weight:700}
+.tag{display:inline-block;border-radius:100px;padding:3px 10px;font-size:11.5px;font-weight:700}
+.tag.on{background:var(--ok-bg);color:var(--ok)}.tag.off{background:var(--off);color:var(--brown)}
 #gate{margin:auto;max-width:340px;padding:24px;text-align:center}#gate input{text-align:center}
+.thumb{width:56px;height:56px;border-radius:10px;object-fit:cover;flex:none;background:var(--deep)}
+.ph{width:56px;height:56px;border-radius:10px;flex:none;background:var(--deep);display:flex;align-items:center;justify-content:center;font-size:10.5px;color:var(--brown);text-align:center}
+.t-item{display:flex;gap:12px}.t-body{flex:1;min-width:0}
+.hint{font-size:12.5px;color:var(--brown);margin-top:6px}
 </style></head><body>
 <div id="gate"><h2>Backstage</h2><input id="pw" type="password" placeholder="Password" aria-label="Password"><button class="b" id="in">Unlock</button></div>
 <nav id="nav" hidden></nav><main id="main" hidden></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-var PASS="150406",db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc");
+var PASS="150406";
+// Funnel project: submissions, templates, payment-link settings.
+var db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc");
+// Landing-page project: testimonials shown on index.html.
+var db2=supabase.createClient("https://yaisiawnqlfosfawcxle.supabase.co","sb_publishable_KZbznu5oAKqKtCTQ36PM1A_eiBCvm8-");
 var $=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-var TABS=[["cust","Customers"],["show","Showcase"],["orders","Orders","orders-admin.html"],["chasing","Chasing Her editor","chasing-admin.html"],["mem","Memories editor","memories-admin.html"]];
+var TABS=[["cust","Customers"],["pay","Payments"],["show","Showcase"],["testi","Testimonials"],["orders","Orders","orders-admin.html"],["chasing","Chasing Her editor","chasing-admin.html"],["mem","Memories editor","memories-admin.html"]];
 function unlock(){["orders_unlocked","backstage_unlocked","memories_unlocked"].forEach(function(k){sessionStorage.setItem(k,"1")});
  $("gate").hidden=true;$("nav").hidden=false;$("main").hidden=false;
  $("nav").innerHTML=TABS.map(function(t){return'<button data-t="'+t[0]+'">'+t[1]+'</button>'}).join("");
- $("main").innerHTML=TABS.map(function(t){return'<section class="pane" id="p-'+t[0]+'" hidden>'+(t[2]?'':'')+'</section>'}).join("");
+ $("main").innerHTML=TABS.map(function(t){return'<section class="pane" id="p-'+t[0]+'" hidden></section>'}).join("");
  $("nav").onclick=function(e){if(e.target.dataset.t)go(e.target.dataset.t)};go("cust")}
 function go(k){TABS.forEach(function(t){$("p-"+t[0]).hidden=t[0]!==k});
  document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t===k)});
  var t=TABS.filter(function(x){return x[0]===k})[0],p=$("p-"+k);$("main").style.padding=t[2]?"0":"14px";
  if(t[2]){if(!p.firstChild){p.style.height="100%";p.innerHTML='<iframe src="'+t[2]+'" title="'+t[1]+'"></iframe>'}}
- else if(k==="cust")loadCust();else loadShow()}
+ else if(k==="cust")loadCust();else if(k==="pay")loadPay();else if(k==="testi")loadTesti();else loadShow()}
 $("in").onclick=function(){$("pw").value===PASS?unlock():($("pw").value="",$("pw").placeholder="Wrong password")};
 $("pw").onkeydown=function(e){if(e.key==="Enter")$("in").click()};
+
+/* ---------------- Customers ---------------- */
 var ROWS=[];
 async function loadCust(){var p=$("p-cust");p.innerHTML='<p class="m">Loading…</p>';
  var r=await db.from("submissions").select("*").order("created_at",{ascending:false});
@@ -47,7 +62,7 @@ async function loadCust(){var p=$("p-cust");p.innerHTML='<p class="m">Loading…
  $("q").oninput=draw;draw()}
 function draw(){var q=($("q").value||"").toLowerCase();
  $("list").innerHTML=ROWS.filter(function(o){return(o.full_name+o.email+o.whatsapp).toLowerCase().indexOf(q)>-1}).map(function(o,i){
- var b=o.brief?'<p class="m">Brief: '+esc(Object.keys(o.brief).map(function(k){return k+": "+o.brief[k]}).join(" · "))+'</p>':'';
+ var b=o.brief?'<p class="m">Brief: '+esc(Object.keys(o.brief).filter(function(k){return o.brief[k]}).map(function(k){return k+": "+o.brief[k]}).join(" · ")||"no details given yet")+'</p>':'';
  return'<div class="c" data-id="'+o.id+'"><div class="row"><b>'+esc(o.full_name||"No name")+'</b><span class="t">'+esc(o.product)+' · '+esc(o.status)+'</span></div>'
  +'<p class="m">'+esc(o.email||"no email saved")+' · '+esc(o.whatsapp||"")+'</p>'+b
  +'<label>Progress<select class="pg">'+[["received","Order received"],["building","Building"],["review","Final checks"],["hosted","Live"]].map(function(s){return'<option value="'+s[0]+'"'+(o.progress===s[0]?' selected':'')+'>'+s[1]+'</option>'}).join('')+'</select></label>'
@@ -58,6 +73,23 @@ document.addEventListener("click",async function(e){if(!e.target.classList.conta
  var c=e.target.closest(".c"),hu=c.querySelector(".hu").value.trim(),pg=c.querySelector(".pg").value;if(hu)pg="hosted";
  var r=await db.from("submissions").update({progress:pg,progress_note:c.querySelector(".nt").value.trim()||null,hosted_url:hu||null}).eq("id",c.dataset.id);
  c.querySelector(".ok").textContent=r.error?"Failed: "+r.error.message:"Saved"});
+
+/* ---------------- Payments ---------------- */
+var PAY_PRODUCTS=[["chasing-her","Chasing Her"],["memories","Memories"],["custom","Custom build"]];
+async function loadPay(){var p=$("p-pay");p.innerHTML='<p class="m">Loading…</p>';
+ var r=await db.from("settings").select("*").like("key","payment_url_%");
+ if(r.error){p.innerHTML='<p class="m">Could not load payment links: '+esc(r.error.message)+'. Have you run the settings part of supabase-customer-portal.sql?</p>';return}
+ var vals={};r.data.forEach(function(row){vals[row.key.replace("payment_url_","")]=row.value||""});
+ p.innerHTML='<div class="grid two">'+PAY_PRODUCTS.map(function(x){
+  return'<div class="c" data-k="'+x[0]+'"><h2>'+x[1]+'</h2><p class="m">Where people are sent to pay after building this design. Leave blank to use the placeholder link until you set one.</p>'
+  +'<label>Outbound payment link<input class="pu" inputmode="url" placeholder="https://" value="'+esc(vals[x[0]]||"")+'"></label>'
+  +'<button class="b sv2">Save</button> <span class="m ok"></span></div>'}).join("")+'</div>'}
+document.addEventListener("click",async function(e){if(!e.target.classList.contains("sv2"))return;
+ var c=e.target.closest(".c"),v=c.querySelector(".pu").value.trim(),s=e.target.nextElementSibling;
+ var r=await db.from("settings").upsert({key:"payment_url_"+c.dataset.k,value:v||null},{onConflict:"key"});
+ s.textContent=r.error?"Failed: "+r.error.message:"Saved — live immediately"});
+
+/* ---------------- Showcase ---------------- */
 async function loadShow(){var p=$("p-show");p.innerHTML='<div class="grid two">'+[["chasing-her","Chasing Her"],["memories","Memories"]].map(function(x){
  return'<div class="c" data-p="'+x[0]+'"><h2>'+x[1]+'</h2><p class="m">Image or video shown on the landing page and the design picker.</p><input type="file" accept="image/*,video/*"><button class="b up">Upload and use</button> <span class="m ok"></span></div>'}).join("")+'</div>'}
 document.addEventListener("click",async function(e){if(!e.target.classList.contains("up"))return;
@@ -67,5 +99,57 @@ document.addEventListener("click",async function(e){if(!e.target.classList.conta
  var url=db.storage.from("templates").getPublicUrl(path).data.publicUrl;
  var r=await db.from("templates").update({media_url:url,media_type:f.type.indexOf("video")===0?"video":"image"}).eq("product",c.dataset.p).select();
  s.textContent=r.error?r.error.message:(r.data.length?"Live on landing page and picker":"Add an example for this design in Orders first")});
+
+/* ---------------- Testimonials ---------------- */
+var TESTI=[],tEditId=null;
+async function loadTesti(){var p=$("p-testi");p.innerHTML='<p class="m">Loading…</p>';
+ var r=await db2.from("testimonials").select("*").order("display_order",{ascending:true});
+ if(r.error){p.innerHTML='<p class="m">Could not load testimonials: '+esc(r.error.message)+'. Have you run testimonials-setup.sql on the landing-page project?</p>';return}
+ TESTI=r.data;
+ p.innerHTML='<div class="grid two"><div class="c"><h2 id="tTitle">Add a testimonial</h2>'
+ +'<label>Type<select id="tKind"><option value="photo">Photo</option><option value="video">Video</option></select></label>'
+ +'<label>Customer name<input id="tName" placeholder="a happy customer"></label>'
+ +'<label>Quote<textarea id="tQuote" rows="3" placeholder="What they said…"></textarea></label>'
+ +'<label>Photo (or video thumbnail)<input type="file" id="tMedia" accept="image/*"></label><p class="hint">Uploads to the testimonials storage bucket.</p>'
+ +'<div id="tVideoWrap" hidden><label>Video link<input id="tVideoUrl" inputmode="url" placeholder="https://drive.google.com/file/d/…/view?usp=sharing"></label><p class="hint">Google Drive (shared as "Anyone with the link"), YouTube, or a direct video file link.</p></div>'
+ +'<div class="grid two"><label>Display order<input id="tOrder" type="number" value="0"></label><label>Published<select id="tPublished"><option value="true">Yes</option><option value="false">No</option></select></label></div>'
+ +'<p class="m" id="tErr" style="color:#a3262e"></p>'
+ +'<button class="b" id="tSave">Save testimonial</button> <button class="b-ghost" id="tCancel" hidden>Cancel</button></div>'
+ +'<div id="tList" class="grid"></div></div>';
+ $("tKind").onchange=function(){$("tVideoWrap").hidden=$("tKind").value!=="video"};
+ $("tCancel").onclick=resetTesti;$("tSave").onclick=saveTesti;
+ drawTesti()}
+function drawTesti(){$("tList").innerHTML=TESTI.map(function(t){
+ var thumb=t.media_url?'<img class="thumb" src="'+esc(t.media_url)+'" alt="">':'<div class="ph">No photo</div>';
+ return'<div class="c t-item" data-id="'+t.id+'">'+thumb+'<div class="t-body"><div class="row" style="margin-bottom:4px"><span class="t">'+esc(t.kind)+'</span><span class="tag '+(t.is_published?'on':'off')+'">'+(t.is_published?"Published":"Hidden")+'</span><span class="t">order '+t.display_order+'</span></div>'
+ +'<p style="margin:4px 0 2px">'+esc(t.quote)+'</p><p class="m">— '+esc(t.customer_name||"a happy customer")+'</p>'
+ +'<div class="row" style="margin-top:8px"><button class="b-ghost te">Edit</button><button class="b-danger td">Delete</button></div></div></div>'}).join("")||'<p class="m">No testimonials yet — add your first one on the left.</p>'}
+document.addEventListener("click",function(e){
+ if(e.target.classList.contains("te")){var row=TESTI.find(function(r){return r.id===e.target.closest(".t-item").dataset.id});if(row)editTesti(row)}
+ if(e.target.classList.contains("td")){var id=e.target.closest(".t-item").dataset.id;if(confirm("Delete this testimonial?"))deleteTesti(id)}});
+function editTesti(row){tEditId=row.id;$("tTitle").textContent="Edit testimonial";$("tKind").value=row.kind;$("tVideoWrap").hidden=row.kind!=="video";
+ $("tName").value=row.customer_name||"";$("tQuote").value=row.quote||"";if($("tVideoUrl"))$("tVideoUrl").value=row.video_url||"";
+ $("tOrder").value=row.display_order||0;$("tPublished").value=row.is_published?"true":"false";$("tSave").textContent="Update testimonial";$("tCancel").hidden=false;
+ window.scrollTo({top:0,behavior:"smooth"})}
+function resetTesti(){tEditId=null;["tName","tQuote"].forEach(function(i){$(i).value=""});if($("tVideoUrl"))$("tVideoUrl").value="";
+ $("tMedia").value="";$("tOrder").value=0;$("tPublished").value="true";$("tKind").value="photo";$("tVideoWrap").hidden=true;
+ $("tTitle").textContent="Add a testimonial";$("tSave").textContent="Save testimonial";$("tCancel").hidden=true;$("tErr").textContent=""}
+async function deleteTesti(id){var r=await db2.from("testimonials").delete().eq("id",id);if(r.error){alert("Could not delete: "+r.error.message);return}loadTesti()}
+async function saveTesti(){$("tErr").textContent="";var btn=$("tSave");btn.disabled=true;var orig=btn.textContent;btn.textContent="Saving…";
+ try{
+  var quote=$("tQuote").value.trim();if(!quote)throw new Error("Add a quote before saving.");
+  var mediaUrl=tEditId?(TESTI.find(function(r){return r.id===tEditId})||{}).media_url:null;
+  var f=$("tMedia").files[0];
+  if(f){var path=Date.now()+"_"+f.name.replace(/\s+/g,"_");
+   var up=await db2.storage.from("testimonials").upload(path,f);if(up.error)throw up.error;
+   mediaUrl=db2.storage.from("testimonials").getPublicUrl(path).data.publicUrl}
+  var payload={kind:$("tKind").value,customer_name:$("tName").value.trim()||"a happy customer",quote:quote,media_url:mediaUrl||null,
+   video_url:$("tKind").value==="video"?($("tVideoUrl").value.trim()||null):null,display_order:parseInt($("tOrder").value,10)||0,is_published:$("tPublished").value==="true"};
+  var r=tEditId?await db2.from("testimonials").update(payload).eq("id",tEditId):await db2.from("testimonials").insert([payload]);
+  if(r.error)throw r.error;
+  resetTesti();loadTesti();
+ }catch(err){$("tErr").textContent=err.message||"Something went wrong saving this testimonial."}
+ finally{btn.disabled=false;btn.textContent=orig}}
+
 if(sessionStorage.getItem("orders_unlocked"))unlock();
 </script></body></html>
