@@ -31,7 +31,8 @@ li small{display:block;font-weight:400;color:var(--brown)}
 <div id="login"><h1>See how your site is coming along</h1>
 <p class="muted" style="margin-top:10px">Enter the email you used when you started your site.</p>
 <input id="em" type="email" inputmode="email" autocomplete="email" autocapitalize="off" placeholder="you@example.com" aria-label="Email address">
-<p class="err" id="err" role="alert"></p><button class="btn" id="go">View my site</button></div>
+<p class="err" id="err" role="alert"></p><button class="btn" id="go">View my site</button>
+<p class="muted" style="margin-top:14px">Tip: bookmark <span style="color:var(--wine);font-weight:700">tinyurl.com/chasingher-customer</span> — it always brings you straight back here.</p></div>
 <div id="app" hidden></div></div>
 <div class="wa"><a class="btn" id="wa" target="_blank" rel="noopener">Chat with us on WhatsApp</a></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -46,10 +47,12 @@ async function loadPayUrls(){
 }
 var STEPS=[["received","Order received","We have your details."],["building","We're building it","Your site is being put together."],["review","Final checks","Nearly there."],["hosted","Live","Your site is ready to open."]];
 var NAMES={"chasing-her":"Chasing Her","memories":"Memories","custom":"Custom build"};
+var BUILD_PAGES={"chasing-her":"build-chasingher.html","memories":"build-memories.html"};
+var COME_BACK_LINK="https://tinyurl.com/chasingher-customer";
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function wa(t){$("wa").href="https://wa.me/"+WA+"?text="+encodeURIComponent(t)}
 wa("Hi! I need help with my site.");
-function card(o){
+function card(o,email){
   var cur=o.hosted_url?3:Math.max(0,STEPS.findIndex(function(s){return s[0]===o.progress}));
   var pay=o.status==="pending_payment";
   var h='<div class="card"><div class="row"><h2>'+esc(NAMES[o.product]||o.product)+'</h2><span class="tag'+(cur===3?' ok':'')+'">'+esc(STEPS[cur][1])+'</span></div>';
@@ -58,6 +61,8 @@ function card(o){
   h+='<ol>'+STEPS.map(function(s,i){return'<li class="'+(i<cur?'done':i===cur?'now':'')+'">'+s[1]+'<small>'+(i===cur?s[2]:'')+'</small></li>'}).join('')+'</ol>';
   if(o.progress_note)h+='<p class="note">'+esc(o.progress_note)+'</p>';
   if(o.hosted_url)h+='<a class="btn" style="margin-top:14px" href="'+esc(o.hosted_url)+'" target="_blank" rel="noopener">Open my site</a>';
+  else if(o.slug&&BUILD_PAGES[o.product])
+    h+='<a class="btn alt" style="margin-top:14px" href="'+BUILD_PAGES[o.product]+'?resume='+encodeURIComponent(o.slug)+'&email='+encodeURIComponent(email)+'">Continue building</a>';
   return h+'</div>';
 }
 async function show(email){
@@ -67,7 +72,9 @@ async function show(email){
   if(!r.data.length){$("err").textContent="We can't find that email. Use the same email you entered when you started.";return}
   localStorage.setItem("cust_email",email);
   $("login").hidden=true;$("app").hidden=false;
-  $("app").innerHTML='<h1>Hi '+esc((r.data[0].full_name||"there").split(" ")[0])+'</h1><p class="muted" style="margin-top:8px">'+esc(email)+' · <a href="#" id="out" style="color:var(--wine)">Not you?</a></p>'+r.data.map(card).join('');
+  $("app").innerHTML='<h1>Hi '+esc((r.data[0].full_name||"there").split(" ")[0])+'</h1><p class="muted" style="margin-top:8px">'+esc(email)+' · <a href="#" id="out" style="color:var(--wine)">Not you?</a></p>'
+    +'<p class="note" style="margin-top:14px">Bookmark <a href="'+COME_BACK_LINK+'" style="color:var(--wine);font-weight:700">'+COME_BACK_LINK+'</a> — it always brings you straight back here, no need to remember this page.</p>'
+    +r.data.map(function(o){return card(o,email)}).join('');
   $("out").onclick=function(e){e.preventDefault();localStorage.removeItem("cust_email");location.href=location.pathname};
   wa("Hi! I'm "+(r.data[0].full_name||"a customer")+" ("+email+"). I need help with my site.");
 }
