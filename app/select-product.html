@@ -182,7 +182,7 @@
         <p class="desc">Send us your photos and words on WhatsApp and we’ll build either design for you. Same 50 GHC launch price, delivered within 24 hours.</p>
       </div>
       <div class="btns">
-        <a class="btn-outline" id="link-custom" href="thankyou-custom.html">Request a custom build</a>
+        <a class="btn-outline" id="link-custom" href="custom-brief.html">Request a custom build</a>
       </div>
     </div>
   </div>
@@ -212,6 +212,7 @@
   var carry = "";
   if (params.get("name")) carry += "&name=" + encodeURIComponent(params.get("name"));
   if (params.get("wa")) carry += "&wa=" + encodeURIComponent(params.get("wa"));
+  if (params.get("email")) carry += "&email=" + encodeURIComponent(params.get("email"));
   if (carry) {
     ["link-chasing-her", "link-memories", "link-custom"].forEach(function (id) {
       var a = document.getElementById(id);
@@ -241,7 +242,7 @@
         return r.json();
       });
     }
-    return get("product,label,pin,html_url,thumb_url")
+    return get("product,label,pin,html_url,thumb_url,media_url,media_type")
       .catch(function () { return get("product,label,pin,html_url"); })
       .then(function (rows) {
         var map = {};
@@ -255,9 +256,16 @@
     if (!map) return;
     Object.keys(map).forEach(function (product) {
       var t = map[product];
-      if (!t.thumb_url || !/^https:\/\//.test(t.thumb_url)) return;
+      var src = t.media_url || t.thumb_url;
+      if (!src || !/^https:\/\//.test(src)) return;
       var img = document.querySelector('.thumb[data-tmpl="' + product + '"] .thumb-img');
       if (!img) return;
+      if (t.media_type === "video") {
+        var v = document.createElement("video");
+        v.className = "thumb-img is-loaded"; v.src = src; v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute("aria-hidden", "true");
+        img.replaceWith(v); return;
+      }
+      t.thumb_url = src;
       img.onload = function () { img.classList.add("is-loaded"); };
       img.alt = THUMB_ALT[product] || "";
       img.src = t.thumb_url;
