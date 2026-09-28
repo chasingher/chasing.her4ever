@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Backstage</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ivory:#FBF3EA;--deep:#F5E9DC;--wine:#5A1A2C;--ink:#33101B;--gold:#DCC397;--brown:#7A5A47}
+*{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--ivory);color:#2B1710;font:15px/1.5 Manrope,system-ui,sans-serif;display:flex;flex-direction:column}
+h2{font-family:Fraunces,serif;font-weight:500;margin:0;color:var(--ink);font-size:18px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;background:var(--wine);padding-top:calc(10px + env(safe-area-inset-top))}
+nav button{flex:none;border:0;border-radius:100px;padding:9px 16px;font:700 14px Manrope;background:transparent;color:#f3dfd5;cursor:pointer}
+nav button.on{background:var(--ivory);color:var(--wine)}
+main{flex:1;overflow:auto;padding:14px;min-height:0}iframe{width:100%;height:100%;border:0;background:#fff}
+.pane[hidden]{display:none}.grid{display:grid;gap:12px;max-width:900px;margin:0 auto}
+@media(min-width:760px){.grid.two{grid-template-columns:1fr 1fr}}
+.c{background:#fff;border:1px solid var(--deep);border-radius:16px;padding:14px}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,textarea{width:100%;font:inherit;padding:11px 12px;border:1.5px solid var(--gold);border-radius:10px;background:#fff;margin-top:6px}
+label{display:block;font-size:13px;font-weight:700;color:var(--brown);margin-top:10px}
+.b{border:0;border-radius:100px;background:var(--wine);color:#fff;font:700 14px Manrope;padding:11px 18px;cursor:pointer;margin-top:12px}
+.m{color:var(--brown);font-size:13px}.t{background:var(--deep);border-radius:100px;padding:3px 10px;font-size:12px;font-weight:700}
+#gate{margin:auto;max-width:340px;padding:24px;text-align:center}#gate input{text-align:center}
+</style></head><body>
+<div id="gate"><h2>Backstage</h2><input id="pw" type="password" placeholder="Password" aria-label="Password"><button class="b" id="in">Unlock</button></div>
+<nav id="nav" hidden></nav><main id="main" hidden></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+var PASS="150406",db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc");
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+var TABS=[["cust","Customers"],["show","Showcase"],["orders","Orders","orders-admin.html"],["chasing","Chasing Her editor","chasing-admin.html"],["mem","Memories editor","memories-admin.html"]];
+function unlock(){["orders_unlocked","backstage_unlocked","memories_unlocked"].forEach(function(k){sessionStorage.setItem(k,"1")});
+ $("gate").hidden=true;$("nav").hidden=false;$("main").hidden=false;
+ $("nav").innerHTML=TABS.map(function(t){return'<button data-t="'+t[0]+'">'+t[1]+'</button>'}).join("");
+ $("main").innerHTML=TABS.map(function(t){return'<section class="pane" id="p-'+t[0]+'" hidden>'+(t[2]?'':'')+'</section>'}).join("");
+ $("nav").onclick=function(e){if(e.target.dataset.t)go(e.target.dataset.t)};go("cust")}
+function go(k){TABS.forEach(function(t){$("p-"+t[0]).hidden=t[0]!==k});
+ document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t===k)});
+ var t=TABS.filter(function(x){return x[0]===k})[0],p=$("p-"+k);$("main").style.padding=t[2]?"0":"14px";
+ if(t[2]){if(!p.firstChild){p.style.height="100%";p.innerHTML='<iframe src="'+t[2]+'" title="'+t[1]+'"></iframe>'}}
+ else if(k==="cust")loadCust();else loadShow()}
+$("in").onclick=function(){$("pw").value===PASS?unlock():($("pw").value="",$("pw").placeholder="Wrong password")};
+$("pw").onkeydown=function(e){if(e.key==="Enter")$("in").click()};
+var ROWS=[];
+async function loadCust(){var p=$("p-cust");p.innerHTML='<p class="m">Loading…</p>';
+ var r=await db.from("submissions").select("*").order("created_at",{ascending:false});
+ if(r.error){p.innerHTML='<p class="m">Could not load customers: '+esc(r.error.message)+'. Have you run supabase-customer-portal.sql?</p>';return}
+ ROWS=r.data;p.innerHTML='<div class="grid"><input id="q" placeholder="Search name, email or WhatsApp" aria-label="Search"><div class="grid two" id="list"></div></div>';
+ $("q").oninput=draw;draw()}
+function draw(){var q=($("q").value||"").toLowerCase();
+ $("list").innerHTML=ROWS.filter(function(o){return(o.full_name+o.email+o.whatsapp).toLowerCase().indexOf(q)>-1}).map(function(o,i){
+ var b=o.brief?'<p class="m">Brief: '+esc(Object.keys(o.brief).map(function(k){return k+": "+o.brief[k]}).join(" · "))+'</p>':'';
+ return'<div class="c" data-id="'+o.id+'"><div class="row"><b>'+esc(o.full_name||"No name")+'</b><span class="t">'+esc(o.product)+' · '+esc(o.status)+'</span></div>'
+ +'<p class="m">'+esc(o.email||"no email saved")+' · '+esc(o.whatsapp||"")+'</p>'+b
+ +'<label>Progress<select class="pg">'+[["received","Order received"],["building","Building"],["review","Final checks"],["hosted","Live"]].map(function(s){return'<option value="'+s[0]+'"'+(o.progress===s[0]?' selected':'')+'>'+s[1]+'</option>'}).join('')+'</select></label>'
+ +'<label>Note for customer<input class="nt" value="'+esc(o.progress_note)+'"></label>'
+ +'<label>Hosted link<input class="hu" inputmode="url" placeholder="https://" value="'+esc(o.hosted_url)+'"></label>'
+ +'<button class="b sv">Save</button> <span class="m ok"></span></div>'}).join("")||'<p class="m">No customers yet.</p>'}
+document.addEventListener("click",async function(e){if(!e.target.classList.contains("sv"))return;
+ var c=e.target.closest(".c"),hu=c.querySelector(".hu").value.trim(),pg=c.querySelector(".pg").value;if(hu)pg="hosted";
+ var r=await db.from("submissions").update({progress:pg,progress_note:c.querySelector(".nt").value.trim()||null,hosted_url:hu||null}).eq("id",c.dataset.id);
+ c.querySelector(".ok").textContent=r.error?"Failed: "+r.error.message:"Saved"});
+async function loadShow(){var p=$("p-show");p.innerHTML='<div class="grid two">'+[["chasing-her","Chasing Her"],["memories","Memories"]].map(function(x){
+ return'<div class="c" data-p="'+x[0]+'"><h2>'+x[1]+'</h2><p class="m">Image or video shown on the landing page and the design picker.</p><input type="file" accept="image/*,video/*"><button class="b up">Upload and use</button> <span class="m ok"></span></div>'}).join("")+'</div>'}
+document.addEventListener("click",async function(e){if(!e.target.classList.contains("up"))return;
+ var c=e.target.closest(".c"),f=c.querySelector("input").files[0],s=c.querySelector(".ok");if(!f){s.textContent="Choose a file first";return}
+ var path="showcase/"+c.dataset.p+"-"+Date.now()+"."+f.name.split(".").pop();s.textContent="Uploading…";
+ var u=await db.storage.from("templates").upload(path,f,{upsert:true,contentType:f.type});if(u.error){s.textContent=u.error.message;return}
+ var url=db.storage.from("templates").getPublicUrl(path).data.publicUrl;
+ var r=await db.from("templates").update({media_url:url,media_type:f.type.indexOf("video")===0?"video":"image"}).eq("product",c.dataset.p).select();
+ s.textContent=r.error?r.error.message:(r.data.length?"Live on landing page and picker":"Add an example for this design in Orders first")});
+if(sessionStorage.getItem("orders_unlocked"))unlock();
+</script></body></html>

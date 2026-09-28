@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tell us what to build — Chasing Her</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<style>:root{--wine:#5A1A2C;--gold:#DCC397}*{box-sizing:border-box}body{margin:0;background:#FBF3EA;color:#2B1710;font:16px/1.6 Manrope,system-ui,sans-serif}
+.w{max-width:520px;margin:0 auto;padding:28px 18px 60px}h1{font:500 28px/1.2 Fraunces,serif;color:#33101B;margin:0 0 8px}
+label{display:block;font-weight:700;font-size:14px;margin-top:16px}input,select,textarea{width:100%;font:inherit;padding:13px 14px;border:1.5px solid var(--gold);border-radius:14px;background:#fff;margin-top:6px}
+.b{width:100%;margin-top:22px;padding:15px;border:0;border-radius:100px;background:var(--wine);color:#FBF3EA;font:700 16px Manrope;cursor:pointer}.e{color:#a3262e;min-height:22px}</style></head><body><div class="w">
+<h1>Tell us what to build</h1><p>A few quick answers so we know which design fits. Then you'll go to payment, and we'll update you in your account.</p>
+<label>Which design?<select id="p"><option value="chasing-her">Chasing Her: one letter, songs and a flower reveal</option><option value="memories">Memories: photo heart, slideshow and voice note</option><option value="unsure">Not sure, recommend one</option></select></label>
+<label>Who is it for?<input id="who" placeholder="e.g. my girlfriend Ama"></label>
+<label>What's the occasion, and how should it feel?<textarea id="mood" rows="3"></textarea></label>
+<label>Link to your photos and songs<input id="links" inputmode="url" placeholder="Google Drive, WhatsApp link or similar"></label>
+<label>Anything else we should know?<textarea id="more" rows="3"></textarea></label>
+<p class="e" id="e" role="alert"></p><button class="b" id="go">Continue to payment</button></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+var PAYMENT_URL="https://YOUR-PAYMENT-LINK";
+var db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc"),q=new URLSearchParams(location.search),$=function(i){return document.getElementById(i)};
+$("go").onclick=async function(){
+ if(!$("who").value.trim()||!$("mood").value.trim()){$("e").textContent="Tell us who it's for and how it should feel.";return}
+ this.disabled=true;var email=q.get("email")||"",slug="custom-"+Date.now().toString(36);
+ var r=await db.from("submissions").insert([{slug:slug,product:"custom",full_name:q.get("name")||null,whatsapp:q.get("wa")||null,email:email||null,status:"pending_payment",progress:"received",
+  brief:{design:$("p").value,for:$("who").value,feel:$("mood").value,links:$("links").value,notes:$("more").value}}]);
+ if(r.error){$("e").textContent="Something went wrong saving this. Please try again.";this.disabled=false;return}
+ sessionStorage.setItem("cust_email",email);location.href=PAYMENT_URL+(PAYMENT_URL.indexOf("?")<0?"?":"&")+"email="+encodeURIComponent(email)};
+</script></body></html>
