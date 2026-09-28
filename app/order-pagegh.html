@@ -1311,6 +1311,37 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   </div>
 </section>
 
+<!-- ================= DESIGNS (merged from select-product) ================= -->
+<style>
+.pick-sec{padding:64px 0;background:#FBF3EA}.pick-sec h2{text-align:center;margin-bottom:8px}.pick-sub{text-align:center;color:#7A5A47;max-width:520px;margin:0 auto 28px}
+.pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:880px;margin:0 auto}@media(max-width:720px){.pick-grid{grid-template-columns:1fr}}
+.pick-card{background:#FFFDFB;border:1px solid #F5E9DC;border-radius:22px;padding:14px 14px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 18px 40px -22px rgba(90,26,44,.25)}
+.pick-media{position:relative;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:linear-gradient(155deg,#F5DAD5,#E1A6A3 62%,#DCC397);display:grid;place-items:center;font:italic 20px Fraunces,serif;color:#33101B;padding:0;border:0;width:100%;cursor:pointer}
+.pick-media img,.pick-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pick-pill{position:absolute;left:12px;bottom:12px;background:rgba(51,16,27,.85);color:#FBF3EA;font:700 13.5px Manrope,sans-serif;padding:8px 14px;border-radius:100px}
+.pick-card h3{font:500 22px Fraunces,serif;margin:0;color:#33101B}.pick-card p{margin:0;color:#7A5A47;font-size:15px}
+.pick-btns{display:flex;flex-direction:column;gap:10px;margin-top:auto}.pick-custom{max-width:880px;margin:20px auto 0;text-align:center;color:#7A5A47}.pick-custom button{background:none;border:0;color:#5A1A2C;font:700 15px Manrope,sans-serif;text-decoration:underline;cursor:pointer}
+.pk-modal{position:fixed;inset:0;background:rgba(43,23,16,.55);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}.pk-modal.on{display:flex}
+.pk-box{background:#FFFDFB;border-radius:18px;width:100%;max-width:420px;padding:20px;max-height:92vh;overflow:auto}.pk-box iframe{width:100%;height:58vh;border:1px solid #F5E9DC;border-radius:12px;background:#FBF3EA}
+.pk-pin{background:#F5E9DC;border-radius:12px;padding:10px;text-align:center;margin:10px 0;font:600 24px Fraunces,serif;letter-spacing:.08em;color:#33101B}
+.pick-radios{display:grid;gap:8px;margin:6px 0 14px}.pick-radios label{display:flex;gap:10px;align-items:center;border:1.5px solid #DCC397;border-radius:14px;padding:12px 14px;cursor:pointer;background:#fff;font-weight:600}.pick-radios input{width:auto;margin:0}
+</style>
+<section class="pick-sec" id="designs"><div class="container">
+  <h2>Pick your design</h2><p class="pick-sub">Tap a design to see a real example. Then build it yourself, free to preview, and pay only when you're happy.</p>
+  <div class="pick-grid">
+    <div class="pick-card"><button type="button" class="pick-media" data-tmpl="chasing-her" aria-label="See an example of Chasing Her">Chasing Her<span class="pick-pill">See an example</span></button>
+      <h3>Chasing Her</h3><p>A love-letter website. Photos, a letter that writes itself out, a song, and a flower reveal behind a PIN.</p>
+      <div class="pick-btns"><button type="button" class="btn-primary cta-btn" data-pick="chasing-her">Craft Mine ❤️</button></div></div>
+    <div class="pick-card"><button type="button" class="pick-media" data-tmpl="memories" aria-label="See an example of Memories">Memories<span class="pick-pill">See an example</span></button>
+      <h3>Memories</h3><p>Your photos fly in and build into a heart, then a slideshow with captions, a voice note, music and your letter.</p>
+      <div class="pick-btns"><button type="button" class="btn-primary cta-btn" data-pick="memories">Craft Mine ❤️</button></div></div>
+  </div>
+  <p class="pick-custom">Rather not build it yourself? <button type="button" data-pick="custom">Have us build it for you</button></p>
+</div></section>
+<div class="pk-modal" id="pkModal"><div class="pk-box" role="dialog" aria-modal="true" aria-labelledby="pkTitle"><h3 id="pkTitle" style="font:500 20px Fraunces,serif;margin:0">Example</h3>
+  <div class="pk-pin" id="pkPin">——</div><iframe id="pkFrame" title="Example preview"></iframe><p id="pkEmpty" hidden style="color:#7A5A47"></p>
+  <div style="text-align:right;margin-top:12px"><button type="button" id="pkClose" style="background:none;border:0;font:700 14px Manrope,sans-serif;color:#7A5A47;cursor:pointer;padding:8px">Close</button></div></div></div>
+
 <!-- ================= OFFER ================= -->
 <section class="offer-section">
   <div class="container">
@@ -1464,6 +1495,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
           <p><strong>Our promise:</strong> free edits until you’re happy. If we can’t fix it, you get a refund. <a href="terms.html#refunds" target="_blank" rel="noopener">Terms &amp; Refunds</a></p>
         </div>
 
+        <div class="pick-radios" role="radiogroup" aria-label="Your design"><label><input type="radio" name="pick" value="chasing-her"> Chasing Her</label><label><input type="radio" name="pick" value="memories"> Memories</label><label><input type="radio" name="pick" value="custom"> Have us build it for me</label></div>
         <p class="form-error" id="formError" role="alert"></p>
 
         <button type="submit" class="btn-primary">Craft Their Website ❤️</button>
@@ -2139,11 +2171,12 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
       // Standard Meta "Lead" event. The same id is saved on the lead row so it can be matched later.
       try { if(window.fbq) fbq("track", "Lead", { content_name: "order_form" }, { eventID: eventId }); } catch(e2){}
 
-      var redirectUrl = FALLBACK_REDIRECT_URL;
+      var redirectUrl = window.__pickRedirect() || FALLBACK_REDIRECT_URL;
+      try { localStorage.setItem("cust_email", email || ""); } catch(e3){}
       var sep = redirectUrl.indexOf("?") === -1 ? "?" : "&";
       redirectUrl = redirectUrl + sep +
         "name=" + encodeURIComponent(payload.full_name) +
-        "&wa=" + encodeURIComponent(payload.whatsapp);
+        "&wa=" + encodeURIComponent(payload.whatsapp) + "&email=" + encodeURIComponent(email || "");
 
       // a short pause so the browser can send the Lead event before the page changes
       setTimeout(function(){ window.location.href = redirectUrl; }, window.fbq ? 350 : 0);
@@ -2291,5 +2324,30 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
 })();
 </script>
 
+<script>
+(function(){
+  var FUNNEL="https://zxnqoxyyzspvznehdpnj.supabase.co",KEY="sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc",H={apikey:KEY,Authorization:"Bearer "+KEY};
+  var PAGES={"chasing-her":"build-chasingher.html","memories":"build-memories.html","custom":"custom-brief.html"};
+  window.__pickRedirect=function(){var r=document.querySelector('input[name="pick"]:checked');return r?PAGES[r.value]:null};
+  document.querySelectorAll("[data-pick]").forEach(function(b){b.addEventListener("click",function(){
+    var r=document.querySelector('input[name="pick"][value="'+b.dataset.pick+'"]');if(r)r.checked=true;
+    document.getElementById("order-form").scrollIntoView({behavior:"smooth"});})});
+  function get(sel){return fetch(FUNNEL+"/rest/v1/templates?product=in.(chasing-her,memories)&is_active=eq.true&order=sort_order.asc&select="+sel,{headers:H}).then(function(r){if(!r.ok)throw 0;return r.json()})}
+  var tp=get("product,label,pin,html_url,thumb_url,media_url,media_type").catch(function(){return get("product,label,pin,html_url")}).then(function(rows){var m={};rows.forEach(function(t){if(!m[t.product])m[t.product]=t});return m}).catch(function(){return null});
+  tp.then(function(m){if(!m)return;Object.keys(m).forEach(function(p){var t=m[p],s=t.media_url||t.thumb_url,box=document.querySelector('.pick-media[data-tmpl="'+p+'"]');
+    if(!s||!/^https:\/\//.test(s)||!box)return;var el;
+    if(t.media_type==="video"){el=document.createElement("video");el.muted=el.loop=el.autoplay=el.playsInline=true;el.setAttribute("aria-hidden","true")}else{el=document.createElement("img");el.alt="";el.loading="lazy"}
+    el.src=s;box.insertBefore(el,box.firstChild)})});
+  var M=document.getElementById("pkModal"),F=document.getElementById("pkFrame"),tok=0;
+  function close(){tok++;M.classList.remove("on");F.srcdoc=""}
+  document.querySelectorAll(".pick-media").forEach(function(b){b.addEventListener("click",function(){
+    var n=++tok,e=document.getElementById("pkEmpty");document.getElementById("pkTitle").textContent="Loading example…";document.getElementById("pkPin").textContent="——";e.hidden=true;F.hidden=false;F.srcdoc="";M.classList.add("on");
+    tp.then(function(m){if(n!==tok)return;var t=m&&m[b.dataset.tmpl];if(!t){document.getElementById("pkTitle").textContent=m?"No example yet":"Couldn't load the example";F.hidden=true;e.hidden=false;e.textContent="You can still start building and preview as you go.";return}
+      document.getElementById("pkTitle").textContent=t.label||"Example";document.getElementById("pkPin").textContent=t.pin||"——";
+      fetch(t.html_url).then(function(r){return r.text()}).then(function(h){if(n===tok)F.srcdoc=h}).catch(function(){})})})});
+  document.getElementById("pkClose").onclick=close;M.addEventListener("click",function(e){if(e.target===M)close()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&M.classList.contains("on"))close()});
+})();
+</script>
 </body>
 </html>
