@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tell us what to build — Chasing Her</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
-<style>:root{--wine:#5A1A2C;--gold:#DCC397;--deep:#F5E9DC;--brown:#7A5A47;--wa:#1FA855}*{box-sizing:border-box}body{margin:0;background:#FBF3EA;color:#2B1710;font:16px/1.6 Manrope,system-ui,sans-serif}
+<style>:root{--wine:#5A1A2C;--gold:#DCC397;--deep:#F5E9DC;--brown:#7A5A47}*{box-sizing:border-box}body{margin:0;background:#FBF3EA;color:#2B1710;font:16px/1.6 Manrope,system-ui,sans-serif}
 .w{max-width:520px;margin:0 auto;padding:28px 18px 60px}h1{font:500 28px/1.2 Fraunces,serif;color:#33101B;margin:0 0 8px}
 .hint{background:var(--deep);border-radius:14px;padding:13px 15px;margin-top:16px;font-size:14.5px;color:var(--brown)}
 label{display:block;font-weight:700;font-size:14px;margin-top:18px}
@@ -9,8 +9,6 @@ label{display:block;font-weight:700;font-size:14px;margin-top:18px}
 input,select,textarea{width:100%;font:inherit;padding:13px 14px;border:1.5px solid var(--gold);border-radius:14px;background:#fff;margin-top:6px}
 .b{width:100%;margin-top:22px;padding:15px;border:0;border-radius:100px;background:var(--wine);color:#FBF3EA;font:700 16px Manrope;cursor:pointer}
 .b:disabled{opacity:.6}.e{color:#a3262e;min-height:22px}
-.or{text-align:center;color:var(--brown);font-size:13.5px;margin:22px 0 -6px}
-.wa{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;margin-top:14px;padding:14px;border-radius:100px;background:var(--wa);color:#fff;font:700 15px Manrope;text-decoration:none}
 </style></head><body><div class="w">
 <h1>Tell us what to build</h1>
 <p>A few quick questions so we know which design fits you best.</p>
@@ -21,21 +19,21 @@ input,select,textarea{width:100%;font:inherit;padding:13px 14px;border:1.5px sol
 <label>Link to your photos and songs <span class="opt">(optional, can send later)</span><input id="links" inputmode="url" placeholder="Google Drive, WhatsApp link or similar"></label>
 <label>Anything else we should know? <span class="opt">(optional)</span><textarea id="more" rows="3"></textarea></label>
 <p class="e" id="e" role="alert"></p><button class="b" id="go">Continue to payment</button>
-<p class="or">or, if it's easier</p>
-<a class="wa" id="waBtn" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.3-.7.8-.8 1-.1.1-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.4-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.3c0-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3s-.9.8-.9 2 .9 2.4 1 2.6c.1.2 1.8 2.7 4.3 3.8.6.3 1.1.4 1.4.5.6.2 1.2.2 1.6.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3Z"/></svg>Just message us on WhatsApp instead</a>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-var PAYMENT_URL_FALLBACK="https://YOUR-PAYMENT-LINK",WA_NUMBER="2348094169489";
+var PAYMENT_URL_FALLBACK="https://YOUR-PAYMENT-LINK";
 async function getPaymentUrl(product,fb){try{var r=await db.from("settings").select("value").eq("key","payment_url_"+product).maybeSingle();if(!r.error&&r.data&&r.data.value)return r.data.value}catch(e){}return fb}
 var db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc"),q=new URLSearchParams(location.search),$=function(i){return document.getElementById(i)};
-$("waBtn").href="https://wa.me/"+WA_NUMBER+"?text="+encodeURIComponent("Hi! I'd like a custom build. My name is "+(q.get("name")||"")+" and my email is "+(q.get("email")||"")+".");
 $("go").onclick=async function(){
  $("e").textContent="";this.disabled=true;this.textContent="One moment…";
  var email=q.get("email")||"",slug="custom-"+Date.now().toString(36);
  var r=await db.from("submissions").insert([{slug:slug,product:"custom",full_name:q.get("name")||null,whatsapp:q.get("wa")||null,email:email||null,status:"pending_payment",progress:"received",
   brief:{design:$("p").value,for:$("who").value.trim()||null,feel:$("mood").value.trim()||null,links:$("links").value.trim()||null,notes:$("more").value.trim()||null}}]);
- if(r.error){$("e").textContent="Something went wrong saving this. Please try again, or message us on WhatsApp above.";this.disabled=false;this.textContent="Continue to payment";return}
+ if(r.error){
+   console.error("custom-brief submissions insert failed:",r.error);
+   $("e").textContent="Something went wrong saving this. Please try again in a moment.";
+   this.disabled=false;this.textContent="Continue to payment";return}
  sessionStorage.setItem("cust_email",email);
  var PAYMENT_URL=await getPaymentUrl("custom",PAYMENT_URL_FALLBACK);
  location.href=PAYMENT_URL+(PAYMENT_URL.indexOf("?")<0?"?":"&")+"email="+encodeURIComponent(email)};
