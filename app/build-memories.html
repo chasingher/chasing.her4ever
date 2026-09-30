@@ -1473,10 +1473,13 @@ function useDraft({ product, form, setForm, paramName, paramWa, setStatus, onTok
           return;
         }
         if (durable) {
-          // The temporary draft is gone, but the saved project is not. Restore it and let autosave
-          // write a fresh draft (savedSnap stays null on purpose so that happens in ~2 seconds).
+          // The temporary draft is gone, but the saved project is not. Restore it and count it as saved
+          // (it is already stored permanently), so Back never warns about "unsaved changes" that aren't.
           const restored = { ...durable.form, slug: resume };
           setForm(restored); setPinTouched(true); setLead(restoredLead);
+          const sn = snapOf(restored, true);
+          savedSnapRef.current = sn; setSavedSnap(sn);
+          setSavedAt(durable.at > 1 ? durable.at : Date.now()); setSaveState("saved");
           if (onToken) onToken(resume);
           setStatus({ text: "Welcome back. We restored your work.", kind: "ok" });
           setReady(true);
