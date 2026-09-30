@@ -64,7 +64,9 @@ function draw(){var q=($("q").value||"").toLowerCase();
  $("list").innerHTML=ROWS.filter(function(o){return(o.full_name+o.email+o.whatsapp).toLowerCase().indexOf(q)>-1}).map(function(o,i){
  var b=o.brief?'<p class="m">Brief: '+esc(Object.keys(o.brief).filter(function(k){return o.brief[k]}).map(function(k){return k+": "+o.brief[k]}).join(" · ")||"no details given yet")+'</p>':'';
  return'<div class="c" data-id="'+o.id+'"><div class="row"><b>'+esc(o.full_name||"No name")+'</b><span class="t">'+esc(o.product)+' · '+esc(o.status)+'</span></div>'
- +'<p class="m">'+esc(o.email||"no email saved")+' · '+esc(o.whatsapp||"")+'</p>'+b
+ +'<p class="m">'+esc(o.email||"no email saved")+' · '+esc(o.whatsapp||"")+'</p>'
+ +'<p style="margin:8px 0 0">'+payTag(o)+' '+buildTag(o)+'</p>'+b
+ +buildPanel(o)
  +'<label>Progress<select class="pg">'+[["received","Order received"],["building","Building"],["review","Final checks"],["hosted","Live"]].map(function(s){return'<option value="'+s[0]+'"'+(o.progress===s[0]?' selected':'')+'>'+s[1]+'</option>'}).join('')+'</select></label>'
  +'<label>Note for customer<input class="nt" value="'+esc(o.progress_note)+'"></label>'
  +'<label>Hosted link<input class="hu" inputmode="url" placeholder="https://" value="'+esc(o.hosted_url)+'"></label>'
@@ -73,6 +75,30 @@ document.addEventListener("click",async function(e){if(!e.target.classList.conta
  var c=e.target.closest(".c"),hu=c.querySelector(".hu").value.trim(),pg=c.querySelector(".pg").value;if(hu)pg="hosted";
  var r=await db.from("submissions").update({progress:pg,progress_note:c.querySelector(".nt").value.trim()||null,hosted_url:hu||null}).eq("id",c.dataset.id);
  c.querySelector(".ok").textContent=r.error?"Failed: "+r.error.message:"Saved"});
+
+
+/* ---------------- Build for a customer ---------------- */
+var BUILD_FILES={"chasing-her":"build-chasingher.html","memories":"build-memories.html"};
+function isPaid(o){return o.status&&o.status!=="pending_payment"}
+function payTag(o){return isPaid(o)?'<span class="tag on">Paid</span>':o.returned_from_payment_at?'<span class="tag on" style="background:#FFF3D6;color:#7A5A10">Back from payment, confirm</span>':'<span class="tag off">Not paid yet</span>'}
+function hasBuild(o){return !!(o.project_data||o.build_saved_at)}
+function buildTag(o){return hasBuild(o)?'<span class="tag on">Build saved</span>':'<span class="tag off">No saved build</span>'}
+function buildPanel(o){if(!o.slug)return'';
+ var cur=o.build_product||(o.product!=="custom"?o.product:"chasing-her");
+ return'<div class="bp" style="margin-top:12px;padding-top:10px;border-top:1px solid var(--deep)"><label>Design to build for them<select class="bsel">'
+  +[["chasing-her","Chasing Her"],["memories","Memories"]].map(function(x){return'<option value="'+x[0]+'"'+(cur===x[0]?' selected':'')+'>'+x[1]+'</option>'}).join('')+'</select></label>'
+  +'<button class="b bo">'+(hasBuild(o)?'Open their build':'Start their build')+'</button> <span class="m bm"></span>'
+  +'<p class="hint">Opens the builder for that design with this customer attached. Press "Save to customer\'s account" there and it appears in their account as Continue building.</p></div>'}
+document.addEventListener("click",async function(e){if(!e.target.classList.contains("bo"))return;
+ var c=e.target.closest(".c"),row=ROWS.filter(function(r){return String(r.id)===c.dataset.id})[0],m=c.querySelector(".bm");if(!row)return;
+ var design=c.querySelector(".bsel").value;m.textContent="";
+ // Remember the choice on the order so their account knows which builder to open. Ignore the error if the column isn't added yet.
+ var r=await db.from("submissions").update({build_product:design}).eq("id",row.id);
+ if(r.error)m.textContent="Opening (run supabase-fixes.sql to remember the design on their account).";
+ row.build_product=design;
+ var qs=new URLSearchParams({resume:row.slug,admin:"1"});
+ if(row.email)qs.set("email",row.email);if(row.full_name)qs.set("name",row.full_name);if(row.whatsapp)qs.set("wa",row.whatsapp);
+ window.open(BUILD_FILES[design]+"?"+qs.toString(),"_blank")});
 
 /* ---------------- Payments ---------------- */
 var PAY_PRODUCTS=[["chasing-her","Chasing Her"],["memories","Memories"],["custom","Custom build"]];
