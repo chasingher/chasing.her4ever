@@ -6,5 +6,14 @@
 a.b{display:block;margin-top:24px;padding:15px;border-radius:100px;background:#5A1A2C;color:#FBF3EA;font-weight:700;text-decoration:none}</style></head>
 <body><div class="c"><h1>Thank you for your purchase ❤️</h1><p>We've started on your site. Sign in with your email to follow its progress and get your link the moment it's live.</p>
 <a class="b" id="a" href="my-site.html">Go to my account</a></div>
-<script>var e=new URLSearchParams(location.search).get("email")||sessionStorage.getItem("cust_email")||localStorage.getItem("cust_email");
-if(e)document.getElementById("a").href="my-site.html?email="+encodeURIComponent(e)</script></body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+var q=new URLSearchParams(location.search),order={};
+try{order=JSON.parse(sessionStorage.getItem("chasing_her_order")||localStorage.getItem("chasing_her_order")||"{}")}catch(x){}
+var e=q.get("email")||order.email||sessionStorage.getItem("cust_email")||localStorage.getItem("cust_email");
+var slug=q.get("resume")||order.ref||"";
+if(e)document.getElementById("a").href="my-site.html?email="+encodeURIComponent(e);
+// Note that they came back from the payment page, so their account shows "confirming payment" and the builder sends them back to their account.
+try{var db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc");
+if(slug||e)db.rpc("mark_returned_from_payment",{p_slug:slug||null,p_email:e||null}).then(function(){},function(){})}catch(x){}
+</script></body></html>
