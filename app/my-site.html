@@ -11,6 +11,7 @@ h1,h2{font-family:Fraunces,Georgia,serif;font-weight:500;color:var(--ink);margin
 input{width:100%;font:inherit;padding:14px 16px;border:1.5px solid var(--gold);border-radius:14px;background:#fff;margin:14px 0 12px}
 .btn{display:flex;justify-content:center;align-items:center;gap:8px;width:100%;padding:15px 20px;border:0;border-radius:100px;background:var(--wine);color:var(--ivory);font:700 16px Manrope,sans-serif;text-decoration:none;cursor:pointer}
 .btn.alt{background:transparent;color:var(--ink);border:1.5px solid var(--gold)}
+.btn.wa-inline{background:#1FA855;color:#fff}
 .muted{color:var(--brown);font-size:14.5px}.err{color:#a3262e;font-size:14px;min-height:20px}
 ol{list-style:none;margin:18px 0 0;padding:0}
 li{position:relative;padding:0 0 18px 34px;color:var(--brown)}
@@ -54,21 +55,28 @@ function wa(t){$("wa").href="https://wa.me/"+WA+"?text="+encodeURIComponent(t)}
 wa("Hi! I need help with my site.");
 function card(o,email){
   var cur=o.hosted_url?3:Math.max(0,STEPS.findIndex(function(s){return s[0]===o.progress}));
-  var pay=o.status==="pending_payment";
-  var h='<div class="card"><div class="row"><h2>'+esc(NAMES[o.product]||o.product)+'</h2><span class="tag'+(cur===3?' ok':'')+'">'+esc(STEPS[cur][1])+'</span></div>';
+  var returned=!!o.returned_from_payment_at,pay=o.status==="pending_payment"&&!returned;
   if(pay){var pu=PAYURLS[o.product]||PAYMENT_URL_FALLBACK;
     h+='<p class="muted" style="margin-top:10px">Payment isn\'t confirmed yet.</p><a class="btn" style="margin-top:12px" href="'+esc(pu)+'" target="_blank" rel="noopener">Complete payment</a>';}
+  else if(o.status==="pending_payment"&&returned)h+='<p class="note" style="margin-top:10px">Thank you. We\'re confirming your payment now, this usually takes a few minutes.</p>';
   h+='<ol>'+STEPS.map(function(s,i){return'<li class="'+(i<cur?'done':i===cur?'now':'')+'">'+s[1]+'<small>'+(i===cur?s[2]:'')+'</small></li>'}).join('')+'</ol>';
   if(o.progress_note)h+='<p class="note">'+esc(o.progress_note)+'</p>';
+  var bp=o.build_product||(o.product!=="custom"?o.product:null);
   if(o.hosted_url)h+='<a class="btn" style="margin-top:14px" href="'+esc(o.hosted_url)+'" target="_blank" rel="noopener">Open my site</a>';
-  else if(o.slug&&BUILD_PAGES[o.product])
-    h+='<a class="btn alt" style="margin-top:14px" href="'+BUILD_PAGES[o.product]+'?resume='+encodeURIComponent(o.slug)+'&email='+encodeURIComponent(email)+'">Continue building</a>';
+  else if(o.slug&&bp&&BUILD_PAGES[bp]&&(o.has_build||o.product!=="custom"))
+    h+='<a class="btn alt" style="margin-top:14px" href="'+BUILD_PAGES[bp]+'?resume='+encodeURIComponent(o.slug)+'&email='+encodeURIComponent(email)+'&from=account">Continue building</a>';
+  else if(o.product==="custom")
+    h+='<p class="note" style="margin-top:14px">There\'s no saved build for you yet. Message us on WhatsApp and we\'ll begin your build. It will appear here as soon as we save it.</p>'
+      +'<a class="btn wa-inline" style="margin-top:12px" target="_blank" rel="noopener" href="https://wa.me/'+WA+'?text='+encodeURIComponent("Hi! I requested a custom build with "+email+". Please can we begin my build?")+'">Start my build on WhatsApp</a>';
   return h+'</div>';
 }
 async function show(email){
   await loadPayUrls();
   var r=await db.rpc("customer_lookup",{p_email:email});
   if(r.error){$("err").textContent="We couldn't load your site. Check your connection and try again.";return}
+  var bi={};
+  try{var br=await db.rpc("customer_builds",{p_email:email});if(!br.error&&br.data)br.data.forEach(function(b){bi[b.slug]=b})}catch(e){}
+  r.data=r.data.map(function(o){var b=bi[o.slug]||{};return Object.assign({},o,{build_product:b.build_product||o.build_product,has_build:!!b.has_build,returned_from_payment_at:b.returned_from_payment_at||o.returned_from_payment_at})});
   if(!r.data.length){$("err").textContent="We can't find that email. Use the same email you entered when you started.";return}
   localStorage.setItem("cust_email",email);
   $("login").hidden=true;$("app").hidden=false;
