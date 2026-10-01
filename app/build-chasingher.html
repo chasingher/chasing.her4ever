@@ -1063,6 +1063,73 @@ function ImageUploader({ slug, folder, items, onChange, withCaption, dropLabel, 
 /* ---------------------------------------------------------------------
    Music: upload, library (preview / rename / delete), and trimming
 --------------------------------------------------------------------- */
+// A curated, admin-managed list of ready-to-use background tracks (Backstage → Music).
+// Kept separate from AllSongsManager below, which scans every customer's own uploads —
+// this one only shows tracks the business has deliberately added and switched on.
+function MusicLibraryPicker({ currentUrl, onPick }) {
+  const [tracks, setTracks] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState("");
+  const previewRef = React.useRef(null);
+  const [previewingId, setPreviewingId] = React.useState(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!supabaseClient) { setLoading(false); return; }
+      try {
+        const { data, error } = await supabaseClient.from("music_library").select("*").eq("is_active", true).order("display_order", { ascending: true });
+        if (error) throw error;
+        if (!cancelled) setTracks(data || []);
+      } catch (e) {
+        if (!cancelled) setError("Couldn't load the song library.");
+      }
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; if (previewRef.current) { previewRef.current.pause(); } };
+  }, []);
+
+  function stopPreview() {
+    if (previewRef.current) { previewRef.current.pause(); previewRef.current = null; }
+    setPreviewingId(null);
+  }
+  function togglePreview(t) {
+    if (previewingId === t.id) { stopPreview(); return; }
+    stopPreview();
+    const a = new Audio(t.file_url);
+    a.addEventListener("ended", () => setPreviewingId(null));
+    a.play().catch(() => setError("Couldn't play that track."));
+    previewRef.current = a;
+    setPreviewingId(t.id);
+  }
+
+  if (loading) return <div className="field-hint">Loading our song library…</div>;
+  if (error) return <div className="field-hint" style={{ color: "var(--bad)" }}>{error}</div>;
+  if (!tracks.length) return null;
+
+  return (
+    <div className="field" style={{ marginBottom: 14 }}>
+      <label>Choose from our library</label>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 260, overflowY: "auto" }}>
+        {tracks.map((t) => {
+          const inUse = !!currentUrl && t.file_url === currentUrl;
+          return (
+            <div key={t.id} className={"audio-row" + (inUse ? " in-use" : "")}>
+              <button type="button" className="mini-btn" style={{ flex: "none" }} onClick={() => togglePreview(t)}>
+                {previewingId === t.id ? "Stop" : "Play"}
+              </button>
+              <div className="audio-name">{t.title}{t.artist ? " — " + t.artist : ""}</div>
+              {inUse
+                ? <span className="mini-btn" style={{ pointerEvents: "none", opacity: .7 }}>In use</span>
+                : <button type="button" className="mini-btn primary" onClick={() => onPick(t.file_url)}>Use this</button>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function MusicUploader({ slug, value, onChange, onUploaded }) {
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -2129,14 +2196,24 @@ function BuildTool() {
 
         <div className="card" id="sec-music">
           <h2>Background music (optional)</h2>
+          <p className="hint">Pick a song from our library below, or upload your own if you don't see it.</p>
+
+          <MusicLibraryPicker currentUrl={form.music_url} onPick={(v) => set("music_url", v)} />
+
           <p className="hint">
-            To have music quietly playing on your site, you need an actual music file (an mp3), not just a link to a
-            streaming app. The easiest way: find the song on YouTube, use a "YouTube to mp3" site to save it as an mp3
-            file, then upload that file below.
+            <strong>Can't find your song?</strong> Send us the title and artist on WhatsApp — from your dashboard
+            if you've already paid, or right here now — and we'll either add it to the library for everyone or
+            drop it straight into your site for you.
           </p>
+          <a className="btn btn-outline" target="_blank" rel="noopener" style={{ marginBottom: 16 }}
+            href={"https://wa.me/2348094169489?text=" + encodeURIComponent("Hi! I'd like to request a song for my Chasing Her build" + (leadName ? " (" + leadName + ")" : "") + " — ref " + form.slug + ". The song is: ")}>
+            Request a song on WhatsApp
+          </a>
+
           <p className="hint">
-            Don't want to do that yourself? You can ask us to add the music for you for a small extra fee — just mention
-            it when you message us on WhatsApp.
+            Prefer to add your own? You need an actual music file (an mp3), not just a link to a streaming app. The
+            easiest way: find the song on YouTube, use a "YouTube to mp3" site to save it as an mp3 file, then upload
+            that file below.
           </p>
           <div className="field">
             <label>Or paste a direct link to an mp3 file, if you already have one</label>
