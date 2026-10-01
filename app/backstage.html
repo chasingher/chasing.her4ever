@@ -39,7 +39,7 @@ var db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publ
 var db2=supabase.createClient("https://yaisiawnqlfosfawcxle.supabase.co","sb_publishable_KZbznu5oAKqKtCTQ36PM1A_eiBCvm8-");
 var $=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-var TABS=[["cust","Customers"],["pay","Payments"],["show","Showcase"],["testi","Testimonials"],["orders","Orders","orders-admin.html"],["chasing","Chasing Her editor","chasing-admin.html"],["mem","Memories editor","memories-admin.html"]];
+var TABS=[["cust","Customers"],["pay","Payments"],["show","Showcase"],["testi","Testimonials"],["music","Music"],["orders","Orders","orders-admin.html"],["chasing","Chasing Her editor","chasing-admin.html"],["mem","Memories editor","memories-admin.html"]];
 function unlock(){["orders_unlocked","backstage_unlocked","memories_unlocked"].forEach(function(k){sessionStorage.setItem(k,"1")});
  $("gate").hidden=true;$("nav").hidden=false;$("main").hidden=false;
  $("nav").innerHTML=TABS.map(function(t){return'<button data-t="'+t[0]+'">'+t[1]+'</button>'}).join("");
@@ -49,7 +49,7 @@ function go(k){TABS.forEach(function(t){$("p-"+t[0]).hidden=t[0]!==k});
  document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t===k)});
  var t=TABS.filter(function(x){return x[0]===k})[0],p=$("p-"+k);$("main").style.padding=t[2]?"0":"14px";
  if(t[2]){if(!p.firstChild){p.style.height="100%";p.innerHTML='<iframe src="'+t[2]+'" title="'+t[1]+'"></iframe>'}}
- else if(k==="cust")loadCust();else if(k==="pay")loadPay();else if(k==="testi")loadTesti();else loadShow()}
+ else if(k==="cust")loadCust();else if(k==="pay")loadPay();else if(k==="testi")loadTesti();else if(k==="music")loadMusic();else loadShow()}
 $("in").onclick=function(){$("pw").value===PASS?unlock():($("pw").value="",$("pw").placeholder="Wrong password")};
 $("pw").onkeydown=function(e){if(e.key==="Enter")$("in").click()};
 
@@ -175,6 +175,53 @@ async function saveTesti(){$("tErr").textContent="";var btn=$("tSave");btn.disab
   if(r.error)throw r.error;
   resetTesti();loadTesti();
  }catch(err){$("tErr").textContent=err.message||"Something went wrong saving this testimonial."}
+ finally{btn.disabled=false;btn.textContent=orig}}
+
+/* ---------------- Music library (background music customers can pick from) ---------------- */
+var MUSIC=[],mEditId=null;
+async function loadMusic(){var p=$("p-music");p.innerHTML='<p class="m">Loading…</p>';
+ var r=await db.from("music_library").select("*").order("display_order",{ascending:true});
+ if(r.error){p.innerHTML='<p class="m">Could not load the music library: '+esc(r.error.message)+'. Have you run music-library-setup.sql?</p>';return}
+ MUSIC=r.data;
+ p.innerHTML='<div class="grid two"><div class="c"><h2 id="mTitle">Add a song</h2>'
+ +'<label>Title<input id="mTitleIn" placeholder="Song title"></label>'
+ +'<label>Artist <span class="m">(optional)</span><input id="mArtist" placeholder="Artist name"></label>'
+ +'<label>MP3 file<input type="file" id="mFile" accept="audio/*"></label><p class="hint">Uploads to the templates storage bucket. Leave empty when editing to keep the current file.</p>'
+ +'<div class="grid two"><label>Display order<input id="mOrder" type="number" value="0"></label><label>Active<select id="mActive"><option value="true">Yes — customers can pick it</option><option value="false">No — hidden</option></select></label></div>'
+ +'<p class="m" id="mErr" style="color:#a3262e"></p>'
+ +'<button class="b" id="mSave">Save song</button> <button class="b-ghost" id="mCancel" hidden>Cancel</button></div>'
+ +'<div id="mList" class="grid"></div></div>';
+ $("mCancel").onclick=resetMusic;$("mSave").onclick=saveMusic;
+ drawMusic()}
+function drawMusic(){$("mList").innerHTML=MUSIC.map(function(t){
+ return'<div class="c" data-id="'+t.id+'"><div class="row"><b>'+esc(t.title)+(t.artist?' — '+esc(t.artist):'')+'</b><span class="tag '+(t.is_active?'on':'off')+'">'+(t.is_active?"Active":"Hidden")+'</span></div>'
+ +'<audio controls style="width:100%;margin-top:8px" src="'+esc(t.file_url)+'"></audio>'
+ +'<p class="m" style="margin-top:6px">Order '+t.display_order+'</p>'
+ +'<div class="row" style="margin-top:8px"><button class="b-ghost me">Edit</button><button class="b-danger md">Delete</button></div></div>'}).join("")||'<p class="m">No songs yet — add your first one on the left.</p>'}
+document.addEventListener("click",function(e){
+ if(e.target.classList.contains("me")){var row=MUSIC.find(function(r){return r.id===e.target.closest(".c[data-id]").dataset.id});if(row)editMusic(row)}
+ if(e.target.classList.contains("md")){var id=e.target.closest(".c[data-id]").dataset.id;if(confirm("Delete this song? Builds already using it will keep playing it, it just won't show as a pick anymore."))deleteMusic(id)}});
+function editMusic(row){mEditId=row.id;$("mTitle").textContent="Edit song";$("mTitleIn").value=row.title||"";$("mArtist").value=row.artist||"";
+ $("mOrder").value=row.display_order||0;$("mActive").value=row.is_active?"true":"false";$("mSave").textContent="Update song";$("mCancel").hidden=false;
+ window.scrollTo({top:0,behavior:"smooth"})}
+function resetMusic(){mEditId=null;$("mTitleIn").value="";$("mArtist").value="";$("mFile").value="";$("mOrder").value=0;$("mActive").value="true";
+ $("mTitle").textContent="Add a song";$("mSave").textContent="Save song";$("mCancel").hidden=true;$("mErr").textContent=""}
+async function deleteMusic(id){var r=await db.from("music_library").delete().eq("id",id);if(r.error){alert("Could not delete: "+r.error.message);return}loadMusic()}
+async function saveMusic(){$("mErr").textContent="";var btn=$("mSave");btn.disabled=true;var orig=btn.textContent;btn.textContent="Saving…";
+ try{
+  var title=$("mTitleIn").value.trim();if(!title)throw new Error("Add a title before saving.");
+  var fileUrl=mEditId?(MUSIC.find(function(r){return r.id===mEditId})||{}).file_url:null;
+  var f=$("mFile").files[0];
+  if(f){var path=Date.now()+"_"+f.name.replace(/\s+/g,"_");
+   var up=await db.storage.from("music-library").upload(path,f,{contentType:f.type});if(up.error)throw up.error;
+   fileUrl=db.storage.from("music-library").getPublicUrl(path).data.publicUrl}
+  if(!fileUrl)throw new Error("Choose an MP3 file.");
+  var payload={title:title,artist:$("mArtist").value.trim()||null,file_url:fileUrl,
+   display_order:parseInt($("mOrder").value,10)||0,is_active:$("mActive").value==="true"};
+  var r=mEditId?await db.from("music_library").update(payload).eq("id",mEditId):await db.from("music_library").insert([payload]);
+  if(r.error)throw r.error;
+  resetMusic();loadMusic();
+ }catch(err){$("mErr").textContent=err.message||"Something went wrong saving this song."}
  finally{btn.disabled=false;btn.textContent=orig}}
 
 if(sessionStorage.getItem("orders_unlocked"))unlock();
