@@ -61,7 +61,7 @@ async function loadCust(){var p=$("p-cust");p.innerHTML='<p class="m">Loading…
  ROWS=r.data;p.innerHTML='<div class="grid"><input id="q" placeholder="Search name, email or WhatsApp" aria-label="Search"><div class="grid two" id="list"></div></div>';
  $("q").oninput=draw;draw()}
 function draw(){var q=($("q").value||"").toLowerCase();
- $("list").innerHTML=ROWS.filter(function(o){return(o.full_name+o.email+o.whatsapp).toLowerCase().indexOf(q)>-1}).map(function(o,i){
+ $("list").innerHTML=ROWS.filter(function(o){return((o.full_name||"")+(o.email||"")+(o.whatsapp||"")).toLowerCase().indexOf(q)>-1}).map(function(o,i){
  var b=o.brief?'<p class="m">Brief: '+esc(Object.keys(o.brief).filter(function(k){return o.brief[k]}).map(function(k){return k+": "+o.brief[k]}).join(" · ")||"no details given yet")+'</p>':'';
  return'<div class="c" data-id="'+o.id+'"><div class="row"><b>'+esc(o.full_name||"No name")+'</b><span class="t">'+esc(o.product)+' · '+esc(o.status)+'</span></div>'
  +'<p class="m">'+esc(o.email||"no email saved")+' · '+esc(o.whatsapp||"")+'</p>'
