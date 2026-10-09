@@ -39,7 +39,7 @@ var db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publ
 var db2=supabase.createClient("https://yaisiawnqlfosfawcxle.supabase.co","sb_publishable_KZbznu5oAKqKtCTQ36PM1A_eiBCvm8-");
 var $=function(i){return document.getElementById(i)};
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-var TABS=[["cust","Customers"],["pay","Payments"],["show","Showcase"],["testi","Testimonials"],["music","Music"],["orders","Orders","orders-admin.html"],["chasing","Chasing Her editor","chasing-admin.html"],["mem","Memories editor","memories-admin.html"]];
+var TABS=[["cust","Customers"],["pay","Payments"],["funnel","Funnel"],["storage","Storage"],["show","Showcase"],["testi","Testimonials"],["music","Music"],["orders","Orders","orders-admin.html"],["chasing","Chasing Her editor","chasing-admin.html"],["mem","Memories editor","memories-admin.html"]];
 function unlock(){["orders_unlocked","backstage_unlocked","memories_unlocked"].forEach(function(k){sessionStorage.setItem(k,"1")});
  $("gate").hidden=true;$("nav").hidden=false;$("main").hidden=false;
  $("nav").innerHTML=TABS.map(function(t){return'<button data-t="'+t[0]+'">'+t[1]+'</button>'}).join("");
@@ -49,7 +49,7 @@ function go(k){TABS.forEach(function(t){$("p-"+t[0]).hidden=t[0]!==k});
  document.querySelectorAll("nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t===k)});
  var t=TABS.filter(function(x){return x[0]===k})[0],p=$("p-"+k);$("main").style.padding=t[2]?"0":"14px";
  if(t[2]){if(!p.firstChild){p.style.height="100%";p.innerHTML='<iframe src="'+t[2]+'" title="'+t[1]+'"></iframe>'}}
- else if(k==="cust")loadCust();else if(k==="pay")loadPay();else if(k==="testi")loadTesti();else if(k==="music")loadMusic();else loadShow()}
+ else if(k==="cust")loadCust();else if(k==="pay")loadPay();else if(k==="funnel")loadFunnel();else if(k==="storage")loadStorage();else if(k==="testi")loadTesti();else if(k==="music")loadMusic();else loadShow()}
 $("in").onclick=function(){$("pw").value===PASS?unlock():($("pw").value="",$("pw").placeholder="Wrong password")};
 $("pw").onkeydown=function(e){if(e.key==="Enter")$("in").click()};
 
@@ -223,6 +223,99 @@ async function saveMusic(){$("mErr").textContent="";var btn=$("mSave");btn.disab
   resetMusic();loadMusic();
  }catch(err){$("mErr").textContent=err.message||"Something went wrong saving this song."}
  finally{btn.disabled=false;btn.textContent=orig}}
+
+/* ---------------- Funnel: where people go + landing prices ---------------- */
+var FUNNEL_DEFAULTS={price_page:"20",price_was:"200",price_custom:"50","route_chasing-her":"payment","route_memories":"payment","route_custom":"payment"};
+async function loadFunnel(){var p=$("p-funnel");p.innerHTML='<p class="m">Loading…</p>';
+ var r=await db.from("settings").select("key,value").in("key",Object.keys(FUNNEL_DEFAULTS));
+ if(r.error){p.innerHTML='<p class="m">Could not load funnel settings: '+esc(r.error.message)+'</p>';return}
+ var v=Object.assign({},FUNNEL_DEFAULTS);r.data.forEach(function(x){if(x.value!=null&&x.value!=="")v[x.key]=x.value});
+ function sel(key,opts){return'<select data-k="'+key+'">'+opts.map(function(o){return'<option value="'+o[0]+'"'+(v[key]===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'}
+ var std=[["payment","Straight to payment, then their account"],["builder","Builder first, then payment"]];
+ p.innerHTML='<div class="grid two"><div class="c"><h2>After the landing form</h2><p class="m">Where each choice sends people. Takes effect immediately.</p>'
+  +'<label>Chasing Her'+sel("route_chasing-her",std)+'</label>'
+  +'<label>Memories'+sel("route_memories",std)+'</label>'
+  +'<label>Custom build'+sel("route_custom",[["payment","Straight to payment, then their account"],["brief","Brief form first, then payment"]])+'</label>'
+  +'<p class="hint">After payment, Selfany should send people to thank-you.html (set that in Selfany). That page forwards them to their account automatically. If a product has no payment link yet (Payments tab), people go to the builder so nobody hits a dead end.</p>'
+  +'<button class="b sv3">Save routes</button> <span class="m ok"></span></div>'
+  +'<div class="c"><h2>Landing page prices (GHC)</h2><p class="m">Used everywhere on the landing page. The countdown is automatic: it ends at midnight GMT every day, then starts again.</p>'
+  +'<label>Today\'s price (the page)<input type="number" min="0" data-k="price_page" value="'+esc(v.price_page)+'"></label>'
+  +'<label>Crossed-out regular price<input type="number" min="0" data-k="price_was" value="'+esc(v.price_was)+'"></label>'
+  +'<label>Custom build price<input type="number" min="0" data-k="price_custom" value="'+esc(v.price_custom)+'"></label>'
+  +'<p class="hint">Only show a crossed-out price you really charge or have charged.</p>'
+  +'<button class="b sv3">Save prices</button> <span class="m ok"></span></div></div>'}
+document.addEventListener("click",async function(e){if(!e.target.classList||!e.target.classList.contains("sv3"))return;
+ var c=e.target.closest(".c"),rows=[];c.querySelectorAll("[data-k]").forEach(function(el){rows.push({key:el.dataset.k,value:String(el.value).trim()})});
+ var s=e.target.nextElementSibling,r=await db.from("settings").upsert(rows,{onConflict:"key"});
+ s.textContent=r.error?"Failed: "+r.error.message:"Saved. Live immediately"});
+
+/* ---------------- Storage pools: extra Supabase projects for uploads ---------------- */
+var POOLS=[],poolEditId=null;
+var POOL_KINDS=[["images","Images (photos, flowers)"],["voice","Voice notes"],["music","Music"]];
+function mb(n){return(Number(n)/1048576).toFixed(1)}
+async function loadStorage(){var p=$("p-storage");p.innerHTML='<p class="m">Loading…</p>';
+ var r=await db.from("storage_pools").select("*").order("kind").order("sort_order").order("created_at");
+ if(r.error){p.innerHTML='<p class="m">Could not load storage projects: '+esc(r.error.message)+'. Run funnel-and-storage-setup.sql first.</p>';return}
+ POOLS=r.data;
+ p.innerHTML='<div class="grid two"><div class="c"><h2 id="spTitle">Add a storage project</h2>'
+ +'<p class="m">Your current project stays as the general store: it keeps everything already uploaded and the default flower pictures. Projects added here take new uploads, one type each, used in order until they fill up. Then the next one takes over.</p>'
+ +'<label>What it stores<select id="spKind">'+POOL_KINDS.map(function(k){return'<option value="'+k[0]+'">'+k[1]+'</option>'}).join('')+'</select></label>'
+ +'<label>Name<input id="spLabel" placeholder="e.g. Images 2"></label>'
+ +'<label>Supabase project URL<input id="spUrl" inputmode="url" placeholder="https://xxxx.supabase.co"></label>'
+ +'<label>Publishable (anon) key<input id="spKey" placeholder="sb_publishable_…"></label>'
+ +'<label>Bucket name<input id="spBucket" value="uploads"></label>'
+ +'<div class="grid two"><label>Size limit (MB)<input id="spCap" type="number" min="0" value="1000"></label><label>Order (lowest first)<input id="spOrder" type="number" value="0"></label></div>'
+ +'<p class="hint">Run storage-pool-project-setup.sql once in each new Supabase project first. It creates the bucket and permissions.</p>'
+ +'<p class="m" id="spMsg"></p>'
+ +'<button class="b" id="spTest">Test connection</button> <button class="b" id="spSave">Save</button> <button class="b-ghost" id="spCancel" hidden>Cancel</button></div>'
+ +'<div id="spList" class="grid"></div></div>';
+ $("spTest").onclick=testPoolForm;$("spSave").onclick=savePool;$("spCancel").onclick=resetPool;drawPools()}
+function drawPools(){
+ var html='<div class="c"><b>General project (current)</b><p class="m">Always the fallback, and the home of the default flower pictures. Nothing here changes.</p></div>';
+ POOL_KINDS.forEach(function(k){
+  var rows=POOLS.filter(function(x){return x.kind===k[0]});
+  html+='<h2 style="margin-top:6px">'+k[1]+'</h2>';
+  if(!rows.length)html+='<p class="m">No extra project yet, so these go to the general project.</p>';
+  rows.forEach(function(x){
+   var cap=x.capacity_mb?x.capacity_mb*1048576:0,pct=cap?Math.min(100,Math.round(Number(x.used_bytes||0)/cap*100)):0,full=cap&&pct>=98,warn=cap&&pct>=80;
+   var host="";try{host=new URL(x.supabase_url).host}catch(e){host=x.supabase_url}
+   html+='<div class="c sp-card" data-id="'+x.id+'"><div class="row"><b>'+esc(x.label||x.kind)+'</b><span class="tag '+(x.is_active&&!full?'on':'off')+'">'+(full?"Full":x.is_active?"Active":"Paused")+'</span></div>'
+   +'<p class="m">'+esc(host)+' · bucket '+esc(x.bucket)+' · order '+(x.sort_order||0)+'</p>'
+   +(cap?'<div style="height:8px;background:#EFE9E2;border-radius:100px;margin:8px 0"><div style="height:8px;width:'+pct+'%;background:'+(warn?'#B23B3B':'#5A1A2C')+';border-radius:100px"></div></div><p class="m">'+mb(x.used_bytes||0)+' MB of '+x.capacity_mb+' MB counted'+(warn&&!full?' · nearly full, add another project':'')+'</p>':'<p class="m">'+mb(x.used_bytes||0)+' MB counted, no limit set</p>')
+   +'<div class="row" style="margin-top:6px"><button class="b-ghost sp-toggle">'+(x.is_active?"Pause":"Activate")+'</button><button class="b-ghost sp-edit">Edit</button><button class="b-ghost sp-reset">Reset count</button><button class="b-danger sp-del">Remove</button></div></div>'});
+ });
+ html+='<p class="hint">The count only includes files uploaded through the builders. Supabase does not share exact storage use with this page, so check Supabase > Storage now and then and use Edit to adjust.</p>';
+ $("spList").innerHTML=html}
+async function testPool(url,key,bucket){
+ var c=supabase.createClient(url,key),path="_test/"+Date.now()+".txt";
+ var up=await c.storage.from(bucket).upload(path,new Blob(["ok"],{type:"text/plain"}),{upsert:true});
+ if(up.error)throw new Error("Upload failed: "+up.error.message);
+ var pub=c.storage.from(bucket).getPublicUrl(path).data.publicUrl,ok=false;
+ try{var f=await fetch(pub);ok=f.ok}catch(x){}
+ try{await c.storage.from(bucket).remove([path])}catch(x){}
+ if(!ok)throw new Error("Uploaded, but the file is not publicly readable. Make the bucket public.");
+ return"Working. Uploaded and read back a test file."}
+function poolForm(){return{kind:$("spKind").value,label:$("spLabel").value.trim(),supabase_url:$("spUrl").value.trim().replace(/\/+$/,""),anon_key:$("spKey").value.trim(),bucket:$("spBucket").value.trim(),
+ capacity_mb:parseInt($("spCap").value,10)||null,sort_order:parseInt($("spOrder").value,10)||0}}
+async function testPoolForm(){var f=poolForm(),m=$("spMsg");m.style.color="";
+ if(!f.supabase_url||!f.anon_key||!f.bucket){m.style.color="#a3262e";m.textContent="Fill in the URL, key and bucket first.";return}
+ m.textContent="Testing…";try{m.textContent=await testPool(f.supabase_url,f.anon_key,f.bucket)}catch(e){m.style.color="#a3262e";m.textContent=e.message}}
+async function savePool(){var f=poolForm(),m=$("spMsg");m.style.color="#a3262e";
+ if(!f.label||!f.supabase_url||!f.anon_key||!f.bucket){m.textContent="Fill in the name, URL, key and bucket.";return}
+ m.style.color="";m.textContent="Checking the connection…";
+ try{await testPool(f.supabase_url,f.anon_key,f.bucket)}catch(e){m.style.color="#a3262e";m.textContent="Not saved. "+e.message;return}
+ var r=poolEditId?await db.from("storage_pools").update(f).eq("id",poolEditId):await db.from("storage_pools").insert([Object.assign({is_active:true},f)]);
+ if(r.error){m.style.color="#a3262e";m.textContent=r.error.message;return}
+ poolEditId=null;loadStorage()}
+function editPool(x){poolEditId=x.id;$("spTitle").textContent="Edit storage project";$("spKind").value=x.kind;$("spLabel").value=x.label||"";$("spUrl").value=x.supabase_url||"";$("spKey").value=x.anon_key||"";
+ $("spBucket").value=x.bucket||"";$("spCap").value=x.capacity_mb||"";$("spOrder").value=x.sort_order||0;$("spCancel").hidden=false;window.scrollTo({top:0,behavior:"smooth"})}
+function resetPool(){poolEditId=null;loadStorage()}
+document.addEventListener("click",async function(e){var t=e.target;if(!t.classList)return;var card=t.closest(".sp-card");if(!card)return;
+ var id=card.dataset.id,row=POOLS.find(function(x){return x.id===id});if(!row)return;var r;
+ if(t.classList.contains("sp-toggle")){r=await db.from("storage_pools").update({is_active:!row.is_active}).eq("id",id);if(r.error){alert(r.error.message);return}loadStorage()}
+ if(t.classList.contains("sp-edit"))editPool(row);
+ if(t.classList.contains("sp-reset")&&confirm("Reset the usage count to 0? Do this only after checking real usage in Supabase.")){r=await db.from("storage_pools").update({used_bytes:0}).eq("id",id);if(r.error){alert(r.error.message);return}loadStorage()}
+ if(t.classList.contains("sp-del")&&confirm("Remove this project from the list? Files already stored there keep working.")){r=await db.from("storage_pools").delete().eq("id",id);if(r.error){alert(r.error.message);return}loadStorage()}});
 
 if(sessionStorage.getItem("orders_unlocked"))unlock();
 </script></body></html>
