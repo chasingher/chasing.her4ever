@@ -65,7 +65,7 @@ function card(o,email){
   var bp=o.build_product||(o.product!=="custom"?o.product:null);
   if(o.hosted_url)h+='<a class="btn" style="margin-top:14px" href="'+esc(o.hosted_url)+'" target="_blank" rel="noopener">Open my site</a>';
   else if(o.slug&&bp&&BUILD_PAGES[bp]&&(o.has_build||o.product!=="custom"))
-    h+='<a class="btn alt" style="margin-top:14px" href="'+BUILD_PAGES[bp]+'?resume='+encodeURIComponent(o.slug)+'&email='+encodeURIComponent(email)+'&from=account">Continue building</a>';
+    h+='<a class="btn alt" style="margin-top:14px" href="'+BUILD_PAGES[bp]+'?resume='+encodeURIComponent(o.slug)+'&email='+encodeURIComponent(email)+'&from=account">'+(o.has_build?'Continue building':'Start building')+'</a>';
   else if(o.product==="custom")
     h+='<p class="note" style="margin-top:14px">There\'s no saved build for you yet. Message us on WhatsApp and we\'ll begin your build. It will appear here as soon as we save it.</p>'
       +'<a class="btn wa-inline" style="margin-top:12px" target="_blank" rel="noopener" href="https://wa.me/'+WA+'?text='+encodeURIComponent("Hi! I requested a custom build with "+email+". Please can we begin my build?")+'">Start my build on WhatsApp</a>';
