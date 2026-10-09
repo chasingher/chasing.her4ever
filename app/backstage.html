@@ -101,7 +101,7 @@ document.addEventListener("click",async function(e){if(!e.target.classList.conta
  window.open(BUILD_FILES[design]+"?"+qs.toString(),"_blank")});
 
 /* ---------------- Payments ---------------- */
-var PAY_PRODUCTS=[["chasing-her","Chasing Her"],["memories","Memories"],["custom","Custom build"]];
+var PAY_PRODUCTS=[["chasing-her","Chasing Her"],["memories","Memories"],["custom","Custom build"],["ke_chasing-her","Chasing Her — Kenya (KES)"],["ke_memories","Memories — Kenya (KES)"],["ke_custom","Custom build — Kenya (KES)"],["ng_chasing-her","Chasing Her — Nigeria (NGN)"],["ng_memories","Memories — Nigeria (NGN)"],["ng_custom","Custom build — Nigeria (NGN)"]];
 async function loadPay(){var p=$("p-pay");p.innerHTML='<p class="m">Loading…</p>';
  var r=await db.from("settings").select("*").like("key","payment_url_%");
  if(r.error){p.innerHTML='<p class="m">Could not load payment links: '+esc(r.error.message)+'. Have you run the settings part of supabase-customer-portal.sql?</p>';return}
@@ -225,7 +225,7 @@ async function saveMusic(){$("mErr").textContent="";var btn=$("mSave");btn.disab
  finally{btn.disabled=false;btn.textContent=orig}}
 
 /* ---------------- Funnel: where people go + landing prices ---------------- */
-var FUNNEL_DEFAULTS={price_page:"20",price_was:"200",price_custom:"50","route_chasing-her":"payment","route_memories":"payment","route_custom":"payment"};
+var FUNNEL_DEFAULTS={price_page:"20",price_was:"200",price_custom:"50",ke_price_page:"250",ke_price_was:"2500",ke_price_custom:"650",ng_price_page:"3000",ng_price_was:"30000",ng_price_custom:"7500","route_chasing-her":"payment","route_memories":"payment","route_custom":"payment"};
 async function loadFunnel(){var p=$("p-funnel");p.innerHTML='<p class="m">Loading…</p>';
  var r=await db.from("settings").select("key,value").in("key",Object.keys(FUNNEL_DEFAULTS));
  if(r.error){p.innerHTML='<p class="m">Could not load funnel settings: '+esc(r.error.message)+'</p>';return}
@@ -238,12 +238,13 @@ async function loadFunnel(){var p=$("p-funnel");p.innerHTML='<p class="m">Loadin
   +'<label>Custom build'+sel("route_custom",[["payment","Straight to payment, then their account"],["brief","Brief form first, then payment"]])+'</label>'
   +'<p class="hint">After payment, Selfany should send people to thank-you.html (set that in Selfany). That page forwards them to their account automatically. If a product has no payment link yet (Payments tab), people go to the builder so nobody hits a dead end.</p>'
   +'<button class="b sv3">Save routes</button> <span class="m ok"></span></div>'
-  +'<div class="c"><h2>Landing page prices (GHC)</h2><p class="m">Used everywhere on the landing page. The countdown is automatic: it ends at midnight GMT every day, then starts again.</p>'
-  +'<label>Today\'s price (the page)<input type="number" min="0" data-k="price_page" value="'+esc(v.price_page)+'"></label>'
-  +'<label>Crossed-out regular price<input type="number" min="0" data-k="price_was" value="'+esc(v.price_was)+'"></label>'
-  +'<label>Custom build price<input type="number" min="0" data-k="price_custom" value="'+esc(v.price_custom)+'"></label>'
+  +[["","Ghana · index.html","GHC","ends at midnight GMT"],["ke_","Kenya · kenya.html","KES","ends at midnight Nairobi time"],["ng_","Nigeria · nigeria.html","NGN","ends at midnight Lagos time"]].map(function(R){
+   return'<div class="c"><h2>Landing page prices — '+R[1]+' ('+R[2]+')</h2><p class="m">Used everywhere on this country\'s landing page. The countdown is automatic: it '+R[3]+' every day, then starts again.</p>'
+  +'<label>Today\'s price (the page)<input type="number" min="0" data-k="'+R[0]+'price_page" value="'+esc(v[R[0]+"price_page"])+'"></label>'
+  +'<label>Crossed-out regular price<input type="number" min="0" data-k="'+R[0]+'price_was" value="'+esc(v[R[0]+"price_was"])+'"></label>'
+  +'<label>Custom build price<input type="number" min="0" data-k="'+R[0]+'price_custom" value="'+esc(v[R[0]+"price_custom"])+'"></label>'
   +'<p class="hint">Only show a crossed-out price you really charge or have charged.</p>'
-  +'<button class="b sv3">Save prices</button> <span class="m ok"></span></div></div>'}
+  +'<button class="b sv3">Save '+R[2]+' prices</button> <span class="m ok"></span></div>'}).join("")+'</div>'}
 document.addEventListener("click",async function(e){if(!e.target.classList||!e.target.classList.contains("sv3"))return;
  var c=e.target.closest(".c"),rows=[];c.querySelectorAll("[data-k]").forEach(function(el){rows.push({key:el.dataset.k,value:String(el.value).trim()})});
  var s=e.target.nextElementSibling,r=await db.from("settings").upsert(rows,{onConflict:"key"});
