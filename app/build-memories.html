@@ -390,14 +390,56 @@ async function compressImage(file, maxDim, quality) {
   }
 }
 
+/* ---------- Storage pools ----------
+   Customer uploads (images / voice notes / music) go to the first active, not-full storage project
+   added in Backstage > Storage. With none set (or if one fails) they go to the general project, as before.
+   Files are saved as full public URLs, so old and new projects keep working side by side, and the
+   default flower pictures always come from the general project. */
+const STORAGE_POOLS = { loaded: null, byKind: {} };
+const POOL_CLIENTS = {};
+function poolKindForFolder(folder) { return folder === "music" ? "music" : folder === "voice" ? "voice" : "images"; }
+function loadStoragePools() {
+  if (STORAGE_POOLS.loaded) return STORAGE_POOLS.loaded;
+  STORAGE_POOLS.loaded = (async () => {
+    try {
+      if (!supabaseClient || !window.supabase) return;
+      const { data, error } = await supabaseClient.from("storage_pools").select("*").eq("is_active", true)
+        .order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+      if (error || !data) return;
+      data.forEach((p) => {
+        if (!p.supabase_url || !p.anon_key || !p.bucket) return;
+        const full = p.capacity_mb && (Number(p.used_bytes) || 0) >= p.capacity_mb * 1048576 * 0.98;
+        if (full) return;
+        (STORAGE_POOLS.byKind[p.kind] = STORAGE_POOLS.byKind[p.kind] || []).push(p);
+      });
+    } catch (e) {}
+  })();
+  return STORAGE_POOLS.loaded;
+}
+function poolClient(p) { return POOL_CLIENTS[p.id] || (POOL_CLIENTS[p.id] = window.supabase.createClient(p.supabase_url, p.anon_key)); }
+async function uploadToStorage(kind, path, file, opts) {
+  await loadStoragePools();
+  for (const p of (STORAGE_POOLS.byKind[kind] || [])) {
+    try {
+      const c = poolClient(p);
+      const { error } = await c.storage.from(p.bucket).upload(path, file, opts);
+      if (!error) {
+        try { supabaseClient.rpc("pool_add_usage", { p_id: p.id, p_bytes: file.size || 0 }).then(() => {}, () => {}); } catch (e) {}
+        return c.storage.from(p.bucket).getPublicUrl(path).data.publicUrl;
+      }
+      console.warn("Storage pool upload failed, trying the next one:", p.label, error.message);
+    } catch (e) { console.warn("Storage pool error", e); }
+  }
+  const { error: upErr } = await supabaseClient.storage.from("photos").upload(path, file, opts);
+  if (upErr) throw upErr;
+  return supabaseClient.storage.from("photos").getPublicUrl(path).data.publicUrl;
+}
+
 async function uploadOne(file, slug, folder) {
   const ext = (file.name.match(/\.[^.]+$/) || [""])[0];
   const base = slugify(file.name.replace(/\.[^.]+$/, "")) || "file";
   const path = `${slug}/${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${base}${ext}`;
-  const { error: upErr } = await supabaseClient.storage.from("photos").upload(path, file, { upsert: true, cacheControl: "31536000" });
-  if (upErr) throw upErr;
-  const { data } = supabaseClient.storage.from("photos").getPublicUrl(path);
-  return data.publicUrl;
+  return uploadToStorage(poolKindForFolder(folder), path, file, { upsert: true, cacheControl: "31536000" });
 }
 
 /* Same layout math as memories-template.html — MUST stay identical so the
@@ -1262,7 +1304,7 @@ function MusicLibraryPicker({ currentUrl, onPick }) {
 
   if (loading) return <div className="field-hint">Loading our song library…</div>;
   if (error) return <div className="field-hint" style={{ color: "var(--bad)" }}>{error}</div>;
-  if (!tracks.length) return null;
+  if (!tracks.length) return <div className="field-hint">We haven't added any songs to the library yet — check back soon, or ask us to add one (see below).</div>;
 
   return (
     <div className="field" style={{ marginBottom: 14 }}>
@@ -1571,7 +1613,7 @@ function useDraft({ product, form, setForm, paramName, paramWa, setStatus, onTok
           setReady(true);
           setStatus(CX_IS_ADMIN
             ? { text: "Blank build ready. Fill it in, then press Save to customer's account.", kind: "ok" }
-            : { text: "Your order is safe with us. Nothing has been saved in the builder yet, so you can start here. If you expected to see work, message us on WhatsApp and we'll restore it.", kind: "" });
+            : { text: (orderRow && (orderRow.project_data || orderRow.build_saved_at) ? "Your order is safe with us, but we couldn't load your saved work just now. Message us from your account and we'll restore it." : "Welcome! Your order is confirmed. Build your site below. It saves automatically, so you can leave and pick it up from your account any time."), kind: "" });
           return;
         }
         setStatus({ text: "We couldn't find that saved draft. It may have expired, so you can start a new one here.", kind: "err" });
@@ -2064,15 +2106,11 @@ function BuildTool(){
 
           <MusicLibraryPicker currentUrl={form.music_url} onPick={(v) => set("music_url", v)} />
 
-          <p className="hint">
-            <strong>Can't find your song?</strong> Send us the title and artist on WhatsApp — from your dashboard
-            if you've already paid, or right here now — and we'll either add it to the library for everyone or
-            drop it straight into your site for you.
+          <p className="hint" style={{ marginBottom: 16 }}>
+            <strong>Can't find your song?</strong> Head to your dashboard and send us the title and artist on
+            WhatsApp from there — we'll either add it to the library for everyone or drop it straight into your
+            site for you.
           </p>
-          <a className="btn btn-outline" target="_blank" rel="noopener" style={{ marginBottom: 16 }}
-            href={"https://wa.me/2348094169489?text=" + encodeURIComponent("Hi! I'd like to request a song for my Memories build" + (leadName ? " (" + leadName + ")" : "") + " — ref " + form.slug + ". The song is: ")}>
-            Request a song on WhatsApp
-          </a>
 
           <p className="hint">
             Prefer to add your own? You need an actual music file (an mp3), not a streaming link. Easiest way: find
