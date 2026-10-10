@@ -1,5 +1,22 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tell us what to build — Chasing Her</title>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1049647771235574');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
 <style>:root{--wine:#5A1A2C;--gold:#DCC397;--deep:#F5E9DC;--brown:#7A5A47}*{box-sizing:border-box}body{margin:0;background:#FBF3EA;color:#2B1710;font:16px/1.6 Manrope,system-ui,sans-serif}
 .w{max-width:520px;margin:0 auto;padding:28px 18px 60px}h1{font:500 28px/1.2 Fraunces,serif;color:#33101B;margin:0 0 8px}
@@ -23,7 +40,9 @@ input,select,textarea{width:100%;font:inherit;padding:13px 14px;border:1.5px sol
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 var PAYMENT_URL_FALLBACK="https://YOUR-PAYMENT-LINK";
-async function getPaymentUrl(product,fb){try{var r=await db.from("settings").select("value").eq("key","payment_url_"+product).maybeSingle();if(!r.error&&r.data&&r.data.value)return r.data.value}catch(e){}return fb}
+function ccode(){try{return (localStorage.getItem("cust_country")||"").toLowerCase()}catch(e){return ""}}
+async function getPaymentUrl(product,fb){var c=ccode(),pre=c==="ng"?"ng_":c==="ke"?"ke_":"",keys=pre?["payment_url_"+pre+product,"payment_url_"+product]:["payment_url_"+product];
+ for(var i=0;i<keys.length;i++){try{var r=await db.from("settings").select("value").eq("key",keys[i]).maybeSingle();if(r&&!r.error&&r.data&&r.data.value)return r.data.value}catch(e){}}return fb}
 var db=supabase.createClient("https://zxnqoxyyzspvznehdpnj.supabase.co","sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc"),q=new URLSearchParams(location.search),$=function(i){return document.getElementById(i)};
 $("go").onclick=async function(){
  $("e").textContent="";this.disabled=true;this.textContent="One moment…";
@@ -35,6 +54,9 @@ $("go").onclick=async function(){
    $("e").textContent="Something went wrong saving this. Please try again in a moment.";
    this.disabled=false;this.textContent="Continue to payment";return}
  sessionStorage.setItem("cust_email",email);
+ try{var cc=ccode();if(cc)await db.from("submissions").update({country:cc}).eq("slug",slug)}catch(e6){}
+ try{sessionStorage.setItem("chasing_her_order",JSON.stringify({ref:slug,product:"custom",name:q.get("name")||""}))}catch(e4){}
+ try{if(window.fbq)fbq("track","InitiateCheckout",{content_name:"custom"})}catch(e5){}
  var PAYMENT_URL=await getPaymentUrl("custom",PAYMENT_URL_FALLBACK);
  location.href=PAYMENT_URL+(PAYMENT_URL.indexOf("?")<0?"?":"&")+"email="+encodeURIComponent(email)};
 </script></body></html>
