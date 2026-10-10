@@ -1424,6 +1424,12 @@ async function loadDraftFromServer(token) {
 
 /* ---- Order / account helpers (customer account, admin mode, durable copy) ---- */
 const PRODUCT_ID = "memories";
+// Which country's payment link applies: set when the customer came through a country landing page,
+// and read from their order when they come back later.
+function cxCountryPrefix() {
+  let c = ""; try { c = (window.CX_ORDER_COUNTRY || localStorage.getItem("cust_country") || "").toLowerCase(); } catch (e) {}
+  return c === "ng" ? "ng_" : c === "ke" ? "ke_" : "";
+}
 const DURABLE_TABLE = { "chasing-her": "projects", "memories": "memory_projects" };
 const ACCOUNT_PAGE = "my-site.html";
 const BACKSTAGE_PAGE = "backstage.html";
@@ -1479,6 +1485,7 @@ async function cxSaveDurable(slug, form) {
 // un-migrated database still works.
 async function cxLookupOrder(slug) {
   const tries = [
+    "id,slug,product,build_product,email,full_name,whatsapp,status,progress,returned_from_payment_at,project_data,project_saved_at,country",
     "id,slug,product,build_product,email,full_name,whatsapp,status,progress,returned_from_payment_at,project_data,project_saved_at",
     "id,slug,product,build_product,email,full_name,whatsapp,status,progress,returned_from_payment_at",
     "id,slug,product,email,full_name,whatsapp,status,progress"
@@ -1558,7 +1565,7 @@ function useDraft({ product, form, setForm, paramName, paramWa, setStatus, onTok
       if (resume && isDraftToken(resume) && supabaseClient) {
         const [row, orderRow] = await Promise.all([loadDraftFromServer(resume), cxLookupOrder(resume)]);
         if (cancelled) return;
-        if (orderRow) { setOrder(orderRow); orderRef.current = orderRow; }
+        if (orderRow) { setOrder(orderRow); orderRef.current = orderRow; if (orderRow.country) window.CX_ORDER_COUNTRY = orderRow.country; }
 
         // Send them to the builder for the design they actually have (never loop on the same file).
         const orderDesign = orderRow ? (orderRow.build_product || (orderRow.product !== "custom" ? orderRow.product : null)) : null;
@@ -1805,10 +1812,14 @@ function BuildTool(){
   const PAYMENT_URL_FALLBACK = "https://YOUR-PAYMENT-LINK"; // used only if no link is set in Backstage → Payments
 
   async function getPaymentUrl(product, fallback) {
-    try {
-      var r = await supabaseClient.from("settings").select("value").eq("key", "payment_url_" + product).maybeSingle();
-      if (!r.error && r.data && r.data.value) return r.data.value;
-    } catch (e) {}
+    const pre = cxCountryPrefix();
+    const keys = pre ? ["payment_url_" + pre + product, "payment_url_" + product] : ["payment_url_" + product];
+    for (const key of keys) {
+      try {
+        var r = await supabaseClient.from("settings").select("value").eq("key", key).maybeSingle();
+        if (!r.error && r.data && r.data.value) return r.data.value;
+      } catch (e) {}
+    }
     return fallback;
   }
   const [adminBusy, setAdminBusy] = React.useState(false);
@@ -1898,7 +1909,9 @@ function BuildTool(){
     } else {
       const base = { slug, product: PRODUCT_ID, full_name: leadName || null, whatsapp: leadWa || null, email: customerEmail || null,
         progress: "received", pin: form.pin || null, status: "pending_payment" };
-      let r = await supabaseClient.from("submissions").insert([{ ...base, build_product: PRODUCT_ID }]);
+      let cc = ""; try { cc = (window.CX_ORDER_COUNTRY || localStorage.getItem("cust_country") || "").toLowerCase(); } catch (e) {}
+      let r = cc ? await supabaseClient.from("submissions").insert([{ ...base, build_product: PRODUCT_ID, country: cc }]) : { error: true };
+      if (r.error) r = await supabaseClient.from("submissions").insert([{ ...base, build_product: PRODUCT_ID }]);
       if (r.error) r = await supabaseClient.from("submissions").insert([base]);
       if (r.error) throw r.error;
     }
