@@ -2461,6 +2461,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
 (function(){
   var URL_="https://zxnqoxyyzspvznehdpnj.supabase.co",KEY="sb_publishable_u3seCQ2HMrlAC9gSjQ7DOw_Eo4Qg2Kc";
   var PREFIX="ke_";
+  var COUNTRY=PREFIX==="ng_"?"ng":PREFIX==="ke_"?"ke":"gh";
   var DEFAULTS={price_page:"250",price_was:"2500",price_custom:"650","route_chasing-her":"payment","route_memories":"payment","route_custom":"payment"};
   var PAGES={"chasing-her":"build-chasingher.html","memories":"build-memories.html","custom":"custom-brief.html"};
   var cfg=JSON.parse(JSON.stringify(DEFAULTS)),pay={},fc=null;
@@ -2476,13 +2477,20 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   window.__funnelReady=(async function(){
     if(!fc)return;
     try{
-      var keys=Object.keys(DEFAULTS).map(function(x){return /^price_/.test(x)?PREFIX+x:x}).concat(["payment_url_"+PREFIX+"chasing-her","payment_url_"+PREFIX+"memories","payment_url_"+PREFIX+"custom"]);
+      var prods=["chasing-her","memories","custom"];
+      var keys=Object.keys(DEFAULTS).map(function(x){return /^price_/.test(x)?PREFIX+x:x});
+      // Each country can have its own routes. Left empty, it follows the main (Ghana) setting.
+      if(PREFIX)prods.forEach(function(p){keys.push(PREFIX+"route_"+p)});
+      prods.forEach(function(p){keys.push("payment_url_"+PREFIX+p)});
       var r=await fc.from("settings").select("key,value").in("key",keys);
       if(r.error||!r.data)return;
+      var own={};
       r.data.forEach(function(row){
         if(row.value==null||row.value==="")return;
-        if(row.key.indexOf("payment_url_")===0)pay[row.key.slice(12+PREFIX.length)]=row.value;else cfg[PREFIX&&row.key.indexOf(PREFIX)===0?row.key.slice(PREFIX.length):row.key]=row.value;
+        if(row.key.indexOf("payment_url_")===0){pay[row.key.slice(12+PREFIX.length)]=row.value;return}
+        if(PREFIX&&row.key.indexOf(PREFIX)===0)own[row.key.slice(PREFIX.length)]=row.value;else cfg[row.key]=row.value;
       });
+      Object.keys(own).forEach(function(k){cfg[k]=own[k]});
       applyPrices();
     }catch(e){}
   })();
@@ -2496,6 +2504,7 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
   // Decides where the landing form sends someone, based on Backstage > Funnel.
   window.__funnelResolve=async function(product,lead){
     try{await window.__funnelReady}catch(e){}
+    try{localStorage.setItem("cust_country",COUNTRY)}catch(e){}
     var route=cfg["route_"+product]||"payment";
     if(route==="builder")return builderUrl(product,lead);
     if(route==="brief")return builderUrl("custom",lead);
@@ -2505,19 +2514,22 @@ src="https://www.facebook.com/tr?id=1049647771235574&ev=PageView&noscript=1"
     var email=(lead.email||"").toLowerCase(),slug=null;
     try{
       if(email){
-        var ex=await fc.from("submissions").select("slug").eq("email",email).eq("product",product).eq("status","pending_payment").limit(1);
-        if(!ex.error&&ex.data&&ex.data.length)slug=ex.data[0].slug;
+        var ex=await fc.from("submissions").select("slug,country").eq("email",email).eq("product",product).eq("status","pending_payment").limit(5);
+        if(ex.error)ex=await fc.from("submissions").select("slug").eq("email",email).eq("product",product).eq("status","pending_payment").limit(5);
+        if(!ex.error&&ex.data){var hit=ex.data.filter(function(x){return !x.country||x.country===COUNTRY})[0];if(hit)slug=hit.slug}
       }
       if(!slug){
         slug=slugFor(lead.name);
         var row={slug:slug,product:product,full_name:lead.name||null,whatsapp:lead.wa||null,email:email||null,status:"pending_payment",progress:"received"};
-        var ins=await fc.from("submissions").insert([Object.assign({build_product:product==="custom"?null:product},row)]);
+        var bp={build_product:product==="custom"?null:product};
+        var ins=await fc.from("submissions").insert([Object.assign({country:COUNTRY},bp,row)]);
+        if(ins.error)ins=await fc.from("submissions").insert([Object.assign({},bp,row)]);
         if(ins.error)ins=await fc.from("submissions").insert([row]);
         if(ins.error)throw ins.error;
       }
     }catch(e){console.warn("Order save failed, using the builder flow",e);return builderUrl(product,lead)}
     try{
-      var o=JSON.stringify({ref:slug,product:product,name:lead.name||"",email:email});
+      var o=JSON.stringify({ref:slug,product:product,name:lead.name||"",email:email,country:COUNTRY});
       sessionStorage.setItem("chasing_her_order",o);localStorage.setItem("chasing_her_order",o);
       if(email)localStorage.setItem("cust_email",email);
     }catch(e){}
