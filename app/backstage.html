@@ -63,7 +63,7 @@ async function loadCust(){var p=$("p-cust");p.innerHTML='<p class="m">Loading…
 function draw(){var q=($("q").value||"").toLowerCase();
  $("list").innerHTML=ROWS.filter(function(o){return((o.full_name||"")+(o.email||"")+(o.whatsapp||"")).toLowerCase().indexOf(q)>-1}).map(function(o,i){
  var b=o.brief?'<p class="m">Brief: '+esc(Object.keys(o.brief).filter(function(k){return o.brief[k]}).map(function(k){return k+": "+o.brief[k]}).join(" · ")||"no details given yet")+'</p>':'';
- return'<div class="c" data-id="'+o.id+'"><div class="row"><b>'+esc(o.full_name||"No name")+'</b><span class="t">'+esc(o.product)+' · '+esc(o.status)+'</span></div>'
+ return'<div class="c" data-id="'+o.id+'"><div class="row"><b>'+esc(o.full_name||"No name")+'</b><span class="t">'+esc(o.product)+(o.country?' · '+esc(String(o.country).toUpperCase()):'')+' · '+esc(o.status)+'</span></div>'
  +'<p class="m">'+esc(o.email||"no email saved")+' · '+esc(o.whatsapp||"")+'</p>'
  +'<p style="margin:8px 0 0">'+payTag(o)+' '+buildTag(o)+'</p>'+b
  +buildPanel(o)
@@ -225,26 +225,41 @@ async function saveMusic(){$("mErr").textContent="";var btn=$("mSave");btn.disab
  finally{btn.disabled=false;btn.textContent=orig}}
 
 /* ---------------- Funnel: where people go + landing prices ---------------- */
-var FUNNEL_DEFAULTS={price_page:"20",price_was:"200",price_custom:"50",ke_price_page:"250",ke_price_was:"2500",ke_price_custom:"650",ng_price_page:"3000",ng_price_was:"30000",ng_price_custom:"7500","route_chasing-her":"payment","route_memories":"payment","route_custom":"payment"};
+var FUNNEL_DEFAULTS={price_page:"20",price_was:"200",price_custom:"50",ke_price_page:"250",ke_price_was:"2500",ke_price_custom:"650",ng_price_page:"3000",ng_price_was:"30000",ng_price_custom:"7500","route_chasing-her":"payment","route_memories":"payment","route_custom":"payment","ke_route_chasing-her":"","ke_route_memories":"","ke_route_custom":"","ng_route_chasing-her":"","ng_route_memories":"","ng_route_custom":""};
 async function loadFunnel(){var p=$("p-funnel");p.innerHTML='<p class="m">Loading…</p>';
  var r=await db.from("settings").select("key,value").in("key",Object.keys(FUNNEL_DEFAULTS));
  if(r.error){p.innerHTML='<p class="m">Could not load funnel settings: '+esc(r.error.message)+'</p>';return}
  var v=Object.assign({},FUNNEL_DEFAULTS);r.data.forEach(function(x){if(x.value!=null&&x.value!=="")v[x.key]=x.value});
  function sel(key,opts){return'<select data-k="'+key+'">'+opts.map(function(o){return'<option value="'+o[0]+'"'+(v[key]===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select>'}
  var std=[["payment","Straight to payment, then their account"],["builder","Builder first, then payment"]];
- p.innerHTML='<div class="grid two"><div class="c"><h2>After the landing form</h2><p class="m">Where each choice sends people. Takes effect immediately.</p>'
+ p.innerHTML='<div class="grid two"><div class="c"><h2>After the landing form: Ghana</h2><p class="m">index.html. Kenya and Nigeria follow this unless you set their own below. Takes effect immediately.</p>'
   +'<label>Chasing Her'+sel("route_chasing-her",std)+'</label>'
   +'<label>Memories'+sel("route_memories",std)+'</label>'
   +'<label>Custom build'+sel("route_custom",[["payment","Straight to payment, then their account"],["brief","Brief form first, then payment"]])+'</label>'
   +'<p class="hint">After payment, Selfany should send people to thank-you.html (set that in Selfany). That page forwards them to their account automatically. If a product has no payment link yet (Payments tab), people go to the builder so nobody hits a dead end.</p>'
-  +'<button class="b sv3">Save routes</button> <span class="m ok"></span></div>'
+  +'<div class="hint" id="payst-"></div><button class="b sv3">Save routes</button> <span class="m ok"></span></div>'
+  +[["ke_","Kenya","kenya.html"],["ng_","Nigeria","nigeria.html"]].map(function(R){
+    var cs=[["","Same as Ghana"],["payment","Straight to payment, then their account"],["builder","Builder first, then payment"]];
+    return'<div class="c"><h2>After the landing form: '+R[1]+'</h2><p class="m">'+R[2]+'. Leave on "Same as Ghana" to follow the Ghana setting.</p>'
+     +'<label>Chasing Her'+sel(R[0]+"route_chasing-her",cs)+'</label>'
+     +'<label>Memories'+sel(R[0]+"route_memories",cs)+'</label>'
+     +'<label>Custom build'+sel(R[0]+"route_custom",[["","Same as Ghana"],["payment","Straight to payment, then their account"],["brief","Brief form first, then payment"]])+'</label>'
+     +'<div class="hint" id="payst-'+R[0]+'"></div>'
+     +'<button class="b sv3">Save '+R[1]+' routes</button> <span class="m ok"></span></div>'}).join("")
   +[["","Ghana · index.html","GHC","ends at midnight GMT"],["ke_","Kenya · kenya.html","KES","ends at midnight Nairobi time"],["ng_","Nigeria · nigeria.html","NGN","ends at midnight Lagos time"]].map(function(R){
    return'<div class="c"><h2>Landing page prices — '+R[1]+' ('+R[2]+')</h2><p class="m">Used everywhere on this country\'s landing page. The countdown is automatic: it '+R[3]+' every day, then starts again.</p>'
   +'<label>Today\'s price (the page)<input type="number" min="0" data-k="'+R[0]+'price_page" value="'+esc(v[R[0]+"price_page"])+'"></label>'
   +'<label>Crossed-out regular price<input type="number" min="0" data-k="'+R[0]+'price_was" value="'+esc(v[R[0]+"price_was"])+'"></label>'
   +'<label>Custom build price<input type="number" min="0" data-k="'+R[0]+'price_custom" value="'+esc(v[R[0]+"price_custom"])+'"></label>'
   +'<p class="hint">Only show a crossed-out price you really charge or have charged.</p>'
-  +'<button class="b sv3">Save '+R[2]+' prices</button> <span class="m ok"></span></div>'}).join("")+'</div>'}
+  +'<button class="b sv3">Save '+R[2]+' prices</button> <span class="m ok"></span></div>'}).join("")+'</div>';fillPayStatus()}
+async function fillPayStatus(){
+ var keys=[];["","ke_","ng_"].forEach(function(c){["chasing-her","memories","custom"].forEach(function(p){keys.push("payment_url_"+c+p)})});
+ var r=await db.from("settings").select("key,value").in("key",keys);if(r.error)return;
+ var have={};r.data.forEach(function(x){if(x.value)have[x.key]=1});
+ [["","Ghana"],["ke_","Kenya"],["ng_","Nigeria"]].forEach(function(R){var el=document.getElementById("payst-"+R[0]);if(!el)return;
+  var miss=[["chasing-her","Chasing Her"],["memories","Memories"],["custom","Custom build"]].filter(function(p){return!have["payment_url_"+R[0]+p[0]]}).map(function(p){return p[1]});
+  el.innerHTML=miss.length?'<span style="color:#a3262e">No '+R[1]+' payment link yet for: '+miss.join(", ")+'. Until you add them (Payments tab), those visitors go to the builder instead of payment.</span>':'<span style="color:#2F6B3F">All three '+R[1]+' payment links are set.</span>'})}
 document.addEventListener("click",async function(e){if(!e.target.classList||!e.target.classList.contains("sv3"))return;
  var c=e.target.closest(".c"),rows=[];c.querySelectorAll("[data-k]").forEach(function(el){rows.push({key:el.dataset.k,value:String(el.value).trim()})});
  var s=e.target.nextElementSibling,r=await db.from("settings").upsert(rows,{onConflict:"key"});
